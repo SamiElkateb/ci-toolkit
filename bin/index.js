@@ -8,12 +8,14 @@ const {
 	errorBoundary,
 } = require('../lib');
 const deploy = async () => {
-	const config = getConfig();
-	if (config) throw 'No config file was found';
-	const gitlab = new Gitlab();
-	const git = new Git();
-	const branchName = await git.getCurrentBranchName();
-	console.log('hi', branchName);
+	const customConfig = getConfig();
+	if (!customConfig) throw 'No config file was found';
+	const conf = await Gitlab.parseConfig(customConfig);
+	const gitlab = new Gitlab(conf);
+	const branchName = await Git.getCurrentBranchName();
+
+	const tags = await gitlab.getTags();
+	console.log(tags);
 };
 
 errorBoundary(deploy);
