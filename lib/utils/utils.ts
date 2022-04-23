@@ -2,9 +2,10 @@ const fs = require('fs');
 import { log } from '../core';
 const YAML = require('yaml');
 
-const increaseTag = (params) => {
+type increaseTagsParams = { type: 'patch' | 'minor' | 'major'; tag: 'string' };
+const increaseTag = (params: increaseTagsParams) => {
 	const { tag, type } = params;
-	let [, major, minor, patch] = tag.match(/(\d*)\.(\d*)\.(\d*)/);
+	let [, major, minor, patch] = tag.match(/(\d*)\.(\d*)\.(\d*)/) as any;
 	switch (type) {
 		case 'patch':
 			patch = +patch + 1;
@@ -52,12 +53,16 @@ const getConfig = () => {
 	}
 };
 
-const errorBoundary = async (callback) => {
+const checkIsString = (toCheck: unknown): toCheck is string => {
+	return typeof toCheck === 'string';
+};
+
+const errorBoundary = async (callback: Function) => {
 	try {
 		await callback();
-	} catch (error) {
+	} catch (error: any) {
 		log.error(error);
 	}
 };
 
-export { increaseTag, getConfig, errorBoundary };
+export { increaseTag, getConfig, errorBoundary, checkIsString };
