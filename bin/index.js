@@ -13,8 +13,9 @@ const deploy = async () => {
 	const conf = await Gitlab.parseConfig(customConfig);
 	const gitlab = new Gitlab(conf);
 	const branchName = await Git.getCurrentBranchName();
-
-	const tags = await gitlab.getTags();
+	//console.log(branchName);
+	const mergeRequest = await gitlab.mergeRequests.get(branchName);
+	const tags = await gitlab.tags.getLast();
 	console.log(tags);
 };
 
