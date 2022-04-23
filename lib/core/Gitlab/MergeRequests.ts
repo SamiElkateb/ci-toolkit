@@ -1,5 +1,6 @@
 const axios = require('axios');
 class MergeRequests {
+	private conf: any;
 	constructor(conf) {
 		this.conf = conf;
 	}
@@ -23,9 +24,9 @@ class MergeRequests {
 	verify = async (mergeRequest) => {};
 	merge = async (mergeRequest) => {
 		const mergeRequestIid = mergeRequest.iid;
-		const url = `${this.protocole}://${this.conf.domain}/api/v4/projects/${this.conf.projectId}/${mergeRequestIid}/merge?access_token=${this.conf.token}`;
+		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/projects/${this.conf.projectId}/${mergeRequestIid}/merge?access_token=${this.conf.token}`;
 		const res = await axios.put(url, { httpsAgent: this.conf.agent });
 		return res.data;
 	};
 }
-module.exports = MergeRequests;
+export default MergeRequests;

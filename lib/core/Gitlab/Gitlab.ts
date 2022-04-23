@@ -1,12 +1,13 @@
-const axios = require('axios');
-const https = require('https');
-const Git = require('../Git');
-const MergeRequests = require('./MergeRequests');
-const Tags = require('./Tags');
+import MergeRequests from './MergeRequests';
+import Tags from './Tags';
+import Git from '../Git';
+import https = require('https');
 const rejectUnauthorized = false;
 const agent = new https.Agent({ rejectUnauthorized });
 
 class Gitlab {
+	public mergeRequests: MergeRequests;
+	public tags: Tags;
 	constructor(conf) {
 		this.mergeRequests = new MergeRequests(conf);
 		this.tags = new Tags(conf);
@@ -30,4 +31,5 @@ class Gitlab {
 		return conf;
 	};
 }
-module.exports = Gitlab;
+
+export default Gitlab;

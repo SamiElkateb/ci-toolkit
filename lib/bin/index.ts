@@ -1,12 +1,5 @@
 #! /usr/bin/env node
-const {
-	increaseTag,
-	Gitlab,
-	Git,
-	getConfig,
-	log,
-	errorBoundary,
-} = require('../lib');
+import { Gitlab, Git, getConfig, errorBoundary } from '../index';
 const deploy = async () => {
 	const customConfig = getConfig();
 	if (!customConfig) throw 'No config file was found';

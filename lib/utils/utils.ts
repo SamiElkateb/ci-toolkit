@@ -1,8 +1,9 @@
 const fs = require('fs');
-const { log } = require('../core');
+import { log } from '../core';
 const YAML = require('yaml');
 
-const increaseTag = ({ tag, type }) => {
+const increaseTag = (params) => {
+	const { tag, type } = params;
 	let [, major, minor, patch] = tag.match(/(\d*)\.(\d*)\.(\d*)/);
 	switch (type) {
 		case 'patch':
@@ -21,7 +22,7 @@ const increaseTag = ({ tag, type }) => {
 	return `${major}.${minor}.${patch}`;
 };
 
-const fileExists = (path) => {
+const fileExists = (path: string) => {
 	try {
 		if (fs.existsSync(path)) return true;
 	} catch (err) {
@@ -30,7 +31,7 @@ const fileExists = (path) => {
 	return false;
 };
 
-const findConfig = (extension) => {
+const findConfig = (extension: configExtension) => {
 	const currentPath = process.cwd();
 	const filePath = `${currentPath}/ci-toolkit.${extension}`;
 	if (!fileExists(filePath)) return;
@@ -44,7 +45,7 @@ const findConfig = (extension) => {
 };
 
 const getConfig = () => {
-	const extensions = ['json', 'yml', 'yaml'];
+	const extensions = ['json', 'yml', 'yaml'] as configExtension[];
 	for (let i = 0, c = extensions.length; i < c; i++) {
 		const config = findConfig(extensions[i]);
 		if (config) return config;
@@ -59,4 +60,4 @@ const errorBoundary = async (callback) => {
 	}
 };
 
-module.exports = { increaseTag, getConfig, errorBoundary };
+export { increaseTag, getConfig, errorBoundary };

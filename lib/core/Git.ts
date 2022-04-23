@@ -30,4 +30,5 @@ class Git {
 		throw 'Fetch and push origin do not match. Could not deduce domain name.';
 	};
 }
-module.exports = Git;
+
+export default Git;

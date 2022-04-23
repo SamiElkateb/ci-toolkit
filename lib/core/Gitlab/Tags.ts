@@ -1,5 +1,6 @@
 const axios = require('axios');
 class Tags {
+	private conf: any;
 	constructor(conf) {
 		this.conf = conf;
 	}
@@ -14,4 +15,4 @@ class Tags {
 		return lastTag;
 	};
 }
-module.exports = Tags;
+export default Tags;
