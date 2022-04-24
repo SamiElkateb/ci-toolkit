@@ -1,3 +1,3 @@
-import { increaseTag, getConfig, errorBoundary, checkIsString } from './utils';
+import { increaseTag, getConfig, checkIsString } from './utils';
 
-export { increaseTag, getConfig, errorBoundary, checkIsString };
+export { increaseTag, getConfig, checkIsString };

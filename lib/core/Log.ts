@@ -10,4 +10,4 @@ class Log {
 		console.error(text);
 	}
 }
-export default new Log();
+export default Log;

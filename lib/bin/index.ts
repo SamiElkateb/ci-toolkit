@@ -1,8 +1,13 @@
 #! /usr/bin/env node
-import { Git } from '../core';
+
+import Runner from '../core/Runner';
+
+/* import { Git } from '../core';
+import ErrorHandler from '../core/Errors/ErrorHandler';
 import Conf from '../core/Gitlab/Conf';
-import { Gitlab, getConfig, errorBoundary } from '../index';
+import { Gitlab, getConfig } from '../index';
 const deploy = async () => {
+	console.log(process.argv);
 	const configFile = getConfig();
 	if (!configFile) throw 'No config file was found';
 	const parsedConfig = await Conf.parseConfig(configFile);
@@ -13,8 +18,11 @@ const deploy = async () => {
 	console.log(branchName);
 	//console.log(branchName);
 	const mergeRequest = await gitlab.mergeRequests.get(branchName);
+	gitlab.mergeRequests.verify(mergeRequest);
+	await gitlab.mergeRequests.merge(mergeRequest);
 	const tags = await gitlab.tags.getLast();
 	console.log(tags);
 };
 
-errorBoundary(deploy);
+ErrorHandler.try(deploy); */
+Runner.start();

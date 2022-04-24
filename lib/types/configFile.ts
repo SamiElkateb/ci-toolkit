@@ -1,3 +1,5 @@
+type configExtension = 'json' | 'yaml' | 'yml';
+
 interface configFile {
 	token?: string;
 	protocole?: string;
@@ -27,7 +29,7 @@ interface merge_options {
 }
 
 interface mergeRequirements {
-	targetBranch: string;
+	targetBranch?: string;
 	minApprovals: number;
 	minUpvotes: number;
 	maxDownvotes: number;

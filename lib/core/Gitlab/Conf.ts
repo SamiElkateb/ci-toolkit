@@ -18,7 +18,7 @@ class Conf {
 			minUpvotes: configFile?.merge_requirements?.min_upvotes || 0,
 			maxDownvotes: configFile?.merge_requirements?.max_downvotes || 0,
 			targetBranch:
-				configFile?.merge_requirements?.target_branch || 'develop',
+				configFile?.merge_requirements?.target_branch || undefined,
 		};
 
 		this.mergeOptions = {

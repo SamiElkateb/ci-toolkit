@@ -57,12 +57,4 @@ const checkIsString = (toCheck: unknown): toCheck is string => {
 	return typeof toCheck === 'string';
 };
 
-const errorBoundary = async (callback: Function) => {
-	try {
-		await callback();
-	} catch (error: any) {
-		log.error(error);
-	}
-};
-
-export { increaseTag, getConfig, errorBoundary, checkIsString };
+export { increaseTag, getConfig, checkIsString };

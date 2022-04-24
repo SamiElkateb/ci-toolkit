@@ -1,4 +1,4 @@
-import { increaseTag, getConfig, errorBoundary } from './utils';
-import { Gitlab, Git, log } from './core';
+import { increaseTag, getConfig } from './utils';
+import { Gitlab, Git } from './core';
 
-export { increaseTag, Gitlab, Git, getConfig, log, errorBoundary };
+export { increaseTag, Gitlab, Git, getConfig };
