@@ -1,4 +1,5 @@
 import { checkIsString } from '../utils';
+import { assertString } from '../utils/assertions';
 
 const util = require('util');
 const { exec } = require('child_process');
@@ -6,11 +7,14 @@ const execProm = util.promisify(exec);
 
 class Git {
 	constructor() {}
+
 	static getCurrentBranchName = async () => {
 		const data = await execProm('git rev-parse --abbrev-ref HEAD');
 		const branchName = data.stdout.replace('\n', '');
+		assertString(branchName, 'Could not find current branch name');
 		return branchName;
 	};
+
 	static getCurrentProjectName = async () => {
 		const data = await execProm('git remote -v');
 		const [fetch, push] = data.stdout.split('\n');
@@ -29,6 +33,7 @@ class Git {
 		if (fetchProjectName === pushProjectName) return pushProjectName;
 		throw 'Fetch and push origin do not match. Could not deduce project name.';
 	};
+
 	static getOriginDomain = async () => {
 		const data = await execProm('git remote -v');
 		const [fetch, push] = data.stdout.split('\n');

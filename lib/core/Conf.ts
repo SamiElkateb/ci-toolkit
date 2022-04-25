@@ -1,4 +1,7 @@
-import Git from '../Git';
+import Git from './Git';
+import YAML = require('yaml');
+import fs = require('fs');
+import { fileExists } from '../utils/utils';
 
 class Conf {
 	readonly mergeRequirements: mergeRequirements;
@@ -7,11 +10,12 @@ class Conf {
 	readonly domain: string;
 	readonly projectId: string;
 	readonly token: string;
-	constructor(configFile: unknown) {
-		if (!Conf.checkIsConfig(configFile)) throw 'Config File Error';
+	readonly logLevel: logLevel;
+	constructor(configFile: configFile) {
 		this.domain = configFile.domain as string;
 		this.projectId = configFile.project_id as string;
 		this.token = configFile.token as string;
+		this.logLevel = configFile.log_level as logLevel;
 
 		this.mergeRequirements = {
 			minApprovals: configFile?.merge_requirements?.min_approvals || 0,
@@ -81,6 +85,25 @@ class Conf {
 		});
 
 		return true;
+	};
+	static getConfigFile = (): unknown => {
+		const extensions = ['json', 'yml', 'yaml'] as configExtension[];
+		for (let i = 0, c = extensions.length; i < c; i++) {
+			const config = Conf.findConfigFile(extensions[i]);
+			if (config) return config;
+		}
+	};
+	static findConfigFile = (extension: configExtension) => {
+		const currentPath = process.cwd();
+		const filePath = `${currentPath}/ci-toolkit.${extension}`;
+		if (!fileExists(filePath)) return;
+		switch (extension) {
+			case 'json':
+				return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+			case 'yaml':
+			case 'yml':
+				return YAML.parse(fs.readFileSync(filePath, 'utf8'));
+		}
 	};
 	static assertProperty = (data: any) => {
 		const { toCheck, property, type } = data;

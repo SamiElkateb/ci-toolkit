@@ -1,7 +1,7 @@
 import MergeRequests from './MergeRequests';
 import Tags from './Tags';
 import https = require('https');
-import Conf from './Conf';
+import Conf from '../Conf';
 const rejectUnauthorized = false;
 const agent = new https.Agent({ rejectUnauthorized });
 

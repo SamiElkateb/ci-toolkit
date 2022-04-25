@@ -57,4 +57,4 @@ const checkIsString = (toCheck: unknown): toCheck is string => {
 	return typeof toCheck === 'string';
 };
 
-export { increaseTag, getConfig, checkIsString };
+export { increaseTag, checkIsString, fileExists };

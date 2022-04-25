@@ -1,4 +1,4 @@
-import { increaseTag, getConfig } from './utils';
+import { increaseTag } from './utils';
 import { Gitlab, Git } from './core';
 
-export { increaseTag, Gitlab, Git, getConfig };
+export { increaseTag, Gitlab, Git };

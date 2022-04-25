@@ -5,6 +5,7 @@ interface configFile {
 	protocole?: string;
 	domain?: string;
 	project_id?: string;
+	log_level?: logLevel;
 	merge_requirements?: {
 		target_branch?: string;
 		min_approvals?: number;
