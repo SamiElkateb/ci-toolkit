@@ -2,46 +2,51 @@ import Git from './Git';
 import YAML = require('yaml');
 import fs = require('fs');
 import { fileExists } from '../utils/utils';
+import { assertProperty } from '../utils/assertions';
+import { hasOwnProperty } from '../utils/validation';
+import defaultConfig from './default';
 
 class Conf {
-	readonly mergeRequirements: mergeRequirements;
-	readonly mergeOptions: mergeOptions;
-	readonly protocole: 'http' | 'https';
+	readonly mergeRequests: mergeRequests_cC;
+	readonly protocole: protocole;
 	readonly domain: string;
 	readonly projectId: string;
 	readonly token: string;
 	readonly logLevel: logLevel;
-	constructor(configFile: configFile) {
-		this.domain = configFile.domain as string;
-		this.projectId = configFile.project_id as string;
-		this.token = configFile.token as string;
-		this.logLevel = configFile.log_level as logLevel;
+	constructor(conf: configFile) {
+		this.domain = conf.domain;
+		this.projectId = conf.project_id;
+		this.token = conf.token;
+		this.logLevel = conf.log_level;
+		this.protocole = conf.protocole;
 
-		this.mergeRequirements = {
-			minApprovals: configFile?.merge_requirements?.min_approvals || 0,
-			minUpvotes: configFile?.merge_requirements?.min_upvotes || 0,
-			maxDownvotes: configFile?.merge_requirements?.max_downvotes || 0,
-			targetBranch:
-				configFile?.merge_requirements?.target_branch || undefined,
+		const requirements: requirements_cC = {
+			minApprovals: conf.merge_requests.requirements.min_approvals,
+			minUpvotes: conf.merge_requests.requirements.min_upvotes,
+			maxDownvotes: conf.merge_requests.requirements.max_downvotes,
 		};
 
-		this.mergeOptions = {
+		const options: options_cC = {
 			deleteSourceBranch:
-				configFile?.merge_options?.delete_source_branch || false,
-			squashCommits: configFile?.merge_options?.squash_commits || false,
+				conf.merge_requests.options.delete_source_branch,
+			squashCommits: conf.merge_requests.options.squash_commits,
 		};
-
-		const protocole = configFile?.protocole;
-		if (protocole === 'http' || protocole === 'https') {
-			this.protocole = protocole;
-		} else {
-			this.protocole = 'https';
-		}
+		const creation: creation_cC = {
+			title: conf.merge_requests.creation.title,
+			assignToMe: conf.merge_requests.creation.assign_to_me,
+			reviewers: conf.merge_requests.creation.reviewers,
+		};
+		this.mergeRequests = {
+			targetBranch: conf.merge_requests.target_branch,
+			requirements,
+			options,
+			creation,
+		};
 	}
-	static parseConfig = async (configFile: unknown) => {
-		if (!Conf.checkIsConfig(configFile)) throw 'Config File Error';
-		const conf = { ...configFile };
-		conf.protocole = conf.protocole || 'https';
+	static parseConfig = async (configFile: unknown): Promise<configFile> => {
+		const conf = Conf.parseThroughConfig(defaultConfig, configFile);
+		const hasToken = conf.token !== '';
+		if (!hasToken) throw 'Token should be set';
 
 		const isDomainDefault = !conf.domain || conf.domain === 'default';
 		if (isDomainDefault) conf.domain = await Git.getOriginDomain();
@@ -55,37 +60,42 @@ class Conf {
 		return conf;
 	};
 
-	static checkIsConfig = (configFile: unknown): configFile is configFile => {
-		if (
-			typeof configFile !== 'object' ||
-			Array.isArray(configFile) ||
-			configFile === null
-		)
-			throw 'Config file: should be an object';
+	static parseThroughConfig<T>(
+		defaultConf: T,
+		customConf: unknown,
+		propName?: string
+	): T {
+		if (typeof customConf === 'undefined') return defaultConf;
+		if (typeof defaultConf !== 'object') {
+			if (typeof defaultConf === typeof customConf)
+				return customConf as T;
+		}
+		if (typeof defaultConf !== typeof customConf) {
+			const defaultConfType = typeof defaultConf;
+			const customConfType = typeof customConf;
+			throw `ConfigFile: ${propName} is of type ${customConfType}, should be of type ${defaultConfType} or undefined`;
+		}
+		if (defaultConf === null || typeof defaultConf !== 'object')
+			return defaultConf;
+		if (customConf === null || typeof customConf !== 'object') {
+			return defaultConf;
+		}
 
-		Conf.assertProperty({
-			toCheck: configFile,
-			property: 'token',
-			type: 'string',
-		});
-		Conf.assertProperty({
-			toCheck: configFile,
-			property: 'protocole',
-			type: 'string',
-		});
-		Conf.assertProperty({
-			toCheck: configFile,
-			property: 'domain',
-			type: 'string',
-		});
-		Conf.assertProperty({
-			toCheck: configFile,
-			property: 'project_id',
-			type: 'string',
-		});
+		for (const property in defaultConf) {
+			if (
+				hasOwnProperty(customConf, property) &&
+				hasOwnProperty(defaultConf, property)
+			) {
+				defaultConf[property] = Conf.parseThroughConfig(
+					defaultConf[property],
+					customConf[property],
+					property
+				);
+			}
+		}
+		return defaultConf;
+	}
 
-		return true;
-	};
 	static getConfigFile = (): unknown => {
 		const extensions = ['json', 'yml', 'yaml'] as configExtension[];
 		for (let i = 0, c = extensions.length; i < c; i++) {
@@ -104,12 +114,6 @@ class Conf {
 			case 'yml':
 				return YAML.parse(fs.readFileSync(filePath, 'utf8'));
 		}
-	};
-	static assertProperty = (data: any) => {
-		const { toCheck, property, type } = data;
-		if (!toCheck.hasOwnProperty(property)) return;
-		if (typeof toCheck[property] === type) return;
-		throw `Config file: ${property} should be a ${type}`;
 	};
 }
 

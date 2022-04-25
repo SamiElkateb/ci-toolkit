@@ -24,6 +24,18 @@ class MergeRequests {
 		if (sourceBranch) return await this.getRequest(sourceBranch);
 		return await this.getRequests();
 	}
+	async post(sourceBranch: string): Promise<mergeRequest | mergeRequest[]> {
+		const data = {
+			source_branch: sourceBranch,
+			target_branch: this.conf,
+			title: '',
+			assignee_id: '',
+			reviewer_ids: '',
+		};
+		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/projects/${this.conf.projectId}/merge_requests?state=opened&access_token=${this.conf.token}`;
+		const res = await axios.get(url, { httpsAgent: agent });
+		return res.data;
+	}
 	getRequests = async (): Promise<mergeRequest[]> => {
 		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/projects/${this.conf.projectId}/merge_requests?state=opened&access_token=${this.conf.token}`;
 		const res = await axios.get(url, { httpsAgent: agent });
@@ -39,14 +51,17 @@ class MergeRequests {
 		return mergeRequest;
 	};
 	verify = (mergeRequest: mergeRequest) => {
-		if (mergeRequest.upvotes < this.conf.mergeRequirements.minUpvotes)
-			throw "merge request doesn't meet minimum upvotes";
-		if (mergeRequest.downvotes >= this.conf.mergeRequirements.maxDownvotes)
-			throw 'merge request exceeds maximum downvotes';
 		if (
-			mergeRequest.target_branch !==
-			this.conf.mergeRequirements.targetBranch
+			mergeRequest.upvotes <
+			this.conf.mergeRequests.requirements.minUpvotes
 		)
+			throw "merge request doesn't meet minimum upvotes";
+		if (
+			mergeRequest.downvotes >=
+			this.conf.mergeRequests.requirements.maxDownvotes
+		)
+			throw 'merge request exceeds maximum downvotes';
+		if (mergeRequest.target_branch !== this.conf.mergeRequests.targetBranch)
 			throw 'target branch error';
 	};
 	merge = async (mergeRequest: mergeRequest) => {

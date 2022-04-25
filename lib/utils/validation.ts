@@ -7,4 +7,10 @@ const checkIsVersion = (val: unknown): val is version => {
 	return Boolean(val.match(/\d*\.\d*\.\d*/));
 };
 
-export { checkIsString, checkIsVersion };
+function hasOwnProperty<X extends {}, Y extends PropertyKey>(
+	obj: X,
+	prop: Y
+): obj is X & Record<Y, unknown> {
+	return obj.hasOwnProperty(prop);
+}
+export { checkIsString, checkIsVersion, hasOwnProperty };

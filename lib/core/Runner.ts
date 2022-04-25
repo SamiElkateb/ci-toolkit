@@ -88,9 +88,12 @@ class Runner {
 		logger.info(lang.newTag(newTag));
 	};
 
-	static createMergeRequest = (params: params) => {
+	static createMergeRequest = async (params: params) => {
 		const { options, conf } = params;
 		const gitlab = new Gitlab(conf);
+		const branchName = await Git.getCurrentBranchName();
+		logger.info(lang.currentBranchIs(branchName));
+		const mergeRequest = await gitlab.mergeRequests.post(branchName);
 	};
 
 	static parseArgs = (

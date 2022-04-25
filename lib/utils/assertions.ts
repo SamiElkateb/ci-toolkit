@@ -25,4 +25,24 @@ const assertVersion: assertVersion = (
 	if (!checkIsVersion(val)) throw message || 'value is not a version number';
 };
 
-export { assertExists, assertString, assertVersion };
+function hasOwnProperty<X extends {}, Y extends PropertyKey>(
+	obj: X,
+	prop: Y
+): obj is X & Record<Y, unknown> {
+	return obj.hasOwnProperty(prop);
+}
+
+/* type assertProperty<X extends {}, Y extends PropertyKey> = (
+	obj: X,
+	prop: Y,
+	message?: string
+) => asserts obj is X & Record<Y, unknown>; */
+function assertProperty<X extends {}, Y extends PropertyKey>(
+	{obj: X,
+	prop: Y,
+	message?: string}
+): asserts obj is X & Record<Y, unknown> {
+	if (!hasOwnProperty(obj, prop)) throw message || 'does not have property';
+}
+
+export { assertExists, assertString, assertVersion, assertProperty };
