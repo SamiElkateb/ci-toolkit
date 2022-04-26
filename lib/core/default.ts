@@ -9,7 +9,7 @@ const defaultConfig: configFile = {
 		requirements: {
 			min_approvals: 0,
 			min_upvotes: 0,
-			max_downvotes: 2,
+			max_downvotes: 1,
 		},
 		options: {
 			delete_source_branch: true,
@@ -17,6 +17,7 @@ const defaultConfig: configFile = {
 		},
 		creation: {
 			assign_to_me: true,
+			approvals_before_merge: 0,
 			reviewers: [],
 			title: '[branch_name]',
 		},

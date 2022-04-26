@@ -16,6 +16,7 @@ Commands:
 		`merging ${sourceBranch} to ${targetBranch}`,
 	currentTag: (tag: string) => `current tag is ${tag}`,
 	newTag: (tag: string) => `new tag is ${tag}`,
+	noUser: (username: string) => `user ${username} does not exist`,
 };
 
 export default lang;

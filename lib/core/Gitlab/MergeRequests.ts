@@ -3,10 +3,16 @@ import https = require('https');
 import Log from '../Log';
 import { assertExists } from '../../utils/assertions';
 import lang from '../lang/en';
+import GitlabApiError from '../Errors/GitlabApiError';
 const rejectUnauthorized = false;
 const agent = new https.Agent({ rejectUnauthorized });
 
 const axios = require('axios');
+type postParams = {
+	sourceBranch: string;
+	assigneeId?: number;
+	reviewerIds: number[];
+};
 
 class MergeRequests {
 	private conf: Conf;
@@ -24,22 +30,38 @@ class MergeRequests {
 		if (sourceBranch) return await this.getRequest(sourceBranch);
 		return await this.getRequests();
 	}
-	async post(sourceBranch: string): Promise<mergeRequest | mergeRequest[]> {
+	async post(params: postParams): Promise<mergeRequest | mergeRequest[]> {
+		const { sourceBranch, assigneeId, reviewerIds } = params;
+		const title = this.conf.mergeRequests.creation.title.replace(
+			/\[branch_name\]/,
+			params.sourceBranch
+		);
+		console.log(this.conf.mergeRequests.targetBranch);
+		console.log(title);
 		const data = {
 			source_branch: sourceBranch,
-			target_branch: this.conf,
-			title: '',
-			assignee_id: '',
-			reviewer_ids: '',
+			target_branch: this.conf.mergeRequests.targetBranch,
+			title,
+			assignee_id: assigneeId,
+			reviewer_ids: reviewerIds,
 		};
-		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/projects/${this.conf.projectId}/merge_requests?state=opened&access_token=${this.conf.token}`;
-		const res = await axios.get(url, { httpsAgent: agent });
-		return res.data;
+		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/projects/${this.conf.projectId}/merge_requests?access_token=${this.conf.token}`;
+		try {
+			const res = await axios.post(url, data, { httpsAgent: agent });
+			return res.data;
+		} catch (error) {
+			throw new GitlabApiError(error);
+		}
 	}
 	getRequests = async (): Promise<mergeRequest[]> => {
+		const mine = '&scope=assigned_to_me';
 		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/projects/${this.conf.projectId}/merge_requests?state=opened&access_token=${this.conf.token}`;
-		const res = await axios.get(url, { httpsAgent: agent });
-		return res.data;
+		try {
+			const res = await axios.get(url, { httpsAgent: agent });
+			return res.data;
+		} catch (error) {
+			throw new GitlabApiError(error);
+		}
 	};
 	getRequest = async (sourceBranch: string): Promise<mergeRequest> => {
 		const mergeRequests = await this.getRequests();
@@ -66,9 +88,18 @@ class MergeRequests {
 	};
 	merge = async (mergeRequest: mergeRequest) => {
 		const mergeRequestIid = mergeRequest.iid;
+		const data = {
+			squash: this.conf.mergeRequests.options.squashCommits,
+			should_remove_source_branch:
+				this.conf.mergeRequests.options.deleteSourceBranch,
+		};
 		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/projects/${this.conf.projectId}/merge_requests/${mergeRequestIid}/merge?access_token=${this.conf.token}`;
-		const res = await axios.put(url, {}, { httpsAgent: agent });
-		return res.data;
+		try {
+			const res = await axios.put(url, data, { httpsAgent: agent });
+			return res.data;
+		} catch (error) {
+			throw new GitlabApiError(error);
+		}
 	};
 }
 export default MergeRequests;

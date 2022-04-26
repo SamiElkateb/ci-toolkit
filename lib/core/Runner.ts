@@ -90,10 +90,21 @@ class Runner {
 
 	static createMergeRequest = async (params: params) => {
 		const { options, conf } = params;
+		const shouldAssignToMe = conf.mergeRequests.creation.assignToMe;
 		const gitlab = new Gitlab(conf);
-		const branchName = await Git.getCurrentBranchName();
-		logger.info(lang.currentBranchIs(branchName));
-		const mergeRequest = await gitlab.mergeRequests.post(branchName);
+		const sourceBranch = await Git.getCurrentBranchName();
+		logger.info(lang.currentBranchIs(sourceBranch));
+		const assigneeId = shouldAssignToMe
+			? (await gitlab.users.getMe()).id
+			: undefined;
+		const reviewers = conf.mergeRequests.creation.reviewers;
+		const reviewerIds = await gitlab.users.getIds(reviewers);
+		await gitlab.mergeRequests.post({
+			assigneeId,
+			sourceBranch,
+			reviewerIds,
+		});
+		logger.info('Merge request created');
 	};
 
 	static parseArgs = (

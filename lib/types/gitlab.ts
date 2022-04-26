@@ -12,3 +12,11 @@ interface mergeRequest {
 	merge_status: string;
 	should_remove_source_branch: string;
 }
+interface user {
+	id: number;
+	username: string;
+	name: string;
+	state: string;
+	avatar_url: string;
+	web_url: string;
+}

@@ -2,6 +2,7 @@ import Conf from '../Conf';
 import https = require('https');
 import Log from '../Log';
 import { assertVersion } from '../../utils/assertions';
+import GitlabApiError from '../Errors/GitlabApiError';
 type increaseTagsParams = {
 	update: 'patch' | 'minor' | 'major';
 	tag: unknown;
@@ -19,8 +20,12 @@ class Tags {
 	}
 	get = async () => {
 		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/projects/${this.conf.projectId}/repository/tags?access_token=${this.conf.token}`;
-		const res = await axios.get(url, { httpsAgent: agent });
-		return res.data;
+		try {
+			const res = await axios.get(url, { httpsAgent: agent });
+			return res.data;
+		} catch (error) {
+			throw new GitlabApiError(error);
+		}
 	};
 	getLast = async () => {
 		const data = await this.get();

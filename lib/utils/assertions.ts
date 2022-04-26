@@ -1,5 +1,5 @@
 import { checkIsString } from './utils';
-import { checkIsVersion } from './validation';
+import { checkIsArray, checkIsObject, checkIsVersion } from './validation';
 
 type assertString = (val: unknown, message?: string) => asserts val is string;
 const assertString: assertString = (
@@ -7,6 +7,25 @@ const assertString: assertString = (
 	message?: string
 ): asserts val is string => {
 	if (!checkIsString(val)) throw message || 'value is not a string';
+};
+
+type assertArray = (
+	val: unknown,
+	message?: string
+) => asserts val is Array<unknown>;
+const assertArray: assertArray = (
+	val: unknown,
+	message?: string
+): asserts val is Array<unknown> => {
+	if (!checkIsArray(val)) throw message || 'value is not an array';
+};
+
+type assertObject = (val: unknown, message?: string) => asserts val is object;
+const assertObject: assertString = (
+	val: unknown,
+	message?: string
+): asserts val is object => {
+	if (!checkIsObject(val)) throw message || 'value is not an object';
 };
 
 type assertExists = (val: unknown, message?: string) => asserts val;
@@ -32,17 +51,24 @@ function hasOwnProperty<X extends {}, Y extends PropertyKey>(
 	return obj.hasOwnProperty(prop);
 }
 
-/* type assertProperty<X extends {}, Y extends PropertyKey> = (
+type assertProperty<X extends {}, Y extends PropertyKey> = (
 	obj: X,
 	prop: Y,
 	message?: string
-) => asserts obj is X & Record<Y, unknown>; */
+) => asserts obj is X & Record<Y, unknown>;
 function assertProperty<X extends {}, Y extends PropertyKey>(
-	{obj: X,
+	obj: X,
 	prop: Y,
-	message?: string}
+	message?: string
 ): asserts obj is X & Record<Y, unknown> {
 	if (!hasOwnProperty(obj, prop)) throw message || 'does not have property';
 }
 
-export { assertExists, assertString, assertVersion, assertProperty };
+export {
+	assertExists,
+	assertString,
+	assertVersion,
+	assertProperty,
+	assertObject,
+	assertArray,
+};

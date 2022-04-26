@@ -31,6 +31,7 @@ interface options {
 }
 interface creation {
 	assign_to_me: boolean;
+	approvals_before_merge: number;
 	reviewers: string[];
 	title: string;
 }
@@ -58,6 +59,7 @@ interface options_cC {
 }
 interface creation_cC {
 	assignToMe: boolean;
+	approvalsBeforeMerge: number;
 	reviewers: string[];
 	title: string;
 }

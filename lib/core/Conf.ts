@@ -33,6 +33,8 @@ class Conf {
 		};
 		const creation: creation_cC = {
 			title: conf.merge_requests.creation.title,
+			approvalsBeforeMerge:
+				conf.merge_requests.creation.approvals_before_merge,
 			assignToMe: conf.merge_requests.creation.assign_to_me,
 			reviewers: conf.merge_requests.creation.reviewers,
 		};
@@ -46,7 +48,10 @@ class Conf {
 	static parseConfig = async (configFile: unknown): Promise<configFile> => {
 		const conf = Conf.parseThroughConfig(defaultConfig, configFile);
 		const hasToken = conf.token !== '';
-		if (!hasToken) throw 'Token should be set';
+		if (!hasToken) throw 'ConfigFile: token cannot be undefined';
+		const hasTargetBranch = conf.merge_requests.target_branch !== '';
+		if (!hasTargetBranch)
+			throw 'ConfigFile: target_branch cannot be undefined';
 
 		const isDomainDefault = !conf.domain || conf.domain === 'default';
 		if (isDomainDefault) conf.domain = await Git.getOriginDomain();
@@ -66,15 +71,14 @@ class Conf {
 		propName?: string
 	): T {
 		if (typeof customConf === 'undefined') return defaultConf;
-		if (typeof defaultConf !== 'object') {
-			if (typeof defaultConf === typeof customConf)
-				return customConf as T;
-		}
 		if (typeof defaultConf !== typeof customConf) {
 			const defaultConfType = typeof defaultConf;
 			const customConfType = typeof customConf;
 			throw `ConfigFile: ${propName} is of type ${customConfType}, should be of type ${defaultConfType} or undefined`;
 		}
+		if (typeof defaultConf !== 'object' || Array.isArray(defaultConf))
+			return customConf as T;
+
 		if (defaultConf === null || typeof defaultConf !== 'object')
 			return defaultConf;
 		if (customConf === null || typeof customConf !== 'object') {
