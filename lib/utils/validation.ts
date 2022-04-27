@@ -2,6 +2,10 @@ const checkIsString = (val: unknown): val is string => {
 	return typeof val === 'string';
 };
 
+const checkIsNumber = (val: unknown): val is number => {
+	return typeof val === 'number';
+};
+
 const checkIsObject = (val: unknown): val is object => {
 	return typeof val === 'object' && val !== null;
 };
@@ -27,4 +31,5 @@ export {
 	checkIsArray,
 	checkIsObject,
 	hasOwnProperty,
+	checkIsNumber,
 };

@@ -59,9 +59,13 @@ class Runner {
 
 	static deploy = async (params: params) => {
 		logger.info('starting deployment');
-		await updatePackageJson();
-		await Runner.mergeCurrentBranch(params);
-		await Runner.tagMainBranch(params);
+		const { options, conf } = params;
+		const gitlab = new Gitlab(conf);
+		//await gitlab.pipelines.post();
+		await gitlab.pipelines.get(526296226);
+		// await updatePackageJson();
+		// await Runner.mergeCurrentBranch(params);
+		// await Runner.tagMainBranch(params);
 	};
 
 	static mergeCurrentBranch = async (params: params) => {

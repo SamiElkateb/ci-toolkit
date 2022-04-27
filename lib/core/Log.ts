@@ -18,8 +18,12 @@ class Log {
 		}
 		this.logLevel = logLevel;
 	};
-	error(text: string) {
-		console.error(this.red, `error: ${text}`);
+	error(text: string, errorType?: string) {
+		if (typeof errorType !== 'undefined') {
+			console.error(this.red, `${errorType}: ${text}`);
+		} else {
+			console.error(this.red, `error: ${text}`);
+		}
 	}
 	warn(text: string) {
 		if (

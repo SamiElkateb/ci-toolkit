@@ -4,6 +4,7 @@ import {
 	assertProperty,
 	assertString,
 } from '../../utils/assertions';
+import { checkIsObject, hasOwnProperty } from '../../utils/validation';
 
 class GitlabApiError {
 	readonly message: string;
@@ -13,15 +14,33 @@ class GitlabApiError {
 			assertProperty(error, 'response');
 			assertObject(error.response);
 			assertProperty(error.response, 'data');
-			assertObject(error.response.data);
-			assertProperty(error.response.data, 'message');
-			assertArray(error.response.data.message);
-			const message = error.response.data.message[0];
-			assertString(message);
-			this.message = message;
+			this.message = GitlabApiError.getMessageFromData(
+				error.response.data
+			);
 		} catch (error) {
 			this.message = `Unknown Gitlab Api error`;
 		}
 	}
+	static getMessageFromData = (data: unknown) => {
+		assertObject(data);
+		if (hasOwnProperty(data, 'error')) {
+			assertString(data.error);
+			return data.error;
+		}
+		assertProperty(data, 'message');
+		if (
+			checkIsObject(data.message) &&
+			hasOwnProperty(data.message, 'base')
+		) {
+			return GitlabApiError.getMessageFromArray(data.message.base);
+		}
+		return GitlabApiError.getMessageFromArray(data.message);
+	};
+	static getMessageFromArray = (messages: unknown) => {
+		assertArray(messages);
+		const message = messages[0];
+		assertString(message);
+		return message;
+	};
 }
 export default GitlabApiError;

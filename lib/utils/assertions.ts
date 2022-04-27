@@ -1,5 +1,10 @@
 import { checkIsString } from './utils';
-import { checkIsArray, checkIsObject, checkIsVersion } from './validation';
+import {
+	checkIsArray,
+	checkIsNumber,
+	checkIsObject,
+	checkIsVersion,
+} from './validation';
 
 type assertString = (val: unknown, message?: string) => asserts val is string;
 const assertString: assertString = (
@@ -7,6 +12,14 @@ const assertString: assertString = (
 	message?: string
 ): asserts val is string => {
 	if (!checkIsString(val)) throw message || 'value is not a string';
+};
+
+type assertNumber = (val: unknown, message?: string) => asserts val is number;
+const assertNumber: assertNumber = (
+	val: unknown,
+	message?: string
+): asserts val is number => {
+	if (!checkIsNumber(val)) throw message || 'value is not a number';
 };
 
 type assertArray = (
@@ -71,4 +84,5 @@ export {
 	assertProperty,
 	assertObject,
 	assertArray,
+	assertNumber,
 };
