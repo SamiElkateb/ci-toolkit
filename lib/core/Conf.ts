@@ -1,10 +1,9 @@
 import Git from './Git';
 import YAML = require('yaml');
 import fs = require('fs');
-import { fileExists } from '../utils/utils';
-import { assertProperty } from '../utils/assertions';
 import { hasOwnProperty } from '../utils/validation';
 import defaultConfig from './default';
+import { fileExists } from '../utils/files';
 
 class Conf {
 	readonly mergeRequests: mergeRequests_cC;

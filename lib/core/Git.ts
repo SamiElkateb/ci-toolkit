@@ -1,5 +1,5 @@
-import { checkIsString } from '../utils';
 import { assertString } from '../utils/assertions';
+import { checkIsString } from '../utils/validation';
 
 const util = require('util');
 const { exec } = require('child_process');

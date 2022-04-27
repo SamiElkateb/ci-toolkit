@@ -1,9 +1,9 @@
-import { checkIsString } from './utils';
 import {
 	checkIsArray,
 	checkIsNumber,
 	checkIsObject,
 	checkIsVersion,
+	checkIsString,
 } from './validation';
 
 type assertString = (val: unknown, message?: string) => asserts val is string;
