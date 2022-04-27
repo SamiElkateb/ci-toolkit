@@ -25,6 +25,7 @@ class Pipelines {
 	}
 	get = async (id: number) => {
 		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/projects/${this.conf.projectId}/pipelines/${id}?access_token=${this.conf.token}`;
+		this.logger.request(url, 'get');
 		try {
 			const res = await axios.get(url, { httpsAgent: agent });
 			if (res.data.status === 'running') 'd';
@@ -36,6 +37,7 @@ class Pipelines {
 	};
 	post = async () => {
 		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/projects/${this.conf.projectId}/pipeline?access_token=${this.conf.token}`;
+		this.logger.request(url, 'post');
 		const data = {
 			ref: 'master',
 			variables: [],

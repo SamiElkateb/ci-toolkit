@@ -17,6 +17,7 @@ class Users {
 	}
 	get = async (username: string): Promise<user[]> => {
 		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/users?username=${username}&access_token=${this.conf.token}`;
+		this.logger.request(url, 'get');
 		try {
 			const res = await axios.get(url, { httpsAgent: agent });
 			return res.data;
@@ -26,6 +27,7 @@ class Users {
 	};
 	getMe = async (): Promise<user> => {
 		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/user?access_token=${this.conf.token}`;
+		this.logger.request(url, 'get');
 		try {
 			const res = await axios.get(url, { httpsAgent: agent });
 			return res.data;

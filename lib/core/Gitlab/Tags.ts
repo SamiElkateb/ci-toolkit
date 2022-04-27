@@ -20,6 +20,7 @@ class Tags {
 	}
 	get = async () => {
 		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/projects/${this.conf.projectId}/repository/tags?access_token=${this.conf.token}`;
+		this.logger.request(url, 'get');
 		try {
 			const res = await axios.get(url, { httpsAgent: agent });
 			return res.data;

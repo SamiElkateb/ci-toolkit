@@ -36,8 +36,6 @@ class MergeRequests {
 			/\[branch_name\]/,
 			params.sourceBranch
 		);
-		console.log(this.conf.mergeRequests.targetBranch);
-		console.log(title);
 		const data = {
 			source_branch: sourceBranch,
 			target_branch: this.conf.mergeRequests.targetBranch,
@@ -46,6 +44,7 @@ class MergeRequests {
 			reviewer_ids: reviewerIds,
 		};
 		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/projects/${this.conf.projectId}/merge_requests?access_token=${this.conf.token}`;
+		this.logger.request(url, 'post');
 		try {
 			const res = await axios.post(url, data, { httpsAgent: agent });
 			return res.data;
@@ -56,6 +55,7 @@ class MergeRequests {
 	getRequests = async (): Promise<mergeRequest[]> => {
 		const mine = '&scope=assigned_to_me';
 		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/projects/${this.conf.projectId}/merge_requests?state=opened&access_token=${this.conf.token}`;
+		this.logger.request(url, 'get');
 		try {
 			const res = await axios.get(url, { httpsAgent: agent });
 			return res.data;
@@ -94,6 +94,7 @@ class MergeRequests {
 				this.conf.mergeRequests.options.deleteSourceBranch,
 		};
 		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/projects/${this.conf.projectId}/merge_requests/${mergeRequestIid}/merge?access_token=${this.conf.token}`;
+		this.logger.request(url, 'put');
 		try {
 			const res = await axios.put(url, data, { httpsAgent: agent });
 			return res.data;

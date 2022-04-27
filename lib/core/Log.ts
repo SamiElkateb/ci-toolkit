@@ -42,5 +42,20 @@ class Log {
 		if (this.logLevel !== 'debug') return;
 		console.debug(`debug: ${text}`);
 	}
+
+	request(url: string, type?: string) {
+		if (this.logLevel !== 'debug') return;
+		const obfuscatedTokenUrl = url.replace(
+			/access_token=.*/,
+			'access_token=*****-********************'
+		);
+		if (typeof type !== 'undefined') {
+			console.debug(
+				`debug: sending ${type} request to ${obfuscatedTokenUrl}`
+			);
+		} else {
+			console.debug(`debug: sending request to ${obfuscatedTokenUrl}`);
+		}
+	}
 }
 export default Log;
