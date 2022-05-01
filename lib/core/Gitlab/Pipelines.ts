@@ -4,6 +4,13 @@ import Log from '../Log';
 import GitlabApiError from '../Errors/GitlabApiError';
 import { checkIsNumber } from '../../utils/validation';
 import { assertNumber } from '../../utils/assertions';
+type pollParams = {
+	fn: () => unknown;
+	validate: (value: unknown) => boolean;
+	interval: number;
+	timeout: number;
+};
+
 const rejectUnauthorized = false;
 const agent = new https.Agent({ rejectUnauthorized });
 
@@ -29,7 +36,6 @@ class Pipelines {
 		try {
 			const res = await axios.get(url, { httpsAgent: agent });
 			if (res.data.status === 'running') 'd';
-			console.log(res.data);
 			return res.data;
 		} catch (error) {
 			throw new GitlabApiError(error);
@@ -47,7 +53,6 @@ class Pipelines {
 			const id = res.data.id;
 			assertNumber(id);
 			this.runningPipelines.push(id);
-			console.log(res.data.id);
 			return res.data;
 		} catch (error) {
 			throw new GitlabApiError(error);
@@ -55,9 +60,9 @@ class Pipelines {
 	};
 	arePipelineRunning = async () => {
 		const runningPipelines = [];
-		const failedPipelines = [];
-		const successPipelines = [];
-		const canceledPipelines = [];
+		const failedPipelines = [...this.failedPipelines];
+		const successPipelines = [...this.successPipelines];
+		const canceledPipelines = [...this.canceledPipelines];
 		for (let i = 0, c = this.runningPipelines.length; i < c; i++) {
 			const pipeline = await this.get(this.runningPipelines[i]);
 			switch (pipeline.status) {
@@ -76,10 +81,19 @@ class Pipelines {
 			}
 		}
 		this.runningPipelines = runningPipelines;
-		this.failedPipelines = [this.failedPipelines, ...failedPipelines];
-		this.successPipelines = [this.successPipelines, ...successPipelines];
-		this.canceledPipelines = [this.canceledPipelines, ...canceledPipelines];
+		this.failedPipelines = [...new Set(failedPipelines)];
+		this.successPipelines = [...new Set(successPipelines)];
+		this.canceledPipelines = [...new Set(canceledPipelines)];
 		return this.runningPipelines.length === 0;
+	};
+	getFailedPipelines = () => {
+		return this.failedPipelines;
+	};
+	getSuccessPipelines = () => {
+		return this.successPipelines;
+	};
+	getCanceledPipelines = () => {
+		return this.canceledPipelines;
 	};
 }
 export default Pipelines;

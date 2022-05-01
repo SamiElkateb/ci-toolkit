@@ -2,6 +2,7 @@ type commands = 'help';
 const help = () => {
 	const message = `npx ci-toolkit <command> \n
 	help		
+	init		initializes ci-toolkit by creating default config files
 	create-mr	create a merge request for the current branch
 	deploy		merge the merge request associated with the current branch
 	`;

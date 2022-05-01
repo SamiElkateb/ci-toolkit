@@ -7,6 +7,7 @@ import lang from './lang/en';
 import Log from './Log';
 import Tags from './Gitlab/Tags';
 import { updatePackageJson } from '../utils/files';
+import { poll } from '../utils/polling';
 
 type commands = 'help' | 'deploy' | 'createMergeRequest';
 type options = 'help';
@@ -61,8 +62,18 @@ class Runner {
 		logger.info('starting deployment');
 		const { options, conf } = params;
 		const gitlab = new Gitlab(conf);
-		//await gitlab.pipelines.post();
-		await gitlab.pipelines.get(526296226);
+		await gitlab.pipelines.post();
+		const pollingData = {
+			fn: gitlab.pipelines.arePipelineRunning,
+			timeoutMessage: 'timeout exceeded',
+			pollingLogFn: () => {
+				logger.debug('polling pipelines');
+			},
+		};
+		await poll(pollingData);
+		const failedPipelines = gitlab.pipelines.getFailedPipelines();
+		console.log('failed pipelines', failedPipelines);
+		//await gitlab.pipelines.get(526296226);
 		// await updatePackageJson();
 		// await Runner.mergeCurrentBranch(params);
 		// await Runner.tagMainBranch(params);

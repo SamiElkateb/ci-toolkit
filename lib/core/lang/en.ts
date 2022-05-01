@@ -2,6 +2,7 @@ const lang = {
 	help: `npx ci-toolkit <command>
 Commands:
         help
+		init		initializes ci-toolkit by creating default config files
         config
         create-mr   create a merge request for the current branch
         deploy      merge the merge request associated with the current branch`,
