@@ -1,3 +1,4 @@
+const fs = require('fs');
 const checkIsString = (val: unknown): val is string => {
 	return typeof val === 'string';
 };
@@ -25,6 +26,20 @@ function hasOwnProperty<X extends {}, Y extends PropertyKey>(
 ): obj is X & Record<Y, unknown> {
 	return obj.hasOwnProperty(prop);
 }
+
+const checkIsPath = (val: unknown): val is path => {
+	if (typeof val !== 'string') return false;
+	return Boolean(val.match(/^(\.{1,2}\/)?(\/|\w|_|-|\.)+$/));
+};
+
+const checkPathExists = (path: path) => {
+	try {
+		if (fs.existsSync(path)) return true;
+	} catch (err) {
+		console.error(err);
+	}
+	return false;
+};
 export {
 	checkIsString,
 	checkIsVersion,
@@ -32,4 +47,6 @@ export {
 	checkIsObject,
 	hasOwnProperty,
 	checkIsNumber,
+	checkIsPath,
+	checkPathExists,
 };

@@ -1,3 +1,5 @@
+import { assertPath, assertPathExists } from './assertions';
+
 type commands = 'help';
 const help = () => {
 	const message = `npx ci-toolkit <command> \n

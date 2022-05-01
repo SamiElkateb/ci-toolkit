@@ -57,7 +57,7 @@ class Conf {
 
 		const isProjectIdDefault = conf.project_id === 'default';
 		if (!conf.project_id || isProjectIdDefault) {
-			conf.project_id = await Git.getCurrentProjectName();
+			conf.project_id = await Git.getProjectName();
 		}
 
 		conf.project_id = encodeURIComponent(conf.project_id);

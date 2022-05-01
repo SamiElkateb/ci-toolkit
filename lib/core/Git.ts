@@ -1,4 +1,4 @@
-import { assertString } from '../utils/assertions';
+import { assertPathExists, assertString } from '../utils/assertions';
 import { checkIsString } from '../utils/validation';
 
 const util = require('util');
@@ -8,34 +8,44 @@ const execProm = util.promisify(exec);
 class Git {
 	constructor() {}
 
-	static getCurrentBranchName = async () => {
-		const data = await execProm('git rev-parse --abbrev-ref HEAD');
+	static getBranchName = async (path?: string) => {
+		if (path) assertPathExists(path);
+		const baseCommand = 'git rev-parse --abbrev-ref HEAD';
+		const command = path ? `cd ${path} && ${baseCommand}` : baseCommand;
+		const data = await execProm(command);
 		const branchName = data.stdout.replace('\n', '');
-		assertString(branchName, 'Could not find current branch name');
+		assertString(branchName, 'Could not find branch name');
 		return branchName;
 	};
 
-	static getCurrentProjectName = async () => {
-		const data = await execProm('git remote -v');
+	static getProjectName = async (path?: string) => {
+		if (path) assertPathExists(path);
+		const baseCommand = 'git remote -v';
+		const command = path ? `cd ${path} && ${baseCommand}` : baseCommand;
+		const data = await execProm(command);
 		const [fetch, push] = data.stdout.split('\n');
-		if (!checkIsString(fetch) || !checkIsString(push))
-			throw 'Could not get Project Name 1';
+
+		assertString(fetch, 'Could not get Project Name');
+		assertString(push, 'Could not get Project Name');
 		const fetchUrl = Git.getUrlFromGitRemote(fetch);
 		const pushUrl = Git.getUrlFromGitRemote(push);
-		if (!checkIsString(fetchUrl) || !checkIsString(pushUrl))
-			throw 'Could not get Project Name 2';
 
+		assertString(fetchUrl, 'Could not get Project Name');
+		assertString(pushUrl, 'Could not get Project Name');
 		const fetchProjectName = Git.getProjectNameFromUrl(fetchUrl);
 		const pushProjectName = Git.getProjectNameFromUrl(pushUrl);
-		if (!checkIsString(fetchProjectName) || !checkIsString(pushProjectName))
-			throw 'Could not get Project Name 3';
 
+		assertString(fetchProjectName, 'Could not get Project Name');
+		assertString(pushProjectName, 'Could not get Project Name');
 		if (fetchProjectName === pushProjectName) return pushProjectName;
 		throw 'Fetch and push origin do not match. Could not deduce project name.';
 	};
 
-	static getOriginDomain = async () => {
-		const data = await execProm('git remote -v');
+	static getOriginDomain = async (path?: string) => {
+		if (path) assertPathExists(path);
+		const baseCommand = 'git remote -v';
+		const command = path ? `cd ${path} && ${baseCommand}` : baseCommand;
+		const data = await execProm(command);
 		const [fetch, push] = data.stdout.split('\n');
 		const fetchUrl = fetch.match(/^origin\t(.*) \(fetch\)$/)[1];
 		const pushUrl = push.match(/^origin\t(.*) \(push\)$/)[1];

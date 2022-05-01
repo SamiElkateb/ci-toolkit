@@ -60,19 +60,21 @@ class Runner {
 
 	static deploy = async (params: params) => {
 		logger.info('starting deployment');
-		const { options, conf } = params;
-		const gitlab = new Gitlab(conf);
-		await gitlab.pipelines.post();
-		const pollingData = {
-			fn: gitlab.pipelines.arePipelineRunning,
-			timeoutMessage: 'timeout exceeded',
-			pollingLogFn: () => {
-				logger.debug('polling pipelines');
-			},
-		};
-		await poll(pollingData);
-		const failedPipelines = gitlab.pipelines.getFailedPipelines();
-		console.log('failed pipelines', failedPipelines);
+		console.log(process.cwd());
+		await Git.getBranchName(process.cwd());
+		// const { options, conf } = params;
+		// const gitlab = new Gitlab(conf);
+		// await gitlab.pipelines.post();
+		// const pollingData = {
+		// 	fn: gitlab.pipelines.arePipelineRunning,
+		// 	timeoutMessage: 'timeout exceeded',
+		// 	pollingLogFn: () => {
+		// 		logger.debug('polling pipelines');
+		// 	},
+		// };
+		// await poll(pollingData);
+		// const failedPipelines = gitlab.pipelines.getFailedPipelines();
+		// console.log('failed pipelines', failedPipelines);
 		//await gitlab.pipelines.get(526296226);
 		// await updatePackageJson();
 		// await Runner.mergeCurrentBranch(params);
@@ -82,7 +84,7 @@ class Runner {
 	static mergeCurrentBranch = async (params: params) => {
 		const { options, conf } = params;
 		const gitlab = new Gitlab(conf);
-		const branchName = await Git.getCurrentBranchName();
+		const branchName = await Git.getBranchName();
 		logger.info(lang.currentBranchIs(branchName));
 		const mergeRequest = await gitlab.mergeRequests.get(branchName);
 		logger.info(lang.foundMr(mergeRequest.title));
@@ -92,6 +94,15 @@ class Runner {
 		logger.info(
 			lang.merging(mergeRequest.source_branch, mergeRequest.target_branch)
 		);
+	};
+
+	static updateEnvDiffs = async (params: params) => {
+		const { options, conf } = params;
+		const gitlab = new Gitlab(conf);
+		const tag = await gitlab.tags.getLast();
+		logger.info(lang.currentTag(tag));
+		const newTag = await Tags.increaseTag({ tag, update: 'minor' });
+		logger.info(lang.newTag(newTag));
 	};
 
 	static tagMainBranch = async (params: params) => {
@@ -107,7 +118,7 @@ class Runner {
 		const { options, conf } = params;
 		const shouldAssignToMe = conf.mergeRequests.creation.assignToMe;
 		const gitlab = new Gitlab(conf);
-		const sourceBranch = await Git.getCurrentBranchName();
+		const sourceBranch = await Git.getBranchName();
 		logger.info(lang.currentBranchIs(sourceBranch));
 		const assigneeId = shouldAssignToMe
 			? (await gitlab.users.getMe()).id
