@@ -1,4 +1,7 @@
 import { assertPath, assertPathExists } from './assertions';
+const util = require('util');
+const { exec } = require('child_process');
+const execProm = util.promisify(exec);
 
 type commands = 'help';
 const help = () => {
@@ -28,3 +31,17 @@ const parseCommand = () => {
 	}
 	if (commands.length === 1) functions[commands[0]]();
 };
+const whitelistedCommands = [
+	'git rev-parse --abbrev-ref HEAD',
+	'git remote -v',
+];
+
+const execCommand = async (initialCommand: string, path?: string) => {
+	if (!whitelistedCommands.includes(initialCommand)) throw 'Invalid command';
+	if (path) assertPathExists(path);
+	const command = path ? `cd ${path} && ${initialCommand}` : initialCommand;
+	const data = await execProm(command);
+	return data;
+};
+
+export { execCommand };

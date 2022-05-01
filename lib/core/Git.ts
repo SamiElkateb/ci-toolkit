@@ -1,28 +1,19 @@
 import { assertPathExists, assertString } from '../utils/assertions';
+import { execCommand } from '../utils/commands';
 import { checkIsString } from '../utils/validation';
-
-const util = require('util');
-const { exec } = require('child_process');
-const execProm = util.promisify(exec);
 
 class Git {
 	constructor() {}
 
 	static getBranchName = async (path?: string) => {
-		if (path) assertPathExists(path);
-		const baseCommand = 'git rev-parse --abbrev-ref HEAD';
-		const command = path ? `cd ${path} && ${baseCommand}` : baseCommand;
-		const data = await execProm(command);
+		const data = await execCommand('git rev-parse --abbrev-ref HEAD', path);
 		const branchName = data.stdout.replace('\n', '');
 		assertString(branchName, 'Could not find branch name');
 		return branchName;
 	};
 
 	static getProjectName = async (path?: string) => {
-		if (path) assertPathExists(path);
-		const baseCommand = 'git remote -v';
-		const command = path ? `cd ${path} && ${baseCommand}` : baseCommand;
-		const data = await execProm(command);
+		const data = await execCommand('git remote -v', path);
 		const [fetch, push] = data.stdout.split('\n');
 
 		assertString(fetch, 'Could not get Project Name');
@@ -42,10 +33,7 @@ class Git {
 	};
 
 	static getOriginDomain = async (path?: string) => {
-		if (path) assertPathExists(path);
-		const baseCommand = 'git remote -v';
-		const command = path ? `cd ${path} && ${baseCommand}` : baseCommand;
-		const data = await execProm(command);
+		const data = await execCommand('git remote -v', path);
 		const [fetch, push] = data.stdout.split('\n');
 		const fetchUrl = fetch.match(/^origin\t(.*) \(fetch\)$/)[1];
 		const pushUrl = push.match(/^origin\t(.*) \(push\)$/)[1];
