@@ -6,7 +6,7 @@ import { assertExists } from '../utils/assertions';
 import lang from './lang/en';
 import Log from './Log';
 import Tags from './Gitlab/Tags';
-import { updatePackageJson } from '../utils/files';
+import { getAbsolutePath, updatePackageJson } from '../utils/files';
 import { poll } from '../utils/polling';
 
 type commands = 'help' | 'deploy' | 'createMergeRequest';
@@ -60,8 +60,9 @@ class Runner {
 
 	static deploy = async (params: params) => {
 		logger.info('starting deployment');
-		console.log(process.cwd());
-		await Git.getBranchName(process.cwd());
+		const project2 = getAbsolutePath('../test2');
+		const branchName = await Git.getBranchName(project2);
+		console.log(branchName);
 		// const { options, conf } = params;
 		// const gitlab = new Gitlab(conf);
 		// await gitlab.pipelines.post();

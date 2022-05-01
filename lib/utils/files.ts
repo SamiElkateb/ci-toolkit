@@ -1,3 +1,6 @@
+import path = require('path');
+import { assertPath } from './assertions';
+
 const fs = require('fs');
 const util = require('util');
 const fileExists = (path: string) => {
@@ -7,6 +10,12 @@ const fileExists = (path: string) => {
 		console.error(err);
 	}
 	return false;
+};
+
+const getAbsolutePath = (filePath: string) => {
+	assertPath(filePath);
+	if (path.isAbsolute(filePath)) return filePath;
+	return path.resolve(process.cwd(), filePath);
 };
 
 const updatePackageJson = async () => {
@@ -19,4 +28,4 @@ const updatePackageJson = async () => {
 	fs.writeFileSync(filePath, packageString, { encoding: 'utf-8' });
 };
 
-export { updatePackageJson, fileExists };
+export { updatePackageJson, fileExists, getAbsolutePath };
