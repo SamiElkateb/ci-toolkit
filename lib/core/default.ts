@@ -26,9 +26,13 @@ const defaultConfig: configFile = {
 		verify_package: false,
 		verify_package_lock: false,
 	},
+	deployment: {
+		environnements: [],
+	},
 };
 
 export default defaultConfig;
+export { notify, defaultConfig, environnement };
 
 const notify = {
 	sound: {
@@ -47,5 +51,22 @@ const notify = {
 		on_error: false,
 		email_location: './secret/email',
 		message: 'Deployment finished',
+	},
+};
+const environnement = {
+	name: '',
+	project_id: '',
+	create_mr: true,
+	changes: [
+		{
+			from_file: '',
+			to_files: [],
+			values: '',
+		},
+	],
+	pipeline: {
+		await: true,
+		retry: 0,
+		variables: [{ key: '', value: '', type: '' }],
 	},
 };
