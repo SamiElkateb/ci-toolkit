@@ -4,9 +4,10 @@ import fs = require('fs');
 import { hasOwnProperty } from '../utils/validation';
 import defaultConfig from './default';
 import { fileExists } from '../utils/files';
+import { SnakeToCamelCase } from '../utils/snakeToCamelCase';
 
 class Conf {
-	readonly mergeRequests: mergeRequests_cC;
+	readonly mergeRequests: SnakeToCamelCaseObjectKeys<merge_requests>;
 	readonly protocole: protocole;
 	readonly domain: string;
 	readonly projectId: string;
@@ -18,31 +19,7 @@ class Conf {
 		this.token = conf.token;
 		this.logLevel = conf.log_level;
 		this.protocole = conf.protocole;
-
-		const requirements: requirements_cC = {
-			minApprovals: conf.merge_requests.requirements.min_approvals,
-			minUpvotes: conf.merge_requests.requirements.min_upvotes,
-			maxDownvotes: conf.merge_requests.requirements.max_downvotes,
-		};
-
-		const options: options_cC = {
-			deleteSourceBranch:
-				conf.merge_requests.options.delete_source_branch,
-			squashCommits: conf.merge_requests.options.squash_commits,
-		};
-		const creation: creation_cC = {
-			title: conf.merge_requests.creation.title,
-			approvalsBeforeMerge:
-				conf.merge_requests.creation.approvals_before_merge,
-			assignToMe: conf.merge_requests.creation.assign_to_me,
-			reviewers: conf.merge_requests.creation.reviewers,
-		};
-		this.mergeRequests = {
-			targetBranch: conf.merge_requests.target_branch,
-			requirements,
-			options,
-			creation,
-		};
+		this.mergeRequests = SnakeToCamelCase(conf.merge_requests);
 	}
 	static parseConfig = async (configFile: unknown): Promise<configFile> => {
 		const conf = Conf.parseThroughConfig(defaultConfig, configFile);

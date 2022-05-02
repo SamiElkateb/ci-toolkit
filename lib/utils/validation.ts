@@ -8,7 +8,7 @@ const checkIsNumber = (val: unknown): val is number => {
 };
 
 const checkIsObject = (val: unknown): val is object => {
-	return typeof val === 'object' && val !== null;
+	return typeof val === 'object' && val !== null && !Array.isArray(val);
 };
 
 const checkIsArray = (val: unknown): val is Array<unknown> => {

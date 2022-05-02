@@ -60,31 +60,3 @@ interface creation {
 	reviewers: string[];
 	title: string;
 }
-
-// camelCase
-interface versioning_cC {
-	verifyPackage: boolean;
-	verifyPackageLock: boolean;
-}
-interface mergeRequests_cC {
-	targetBranch: string;
-	requirements: requirements_cC;
-	options: options_cC;
-	creation: creation_cC;
-}
-
-interface requirements_cC {
-	minApprovals: number;
-	minUpvotes: number;
-	maxDownvotes: number;
-}
-interface options_cC {
-	deleteSourceBranch: boolean;
-	squashCommits: boolean;
-}
-interface creation_cC {
-	assignToMe: boolean;
-	approvalsBeforeMerge: number;
-	reviewers: string[];
-	title: string;
-}
