@@ -1,13 +1,21 @@
 import Git from './Git';
 import YAML = require('yaml');
 import fs = require('fs');
-import { hasOwnProperty } from '../utils/validation';
-import defaultConfig from './default';
-import { fileExists } from '../utils/files';
+import {
+	checkIsArray,
+	checkIsConfigFilePath,
+	checkIsObject,
+	checkIsPath,
+	checkIsString,
+	hasOwnProperty,
+} from '../utils/validation';
+import defaultConfig, { environnement } from './default';
+import { fileExists, getAbsolutePath } from '../utils/files';
 import { SnakeToCamelCase } from '../utils/snakeToCamelCase';
 
 class Conf {
 	readonly mergeRequests: SnakeToCamelCaseObjectKeys<merge_requests>;
+	readonly deployment: SnakeToCamelCaseObjectKeys<deployment>;
 	readonly protocole: protocole;
 	readonly domain: string;
 	readonly projectId: string;
@@ -20,9 +28,11 @@ class Conf {
 		this.logLevel = conf.log_level;
 		this.protocole = conf.protocole;
 		this.mergeRequests = SnakeToCamelCase(conf.merge_requests);
+		this.deployment = SnakeToCamelCase(conf.deployment);
 	}
 	static parseConfig = async (configFile: unknown): Promise<configFile> => {
-		const conf = Conf.parseThroughConfig(defaultConfig, configFile);
+		const populatedConfig = Conf.populateFromLinkedFiles(configFile);
+		const conf = Conf.parseThroughConfig(defaultConfig, populatedConfig);
 		const hasToken = conf.token !== '';
 		if (!hasToken) throw 'ConfigFile: token cannot be undefined';
 		const hasTargetBranch = conf.merge_requests.target_branch !== '';
@@ -52,6 +62,15 @@ class Conf {
 			const customConfType = typeof customConf;
 			throw `ConfigFile: ${propName} is of type ${customConfType}, should be of type ${defaultConfType} or undefined`;
 		}
+		if (
+			checkIsArray(defaultConf) &&
+			checkIsArray(customConf) &&
+			propName === 'environnements'
+		) {
+			return customConf.map((env) =>
+				Conf.parseThroughConfig(environnement, env)
+			) as unknown as T;
+		}
 		if (typeof defaultConf !== 'object' || Array.isArray(defaultConf))
 			return customConf as T;
 
@@ -75,25 +94,60 @@ class Conf {
 		}
 		return defaultConf;
 	}
+	static populateFromLinkedFiles = (
+		configFile: unknown,
+		property?: string
+	): unknown => {
+		if (Conf.shouldDismissProperty(property)) return configFile;
+		if (checkIsConfigFilePath(configFile)) {
+			const path = getAbsolutePath(configFile);
+			configFile = Conf.getLinkedFile(path);
+		}
+		if (!checkIsObject(configFile)) return configFile;
+		for (const property in configFile) {
+			if (hasOwnProperty(configFile, property)) {
+				configFile[property] = Conf.populateFromLinkedFiles(
+					configFile[property],
+					property
+				);
+			}
+		}
+		return configFile;
+	};
+	static getLinkedFile = (path: path): unknown => {
+		if (path.match(/\.yaml$|\.yml$/)) {
+			const configFile = Conf.findConfigFile(path, 'yaml');
+			if (configFile) return configFile;
+		}
+		if (path.match(/\.json$/)) {
+			const configFile = Conf.findConfigFile(path, 'json');
+			if (configFile) return configFile;
+		}
+		throw `File: ${path} does not exist`;
+	};
 
 	static getConfigFile = (): unknown => {
 		const extensions = ['json', 'yml', 'yaml'] as configExtension[];
 		for (let i = 0, c = extensions.length; i < c; i++) {
-			const config = Conf.findConfigFile(extensions[i]);
+			const currentPath = process.cwd();
+			const filePath = `${currentPath}/ci-toolkit.${extensions[i]}`;
+			const config = Conf.findConfigFile(filePath, extensions[i]);
 			if (config) return config;
 		}
 	};
-	static findConfigFile = (extension: configExtension) => {
-		const currentPath = process.cwd();
-		const filePath = `${currentPath}/ci-toolkit.${extension}`;
-		if (!fileExists(filePath)) return;
+	static findConfigFile = (path: string, extension: configExtension) => {
+		if (!fileExists(path)) return;
 		switch (extension) {
 			case 'json':
-				return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+				return JSON.parse(fs.readFileSync(path, 'utf8'));
 			case 'yaml':
 			case 'yml':
-				return YAML.parse(fs.readFileSync(filePath, 'utf8'));
+				return YAML.parse(fs.readFileSync(path, 'utf8'));
 		}
+	};
+	static shouldDismissProperty = (property?: string) => {
+		if (!property) return false;
+		return ['from_file', 'to_file', 'token'].includes(property);
 	};
 }
 

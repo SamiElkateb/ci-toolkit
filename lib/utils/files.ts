@@ -12,10 +12,10 @@ const fileExists = (path: string) => {
 	return false;
 };
 
-const getAbsolutePath = (filePath: string) => {
+const getAbsolutePath = (filePath: string): path => {
 	assertPath(filePath);
 	if (path.isAbsolute(filePath)) return filePath;
-	return path.resolve(process.cwd(), filePath);
+	return path.resolve(process.cwd(), filePath) as path;
 };
 
 const updatePackageJson = async () => {

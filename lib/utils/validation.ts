@@ -6,8 +6,11 @@ const checkIsString = (val: unknown): val is string => {
 const checkIsNumber = (val: unknown): val is number => {
 	return typeof val === 'number';
 };
-
 const checkIsObject = (val: unknown): val is object => {
+	return typeof val === 'object' && val !== null;
+};
+
+const checkIsStrictObject = (val: unknown): val is object => {
 	return typeof val === 'object' && val !== null && !Array.isArray(val);
 };
 
@@ -32,6 +35,11 @@ const checkIsPath = (val: unknown): val is path => {
 	return Boolean(val.match(/^(\.{1,2}\/)?(\/|\w|_|-|\.)+$/));
 };
 
+const checkIsConfigFilePath = (val: unknown): val is path => {
+	if (!checkIsPath(val)) return false;
+	return Boolean(val.match(/.json$|.yaml$|.yml$/));
+};
+
 const checkPathExists = (path: path) => {
 	try {
 		if (fs.existsSync(path)) return true;
@@ -49,4 +57,6 @@ export {
 	checkIsNumber,
 	checkIsPath,
 	checkPathExists,
+	checkIsStrictObject,
+	checkIsConfigFilePath,
 };

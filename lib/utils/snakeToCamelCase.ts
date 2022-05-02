@@ -1,7 +1,18 @@
-import { checkIsObject } from './validation';
+import {
+	checkIsArray,
+	checkIsNumber,
+	checkIsObject,
+	checkIsString,
+} from './validation';
 
-function SnakeToCamelCase<T>(obj: T): SnakeToCamelCaseObjectKeys<T> {
-	const entries = Object.entries(obj);
+function SnakeToCamelCase<T>(val: T): SnakeToCamelCaseObjectKeys<T> {
+	if (!checkIsObject(val)) return val as SnakeToCamelCaseObjectKeys<T>;
+	if (checkIsArray(val)) {
+		return val.map((i) => {
+			return SnakeToCamelCase(i);
+		}) as unknown as SnakeToCamelCaseObjectKeys<T>;
+	}
+	const entries = Object.entries(val);
 	const mappedEntries = entries.map(([key, value]) => {
 		const lowerCaseKey = key.toLowerCase();
 

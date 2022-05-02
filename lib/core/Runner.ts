@@ -63,7 +63,8 @@ class Runner {
 		const project2 = getAbsolutePath('../test2');
 		const branchName = await Git.getBranchName(project2);
 		console.log(branchName);
-		// const { options, conf } = params;
+		const { options, conf } = params;
+		console.log(conf.deployment);
 		// const gitlab = new Gitlab(conf);
 		// await gitlab.pipelines.post();
 		// const pollingData = {
