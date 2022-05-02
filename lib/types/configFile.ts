@@ -21,7 +21,7 @@ interface merge_requests {
 	creation: creation;
 }
 interface deployment {
-	environnements: environnement[];
+	environments: environnement[];
 }
 interface environnement {
 	name: string;

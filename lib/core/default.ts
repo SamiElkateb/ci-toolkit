@@ -27,7 +27,7 @@ const defaultConfig: configFile = {
 		verify_package_lock: false,
 	},
 	deployment: {
-		environnements: [],
+		environments: [],
 	},
 };
 
