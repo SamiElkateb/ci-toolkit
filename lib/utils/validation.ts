@@ -1,3 +1,5 @@
+import { commandName, command_name } from '../constants/commandNames';
+
 const fs = require('fs');
 const checkIsString = (val: unknown): val is string => {
 	return typeof val === 'string';
@@ -30,6 +32,11 @@ function hasOwnProperty<X extends {}, Y extends PropertyKey>(
 	return obj.hasOwnProperty(prop);
 }
 
+const checkIsVarKey = (val: unknown): val is varKey => {
+	if (!checkIsString(val)) return false;
+	return Boolean(val.match(/\$_\w+/));
+};
+
 const checkIsPath = (val: unknown): val is path => {
 	if (typeof val !== 'string') return false;
 	return Boolean(val.match(/^(\.{1,2}\/)?(\/|\w|_|-|\.)+$/));
@@ -48,6 +55,10 @@ const checkPathExists = (path: path) => {
 	}
 	return false;
 };
+const checkIsCommandName = (val: unknown): val is commandName => {
+	return true;
+};
+
 export {
 	checkIsString,
 	checkIsVersion,
@@ -59,4 +70,6 @@ export {
 	checkPathExists,
 	checkIsStrictObject,
 	checkIsConfigFilePath,
+	checkIsVarKey,
+	checkIsCommandName,
 };

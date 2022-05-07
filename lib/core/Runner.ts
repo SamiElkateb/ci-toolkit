@@ -1,13 +1,24 @@
 import ErrorHandler from './Errors/ErrorHandler';
+import prompt = require('prompt');
 import Git from './Git';
 import Conf from './Conf';
 import Gitlab from './Gitlab/Gitlab';
-import { assertExists } from '../utils/assertions';
+import {
+	assertCommandOptions,
+	assertProperty,
+	assertVarKey,
+} from '../utils/assertions/customTypes';
 import lang from './lang/en';
 import Log from './Log';
 import Tags from './Gitlab/Tags';
 import { getAbsolutePath, updatePackageJson } from '../utils/files';
 import { poll } from '../utils/polling';
+import {
+	checkIsArray,
+	checkIsCommandName,
+	checkIsString,
+} from '../utils/validation';
+import { defaultConfig } from './defaultConfig';
 
 type commands = 'help' | 'deploy' | 'createMergeRequest';
 type options = 'help';
@@ -15,9 +26,15 @@ type params = {
 	conf: Conf;
 	options?: options[];
 };
+interface store {
+	[key: string]: string;
+}
 const logger = new Log();
 class Runner {
-	constructor() {}
+	store: store;
+	constructor() {
+		this.store = {};
+	}
 
 	static help = (params?: params) => {
 		const message = lang.help;
@@ -25,31 +42,48 @@ class Runner {
 	};
 
 	static start = async () => {
+		// const runner = new Runner();
+		// const options = {
+		// 	question: 'What version?',
+		// 	store: '$_increment',
+		// };
+		// runner.assertPromptOptions(options);
+		// runner.prompt(options);
+		// return;
 		const args = process.argv;
-		const commands: commands[] = [];
-		const options: options[] = [];
-		args.forEach((arg) => {
-			const parsedArg = Runner.parseArgs(arg);
-			if (typeof parsedArg.command !== 'undefined')
-				commands.push(parsedArg.command);
-			if (typeof parsedArg.option !== 'undefined')
-				options.push(parsedArg.option);
+		const command = args[2];
+		ErrorHandler.try(async () => {
+			const conf = await Runner.getConf();
+			await Runner.runCustomCommand(command, conf);
 		});
-		if (commands.length > 1 || commands.length === 0) {
-			Runner.help();
-			return;
+	};
+	static runCustomCommand = async (customCommandKey: string, conf: Conf) => {
+		assertProperty(conf.commands, customCommandKey);
+		const commands = conf.commands[customCommandKey];
+		assertArray(commands);
+		for (let i = 0, c = commands.length; i < c; i++) {
+			const commandName = Runner.getCommandName(commands[i]);
+			assertExists(commandName);
+			const runner = new Runner();
+			assertProperty(runner, commandName);
+			const commandsOptions = commands[i];
+			if (checkIsCommandName(commandName)) {
+				assertProperty(commandsOptions, commandName);
+				const data = commandsOptions[commandName];
+				await runner[commandName](commandsOptions[commandName]);
+			}
 		}
-		if (commands.length === 1) {
-			ErrorHandler.try(async () => {
-				const conf = await Runner.getConf();
-				await Runner[commands[0]]({ options, conf });
-			});
+	};
+
+	static getCommandName = (command: object) => {
+		for (const property in command) {
+			return property;
 		}
 	};
 
 	static getConf = async () => {
 		logger.debug('getting config file');
-		const configFile = Conf.getConfigFile();
+		const configFile = Conf.readConfigFile();
 		if (!configFile) throw 'No config file was found';
 		logger.debug('parsing config file');
 		const parsedConfig = await Conf.parseConfig(configFile);
@@ -64,7 +98,7 @@ class Runner {
 		const branchName = await Git.getBranchName(project2);
 		console.log(branchName);
 		const { options, conf } = params;
-		console.log(conf.deployment);
+		//console.log(conf.deployment);
 		// const gitlab = new Gitlab(conf);
 		// await gitlab.pipelines.post();
 		// const pollingData = {
@@ -116,24 +150,24 @@ class Runner {
 		logger.info(lang.newTag(newTag));
 	};
 
-	static createMergeRequest = async (params: params) => {
-		const { options, conf } = params;
-		const shouldAssignToMe = conf.mergeRequests.creation.assignToMe;
-		const gitlab = new Gitlab(conf);
-		const sourceBranch = await Git.getBranchName();
-		logger.info(lang.currentBranchIs(sourceBranch));
-		const assigneeId = shouldAssignToMe
-			? (await gitlab.users.getMe()).id
-			: undefined;
-		const reviewers = conf.mergeRequests.creation.reviewers;
-		const reviewerIds = await gitlab.users.getIds(reviewers);
-		await gitlab.mergeRequests.post({
-			assigneeId,
-			sourceBranch,
-			reviewerIds,
-		});
-		logger.info('Merge request created');
-	};
+	// static createMergeRequest = async (params: params) => {
+	// 	const { options, conf } = params;
+	// 	const shouldAssignToMe = conf.mergeRequests.creation.assignToMe;
+	// 	const gitlab = new Gitlab(conf);
+	// 	const sourceBranch = await Git.getBranchName();
+	// 	logger.info(lang.currentBranchIs(sourceBranch));
+	// 	const assigneeId = shouldAssignToMe
+	// 		? (await gitlab.users.getMe()).id
+	// 		: undefined;
+	// 	const reviewers = conf.mergeRequests.creation.reviewers;
+	// 	const reviewerIds = await gitlab.users.getIds(reviewers);
+	// 	await gitlab.mergeRequests.post({
+	// 		assigneeId,
+	// 		sourceBranch,
+	// 		reviewerIds,
+	// 	});
+	// 	logger.info('Merge request created');
+	// };
 
 	static parseArgs = (
 		arg: string
@@ -143,6 +177,46 @@ class Runner {
 		if (arg === 'create-mr') return { command: 'createMergeRequest' };
 		if (arg === '--help') return { option: 'help' };
 		return {};
+	};
+
+	prompt = async (options: unknown) => {
+		assertCommandOptions(options, 'prompt');
+		const { store, question } = options;
+		assertVarKey(store);
+		prompt.start();
+		const key = store.replace('$_', '');
+		const { value } = await prompt.get([
+			{
+				description: question,
+				name: 'value',
+				required: true,
+			},
+		]);
+		if (typeof value === 'string') {
+			this.store[key] = value;
+			return;
+		}
+		this.prompt(options);
+	};
+
+	getCurrentBranchName = async (options: unknown) => {
+		assertCommandOptions(options, 'prompt');
+		const { store, question } = options;
+		assertVarKey(store);
+		prompt.start();
+		const key = store.replace('$_', '');
+		const { value } = await prompt.get([
+			{
+				description: question,
+				name: 'value',
+				required: true,
+			},
+		]);
+		if (typeof value === 'string') {
+			this.store[key] = value;
+			return;
+		}
+		this.prompt(options);
 	};
 }
 export default Runner;

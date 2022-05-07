@@ -1,4 +1,5 @@
-import { assertPathExists, assertString } from '../utils/assertions';
+import { assertString } from '../utils/assertions/baseTypes';
+import { assertPathExists } from '../utils/assertions/customTypes';
 import { execCommand } from '../utils/commands';
 import { checkIsString } from '../utils/validation';
 

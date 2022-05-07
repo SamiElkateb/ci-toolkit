@@ -3,7 +3,7 @@ import {
 	assertObject,
 	assertProperty,
 	assertString,
-} from '../../utils/assertions';
+} from '../../utils/assertions/baseTypes';
 import { checkIsObject, hasOwnProperty } from '../../utils/validation';
 
 class GitlabApiError {

@@ -1,6 +1,6 @@
 type configExtension = 'json' | 'yaml' | 'yml';
 type protocole = 'http' | 'https';
-interface configFile {
+/* interface configFile {
 	token: string;
 	protocole: protocole;
 	domain: string;
@@ -9,7 +9,7 @@ interface configFile {
 	merge_requests: merge_requests;
 	versioning: versioning;
 	deployment: deployment;
-}
+} */
 interface versioning {
 	verify_package: boolean;
 	verify_package_lock: boolean;

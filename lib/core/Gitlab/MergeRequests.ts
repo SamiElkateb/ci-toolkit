@@ -1,7 +1,8 @@
+// @ts-nocheck
 import Conf from '../Conf';
 import https = require('https');
 import Log from '../Log';
-import { assertExists } from '../../utils/assertions';
+import { assertExists } from '../../utils/assertions/baseTypes';
 import lang from '../lang/en';
 import GitlabApiError from '../Errors/GitlabApiError';
 const rejectUnauthorized = false;

@@ -16,13 +16,24 @@ function SnakeToCamelCase<T>(val: T): SnakeToCamelCaseObjectKeys<T> {
 	const mappedEntries = entries.map(([key, value]) => {
 		const lowerCaseKey = key.toLowerCase();
 
-		const camelCaseKey = lowerCaseKey.replace(/([-_][a-z])/, (group) =>
-			group.toUpperCase().replace('_', '')
-		);
+		const camelCaseKey = lowerCaseKey.replace(/(_\w)/g, (group) => {
+			return group.toUpperCase().replace('_', '');
+		});
 		const newValue = checkIsObject(value) ? SnakeToCamelCase(value) : value;
 		return [camelCaseKey, newValue];
 	});
 	return Object.fromEntries(mappedEntries);
 }
 
-export { SnakeToCamelCase };
+function SnakeToCamelCaseArray<S extends string>(
+	val: S[]
+): SnakeToCamelCase<S>[] {
+	return val.map((value) => {
+		const lowerCaseKey = value.toLowerCase();
+		return lowerCaseKey.replace(/(_\w)/g, (group) => {
+			return group.toUpperCase().replace('_', '');
+		}) as unknown as SnakeToCamelCase<S>;
+	});
+}
+
+export { SnakeToCamelCase, SnakeToCamelCaseArray };

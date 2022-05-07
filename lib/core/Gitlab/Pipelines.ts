@@ -2,8 +2,7 @@ import Conf from '../Conf';
 import https = require('https');
 import Log from '../Log';
 import GitlabApiError from '../Errors/GitlabApiError';
-import { checkIsNumber } from '../../utils/validation';
-import { assertNumber } from '../../utils/assertions';
+import { assertNumber } from '../../utils/assertions/baseTypes';
 type pollParams = {
 	fn: () => unknown;
 	validate: (value: unknown) => boolean;

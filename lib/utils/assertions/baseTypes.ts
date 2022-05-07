@@ -2,11 +2,8 @@ import {
 	checkIsArray,
 	checkIsNumber,
 	checkIsObject,
-	checkIsVersion,
 	checkIsString,
-	checkIsPath,
-	checkPathExists,
-} from './validation';
+} from '../validation';
 
 type assertString = (val: unknown, message?: string) => asserts val is string;
 const assertString: assertString = (
@@ -36,7 +33,7 @@ const assertArray: assertArray = (
 };
 
 type assertObject = (val: unknown, message?: string) => asserts val is object;
-const assertObject: assertString = (
+const assertObject: assertObject = (
 	val: unknown,
 	message?: string
 ): asserts val is object => {
@@ -49,31 +46,6 @@ const assertExists: assertExists = (
 	message?: string
 ): asserts val => {
 	if (typeof val === 'undefined') throw message || 'value does not exist';
-};
-
-type assertPathExists = (val: unknown, message?: string) => asserts val;
-const assertPathExists: assertPathExists = (
-	val: unknown,
-	message?: string
-): asserts val => {
-	assertPath(val);
-	if (!checkPathExists(val)) throw message || 'path does not exist';
-};
-
-type assertVersion = (val: unknown, message?: string) => asserts val is version;
-const assertVersion: assertVersion = (
-	val: unknown,
-	message?: string
-): asserts val is version => {
-	if (!checkIsVersion(val)) throw message || 'value is not a version number';
-};
-
-type assertPath = (val: unknown, message?: string) => asserts val is path;
-const assertPath: assertPath = (
-	val: unknown,
-	message?: string
-): asserts val is path => {
-	if (!checkIsPath(val)) throw message || 'value is not a path';
 };
 
 function hasOwnProperty<X extends {}, Y extends PropertyKey>(
@@ -99,11 +71,8 @@ function assertProperty<X extends {}, Y extends PropertyKey>(
 export {
 	assertExists,
 	assertString,
-	assertVersion,
 	assertProperty,
 	assertObject,
 	assertArray,
 	assertNumber,
-	assertPath,
-	assertPathExists,
 };

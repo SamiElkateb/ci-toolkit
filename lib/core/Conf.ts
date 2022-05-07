@@ -9,16 +9,24 @@ import {
 	checkIsString,
 	hasOwnProperty,
 } from '../utils/validation';
-import defaultConfig, { environnement } from './default';
+import { defaultConfig } from './defaultConfig';
 import { fileExists, getAbsolutePath } from '../utils/files';
 import { SnakeToCamelCase } from '../utils/snakeToCamelCase';
+import {
+	assertPathExists,
+	assertProperty,
+} from '../utils/assertions/customTypes';
+import {
+	assertArray,
+	assertObject,
+	assertString,
+} from '../utils/assertions/baseTypes';
 
 class Conf {
-	readonly mergeRequests: SnakeToCamelCaseObjectKeys<merge_requests>;
-	readonly deployment: SnakeToCamelCaseObjectKeys<deployment>;
+	readonly commands: SnakeToCamelCaseObjectKeys<customCommands>;
 	readonly protocole: protocole;
-	readonly domain: string;
-	readonly projectId: string;
+	readonly domain?: string;
+	readonly projectId?: string;
 	readonly token: string;
 	readonly logLevel: logLevel;
 	constructor(conf: configFile) {
@@ -27,28 +35,45 @@ class Conf {
 		this.token = conf.token;
 		this.logLevel = conf.log_level;
 		this.protocole = conf.protocole;
-		this.mergeRequests = SnakeToCamelCase(conf.merge_requests);
-		this.deployment = SnakeToCamelCase(conf.deployment);
+		this.commands = SnakeToCamelCase(conf.commands);
 	}
 	static parseConfig = async (configFile: unknown): Promise<configFile> => {
-		const populatedConfig = Conf.populateFromLinkedFiles(configFile);
-		const conf = Conf.parseThroughConfig(defaultConfig, populatedConfig);
-		const hasToken = conf.token !== '';
-		if (!hasToken) throw 'ConfigFile: token cannot be undefined';
-		const hasTargetBranch = conf.merge_requests.target_branch !== '';
-		if (!hasTargetBranch)
-			throw 'ConfigFile: target_branch cannot be undefined';
+		assertObject(configFile);
+		assertProperty(configFile, 'token');
+		assertPathExists(configFile.token);
+		configFile.token = Conf.populateFromFilesPath(configFile.token);
 
-		const isDomainDefault = !conf.domain || conf.domain === 'default';
-		if (isDomainDefault) conf.domain = await Git.getOriginDomain();
-
-		const isProjectIdDefault = conf.project_id === 'default';
-		if (!conf.project_id || isProjectIdDefault) {
-			conf.project_id = await Git.getProjectName();
+		assertProperty(configFile, 'commands');
+		assertObject(configFile.commands);
+		for (const property in configFile.commands) {
+			if (hasOwnProperty(configFile.commands, property)) {
+				configFile.commands[property] = Conf.populateFromFilesPath(
+					configFile.commands[property]
+				);
+				assertArray(configFile.commands[property]);
+			}
 		}
 
-		conf.project_id = encodeURIComponent(conf.project_id);
-		return conf;
+		for (const property in configFile.commands) {
+			if (
+				hasOwnProperty(configFile.commands, property) &&
+				hasOwnProperty(defaultConfig, property)
+			) {
+				configFile.commands[property] = Conf.parseThroughConfig(
+					defaultConfig[property],
+					configFile.commands[property]
+				);
+			}
+		}
+
+		assertString(configFile.token);
+		const conf = {
+			protocole: 'https',
+			log_level: 'info',
+			...configFile,
+		};
+
+		return conf as configFile;
 	};
 
 	static parseThroughConfig<T>(
@@ -61,15 +86,6 @@ class Conf {
 			const defaultConfType = typeof defaultConf;
 			const customConfType = typeof customConf;
 			throw `ConfigFile: ${propName} is of type ${customConfType}, should be of type ${defaultConfType} or undefined`;
-		}
-		if (
-			checkIsArray(defaultConf) &&
-			checkIsArray(customConf) &&
-			propName === 'environnements'
-		) {
-			return customConf.map((env) =>
-				Conf.parseThroughConfig(environnement, env)
-			) as unknown as T;
 		}
 		if (typeof defaultConf !== 'object' || Array.isArray(defaultConf))
 			return customConf as T;
@@ -94,23 +110,10 @@ class Conf {
 		}
 		return defaultConf;
 	}
-	static populateFromLinkedFiles = (
-		configFile: unknown,
-		property?: string
-	): unknown => {
-		if (Conf.shouldDismissProperty(property)) return configFile;
+	static populateFromFilesPath = (configFile: unknown): unknown => {
 		if (checkIsConfigFilePath(configFile)) {
 			const path = getAbsolutePath(configFile);
-			configFile = Conf.getLinkedFile(path);
-		}
-		if (!checkIsObject(configFile)) return configFile;
-		for (const property in configFile) {
-			if (hasOwnProperty(configFile, property)) {
-				configFile[property] = Conf.populateFromLinkedFiles(
-					configFile[property],
-					property
-				);
-			}
+			return Conf.getLinkedFile(path);
 		}
 		return configFile;
 	};
@@ -126,8 +129,8 @@ class Conf {
 		throw `File: ${path} does not exist`;
 	};
 
-	static getConfigFile = (): unknown => {
-		const extensions = ['json', 'yml', 'yaml'] as configExtension[];
+	static readConfigFile = (): unknown => {
+		const extensions = ['yml', 'yaml', 'json'] as configExtension[];
 		for (let i = 0, c = extensions.length; i < c; i++) {
 			const currentPath = process.cwd();
 			const filePath = `${currentPath}/ci-toolkit.${extensions[i]}`;
@@ -144,10 +147,6 @@ class Conf {
 			case 'yml':
 				return YAML.parse(fs.readFileSync(path, 'utf8'));
 		}
-	};
-	static shouldDismissProperty = (property?: string) => {
-		if (!property) return false;
-		return ['from_file', 'to_file', 'token'].includes(property);
 	};
 }
 
