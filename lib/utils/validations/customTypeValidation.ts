@@ -21,9 +21,13 @@ const checkIsPath = (val: unknown): val is path => {
 	return Boolean(val.match(/^(\.{1,2}\/)?(\/|\w|_|-|\.)+$/));
 };
 
+function checkIsSameType<T, K>(val1: T, val2: K): val1 is K & T {
+	return typeof val1 === typeof val2;
+}
+
 const checkIsConfigFilePath = (val: unknown): val is path => {
 	if (!checkIsPath(val)) return false;
-	return Boolean(val.match(/.json$|.yaml$|.yml$/));
+	return Boolean(val.match(/.json$|.yaml$|.yml$|.txt$/));
 };
 
 const checkPathExists = (path: path) => {
@@ -47,4 +51,5 @@ export {
 	checkIsConfigFilePath,
 	checkIsVarKey,
 	checkIsCommandName,
+	checkIsSameType,
 };

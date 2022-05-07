@@ -18,22 +18,39 @@ class Conf {
 	readonly commands: SnakeToCamelCaseObjectKeys<customCommands>;
 	readonly protocole: protocole;
 	readonly domain?: string;
-	readonly projectId?: string;
+	readonly project?: string;
 	readonly token: string;
 	readonly logLevel: logLevel;
 	constructor(conf: configFile) {
 		this.domain = conf.domain;
-		this.projectId = conf.project_id;
+		this.project = conf.project;
 		this.token = conf.token;
 		this.logLevel = conf.log_level;
 		this.protocole = conf.protocole;
 		this.commands = SnakeToCamelCase(conf.commands);
 	}
+
+	getProject = () => {
+		assertString(this.project, 'Project name is not defined');
+		return this.project;
+	};
+	getDomain = () => {
+		assertString(this.domain, 'Domain name is not defined');
+		return this.domain;
+	};
+	getProtocole = () => {
+		assertString(this.protocole, 'Protocole name is not defined');
+		return this.protocole;
+	};
+	getToken = () => {
+		assertString(this.token, 'Token is not defined');
+		return this.token;
+	};
 	static parseConfig = async (configFile: unknown): Promise<configFile> => {
 		assertObject(configFile);
 		assertProperty(configFile, 'token');
-		// assertPathExists(configFile.token);
-		// configFile.token = Conf.populateFromFilesPath(configFile.token);
+		assertPathExists(configFile.token);
+		configFile.token = Conf.populateFromFilesPath(configFile.token);
 
 		assertProperty(configFile, 'commands');
 		assertObject(configFile.commands);
@@ -64,7 +81,7 @@ class Conf {
 			log_level: 'info',
 			...configFile,
 		};
-
+		console.log(configFile.token);
 		return conf as configFile;
 	};
 
@@ -110,6 +127,10 @@ class Conf {
 		return configFile;
 	};
 	static getLinkedFile = (path: path): unknown => {
+		if (path.match(/\.txt$|\.txt$/)) {
+			const configFile = Conf.findConfigFile(path, 'txt');
+			if (configFile) return configFile;
+		}
 		if (path.match(/\.yaml$|\.yml$/)) {
 			const configFile = Conf.findConfigFile(path, 'yaml');
 			if (configFile) return configFile;
@@ -133,6 +154,8 @@ class Conf {
 	static findConfigFile = (path: string, extension: configExtension) => {
 		if (!fileExists(path)) return;
 		switch (extension) {
+			case 'txt':
+				return fs.readFileSync(path, 'utf8');
 			case 'json':
 				return JSON.parse(fs.readFileSync(path, 'utf8'));
 			case 'yaml':

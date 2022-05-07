@@ -12,6 +12,8 @@ interface command_options {
 	get_last_tag: {
 		project: string;
 		store: string;
+		protocole?: protocole;
+		domain?: string;
 	};
 }
 type commandOptions = SnakeToCamelCaseObjectKeys<command_options>;

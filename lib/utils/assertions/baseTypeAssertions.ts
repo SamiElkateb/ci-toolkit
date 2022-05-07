@@ -11,7 +11,7 @@ const assertString: assertString = (
 	val: unknown,
 	message?: string
 ): asserts val is string => {
-	if (!checkIsString(val)) throw message || 'value is not a string';
+	if (!checkIsString(val)) throw message || `${val} is not a string`;
 };
 
 type assertNumber = (val: unknown, message?: string) => asserts val is number;
@@ -38,7 +38,7 @@ const assertObject: assertObject = (
 	val: unknown,
 	message?: string
 ): asserts val is object => {
-	if (!checkIsObject(val)) throw message || 'value is not an object';
+	if (!checkIsObject(val)) throw message || `${val} is not an object`;
 };
 
 type assertExists = (val: unknown, message?: string) => asserts val;

@@ -2,11 +2,11 @@ type logLevel = 'error' | 'warn' | 'info' | 'debug';
 type version = `${number}.${number}.${number}`;
 type path = `${string}/${string}`;
 type varKey = `$_${string}`;
-type configExtension = 'json' | 'yaml' | 'yml';
+type configExtension = 'json' | 'yaml' | 'yml' | 'txt';
 type protocole = 'http' | 'https';
 interface configFile {
 	protocole: protocole;
-	project_id?: string;
+	project?: string;
 	domain?: string;
 	token: string;
 	log_level: logLevel;

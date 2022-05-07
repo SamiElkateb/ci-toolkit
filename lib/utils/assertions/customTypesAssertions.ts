@@ -1,12 +1,18 @@
 import { defaultConfig } from '../../core/defaultConfig';
 import { commandName } from '../../types/commandNames';
+import { hasOwnProperty } from '../validations/basicTypeValidations';
 import {
 	checkIsVersion,
 	checkIsPath,
 	checkPathExists,
 	checkIsVarKey,
+	checkIsSameType,
 } from '../validations/customTypeValidation';
-import { assertObject, assertProperty } from './baseTypeAssertions';
+import {
+	assertObject,
+	assertProperty,
+	assertString,
+} from './baseTypeAssertions';
 
 type assertPathExists = (val: unknown, message?: string) => asserts val;
 const assertPathExists: assertPathExists = (
@@ -14,7 +20,7 @@ const assertPathExists: assertPathExists = (
 	message?: string
 ): asserts val => {
 	assertPath(val);
-	if (!checkPathExists(val)) throw message || 'path does not exist';
+	if (!checkPathExists(val)) throw message || `path ${val} does not exist`;
 };
 
 type assertVersion = (val: unknown, message?: string) => asserts val is version;
@@ -22,7 +28,7 @@ const assertVersion: assertVersion = (
 	val: unknown,
 	message?: string
 ): asserts val is version => {
-	if (!checkIsVersion(val)) throw message || 'value is not a version number';
+	if (!checkIsVersion(val)) throw message || `${val} is not a version number`;
 };
 
 type assertVarKey = (val: unknown, message?: string) => asserts val is varKey;
@@ -39,14 +45,16 @@ const assertPath: assertPath = (
 	val: unknown,
 	message?: string
 ): asserts val is path => {
-	if (!checkIsPath(val)) throw message || 'value is not a path';
+	if (!checkIsPath(val)) throw message || `${val} is not a path`;
 };
 
-function hasOwnProperty<X extends {}, Y extends PropertyKey>(
-	obj: X,
-	prop: Y
-): obj is X & Record<Y, unknown> {
-	return obj.hasOwnProperty(prop);
+function assertSameType<T, K>(
+	val1: T,
+	val2: K,
+	message?: string
+): asserts val1 is T & K {
+	if (!checkIsSameType(val1, val2))
+		throw message || `${val1} and ${val2} are not the same type`;
 }
 
 type assertCommandOptions = (
@@ -62,11 +70,19 @@ function assertCommandOptions<C extends commandName>(
 	assertObject(options);
 	for (const property in commandOptions) {
 		assertProperty(commandOptions, property);
-		assertProperty(options, property);
+		const requirementLevel = commandOptions[property];
+		assertString(requirementLevel);
+		const isRequired = requirementLevel === 'required';
+		if (isRequired) {
+			assertProperty(options, property);
+		} else if (hasOwnProperty(options, property)) {
+			assertSameType(options[property], commandOptions[property]);
+		}
 	}
 	for (const property in options) {
 		assertProperty(commandOptions, property);
 		assertProperty(options, property);
+		assertSameType(options[property], commandOptions[property]);
 	}
 }
 

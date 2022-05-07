@@ -227,10 +227,10 @@ class Runner {
 		const { store, project } = options;
 		assertVarKey(store);
 		const fetchOptions = {
-			project,
-			domain: conf.domain || (await Git.getOriginDomain()),
-			protocole: conf.protocole,
-			token: conf.token,
+			project: options.project || conf.getProject(),
+			domain: options.domain || conf.getDomain(),
+			protocole: options.protocole || conf.getProtocole(),
+			token: conf.getToken(),
 		};
 		const tag = await Tags.fetchLast(fetchOptions);
 		console.log(fetchOptions);

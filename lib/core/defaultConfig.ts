@@ -1,18 +1,20 @@
 const defaultConfig = {
 	commands: {
 		prompt: {
-			question: '',
-			store: '',
+			question: 'required',
+			store: 'required',
 		},
 		getCurrentBranchName: {
-			store: '',
+			store: 'required',
 		},
 		getCurrentProjectName: {
-			store: '',
+			store: 'required',
 		},
 		getLastTag: {
-			project: '',
-			store: '',
+			project: 'required',
+			store: 'required',
+			protocole: 'optional',
+			domain: 'optional',
 		},
 	},
 };
