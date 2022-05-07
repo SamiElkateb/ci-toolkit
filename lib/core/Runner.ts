@@ -5,19 +5,23 @@ import Conf from './Conf';
 import Gitlab from './Gitlab/Gitlab';
 import {
 	assertCommandOptions,
-	assertProperty,
 	assertVarKey,
 } from '../utils/assertions/customTypesAssertions';
+import { assertProperty } from '../utils/assertions/baseTypeAssertions';
 import lang from './lang/en';
 import Log from './Log';
 import Tags from './Gitlab/Tags';
 import { getAbsolutePath, updatePackageJson } from '../utils/files';
 import { poll } from '../utils/polling';
-import { checkIsCommandName } from '../utils/validations/customTypeValidation';
+import {
+	checkIsCommandName,
+	checkIsVarKey,
+} from '../utils/validations/customTypeValidation';
 import { defaultConfig } from './defaultConfig';
 import {
 	assertArray,
 	assertExists,
+	assertString,
 } from '../utils/assertions/baseTypeAssertions';
 
 type commands = 'help' | 'deploy' | 'createMergeRequest';
@@ -61,18 +65,19 @@ class Runner {
 		assertProperty(conf.commands, customCommandKey);
 		const commands = conf.commands[customCommandKey];
 		assertArray(commands);
+		const runner = new Runner();
 		for (let i = 0, c = commands.length; i < c; i++) {
 			const commandName = Runner.getCommandName(commands[i]);
 			assertExists(commandName);
-			const runner = new Runner();
 			assertProperty(runner, commandName);
 			const commandsOptions = commands[i];
 			if (checkIsCommandName(commandName)) {
 				assertProperty(commandsOptions, commandName);
 				const data = commandsOptions[commandName];
-				await runner[commandName](commandsOptions[commandName]);
+				await runner[commandName](commandsOptions[commandName], conf);
 			}
 		}
+		console.log(runner.store);
 	};
 
 	static getCommandName = (command: object) => {
@@ -116,7 +121,7 @@ class Runner {
 		// await Runner.mergeCurrentBranch(params);
 		// await Runner.tagMainBranch(params);
 	};
-
+	/* 
 	static mergeCurrentBranch = async (params: params) => {
 		const { options, conf } = params;
 		const gitlab = new Gitlab(conf);
@@ -130,25 +135,25 @@ class Runner {
 		logger.info(
 			lang.merging(mergeRequest.source_branch, mergeRequest.target_branch)
 		);
-	};
+	}; */
 
-	static updateEnvDiffs = async (params: params) => {
+	/* static updateEnvDiffs = async (params: params) => {
 		const { options, conf } = params;
 		const gitlab = new Gitlab(conf);
 		const tag = await gitlab.tags.getLast();
 		logger.info(lang.currentTag(tag));
 		const newTag = await Tags.increaseTag({ tag, update: 'minor' });
 		logger.info(lang.newTag(newTag));
-	};
+	}; */
 
-	static tagMainBranch = async (params: params) => {
+	/* static tagMainBranch = async (params: params) => {
 		const { options, conf } = params;
 		const gitlab = new Gitlab(conf);
 		const tag = await gitlab.tags.getLast();
 		logger.info(lang.currentTag(tag));
 		const newTag = await Tags.increaseTag({ tag, update: 'minor' });
 		logger.info(lang.newTag(newTag));
-	};
+	}; */
 
 	// static createMergeRequest = async (params: params) => {
 	// 	const { options, conf } = params;
@@ -179,7 +184,7 @@ class Runner {
 		return {};
 	};
 
-	prompt = async (options: unknown) => {
+	prompt = async (options: unknown, _: Conf) => {
 		assertCommandOptions(options, 'prompt');
 		const { store, question } = options;
 		assertVarKey(store);
@@ -192,31 +197,51 @@ class Runner {
 				required: true,
 			},
 		]);
-		if (typeof value === 'string') {
-			this.store[key] = value;
-			return;
-		}
-		this.prompt(options);
+		assertString(value);
+		this.store[key] = value;
 	};
 
-	getCurrentBranchName = async (options: unknown) => {
-		assertCommandOptions(options, 'prompt');
-		const { store, question } = options;
+	getCurrentBranchName = async (options: unknown, _: Conf) => {
+		assertCommandOptions(options, 'getCurrentBranchName');
+		const { store } = options;
 		assertVarKey(store);
-		prompt.start();
 		const key = store.replace('$_', '');
-		const { value } = await prompt.get([
-			{
-				description: question,
-				name: 'value',
-				required: true,
-			},
-		]);
-		if (typeof value === 'string') {
-			this.store[key] = value;
-			return;
+		const branchName = await Git.getBranchName();
+		this.store[key] = branchName;
+	};
+
+	getCurrentProjectName = async (options: unknown, _: Conf) => {
+		assertCommandOptions(options, 'getCurrentProjectName');
+		const { store } = options;
+		assertVarKey(store);
+		const key = store.replace('$_', '');
+		const projectName = await Git.getProjectName();
+		this.store[key] = encodeURIComponent(projectName);
+	};
+
+	getLastTag = async (options: unknown, conf: Conf) => {
+		assertCommandOptions(options, 'getLastTag');
+		if (checkIsVarKey(options.project)) {
+			options.project = this.populateVariable(options.project);
 		}
-		this.prompt(options);
+		const { store, project } = options;
+		assertVarKey(store);
+		const fetchOptions = {
+			project,
+			domain: conf.domain || (await Git.getOriginDomain()),
+			protocole: conf.protocole,
+			token: conf.token,
+		};
+		const tag = await Tags.fetchLast(fetchOptions);
+		console.log(fetchOptions);
+		const key = store.replace('$_', '');
+		this.store[key] = tag;
+	};
+
+	populateVariable = (store: string): string => {
+		const key = store.replace('$_', '');
+		assertExists(this.store[key]);
+		return this.store[key];
 	};
 }
 export default Runner;

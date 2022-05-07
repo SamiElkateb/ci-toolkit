@@ -7,6 +7,13 @@ const defaultConfig = {
 		getCurrentBranchName: {
 			store: '',
 		},
+		getCurrentProjectName: {
+			store: '',
+		},
+		getLastTag: {
+			project: '',
+			store: '',
+		},
 	},
 };
 

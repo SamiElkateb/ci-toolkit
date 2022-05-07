@@ -6,9 +6,9 @@ import {
 const command_names = [
 	'get_current_branch_name',
 	'prompt',
-	// 'get_current_project_name',
+	'get_current_project_name',
 	// 'create_merge_request',
-	// 'get_last_tag',
+	'get_last_tag',
 	// 'get_current_version',
 	// 'increment_version',
 	// 'tag',

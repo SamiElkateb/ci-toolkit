@@ -5,7 +5,6 @@ interface command_options {
 	};
 	get_current_branch_name: {
 		store: string;
-		question: string;
 	};
 	get_current_project_name: {
 		store: string;

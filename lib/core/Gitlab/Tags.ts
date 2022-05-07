@@ -11,6 +11,13 @@ const rejectUnauthorized = false;
 const agent = new https.Agent({ rejectUnauthorized });
 
 const axios = require('axios');
+
+type fetchOptions = {
+	protocole: protocole;
+	domain: string;
+	project: string;
+	token: string;
+};
 class Tags {
 	private conf: Conf;
 	private logger: Log;
@@ -18,9 +25,10 @@ class Tags {
 		this.conf = conf;
 		this.logger = new Log(conf.logLevel);
 	}
-	get = async () => {
-		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/projects/${this.conf.projectId}/repository/tags?access_token=${this.conf.token}`;
-		this.logger.request(url, 'get');
+	static fetch = async (options: fetchOptions, logger?: Log) => {
+		const { protocole, domain, project, token } = options;
+		const url = `${protocole}://${domain}/api/v4/projects/${project}/repository/tags?access_token=${token}`;
+		logger?.request(url, 'get');
 		try {
 			const res = await axios.get(url, { httpsAgent: agent });
 			return res.data;
@@ -28,8 +36,8 @@ class Tags {
 			throw new GitlabApiError(error);
 		}
 	};
-	getLast = async () => {
-		const data = await this.get();
+	static fetchLast = async (options: fetchOptions, logger?: Log) => {
+		const data = await Tags.fetch(options, logger);
 		const lastTag = data[0].name;
 		return lastTag;
 	};

@@ -6,7 +6,7 @@ import {
 	checkPathExists,
 	checkIsVarKey,
 } from '../validations/customTypeValidation';
-import { assertObject } from './baseTypeAssertions';
+import { assertObject, assertProperty } from './baseTypeAssertions';
 
 type assertPathExists = (val: unknown, message?: string) => asserts val;
 const assertPathExists: assertPathExists = (
@@ -49,19 +49,6 @@ function hasOwnProperty<X extends {}, Y extends PropertyKey>(
 	return obj.hasOwnProperty(prop);
 }
 
-type assertProperty<X extends {}, Y extends PropertyKey> = (
-	obj: X,
-	prop: Y,
-	message?: string
-) => asserts obj is X & Record<Y, unknown>;
-function assertProperty<X extends {}, Y extends PropertyKey>(
-	obj: X,
-	prop: Y,
-	message?: string
-): asserts obj is X & Record<Y, unknown> {
-	if (!hasOwnProperty(obj, prop)) throw message || 'does not have property';
-}
-
 type assertCommandOptions = (
 	options: unknown,
 	commandName: commandName
@@ -85,7 +72,6 @@ function assertCommandOptions<C extends commandName>(
 
 export {
 	assertVersion,
-	assertProperty,
 	assertPath,
 	assertPathExists,
 	assertVarKey,

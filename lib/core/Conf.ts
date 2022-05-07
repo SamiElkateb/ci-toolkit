@@ -6,14 +6,12 @@ import { checkIsConfigFilePath } from '../utils/validations/customTypeValidation
 import { defaultConfig } from './defaultConfig';
 import { fileExists, getAbsolutePath } from '../utils/files';
 import { SnakeToCamelCase } from '../utils/snakeToCamelCase';
-import {
-	assertPathExists,
-	assertProperty,
-} from '../utils/assertions/customTypesAssertions';
+import { assertPathExists } from '../utils/assertions/customTypesAssertions';
 import {
 	assertArray,
 	assertObject,
 	assertString,
+	assertProperty,
 } from '../utils/assertions/baseTypeAssertions';
 
 class Conf {
@@ -34,8 +32,8 @@ class Conf {
 	static parseConfig = async (configFile: unknown): Promise<configFile> => {
 		assertObject(configFile);
 		assertProperty(configFile, 'token');
-		assertPathExists(configFile.token);
-		configFile.token = Conf.populateFromFilesPath(configFile.token);
+		// assertPathExists(configFile.token);
+		// configFile.token = Conf.populateFromFilesPath(configFile.token);
 
 		assertProperty(configFile, 'commands');
 		assertObject(configFile.commands);
