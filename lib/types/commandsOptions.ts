@@ -15,5 +15,9 @@ interface command_options {
 		protocole?: protocole;
 		domain?: string;
 	};
+	get_current_version: {
+		file: string;
+		store: string;
+	};
 }
 type commandOptions = SnakeToCamelCaseObjectKeys<command_options>;

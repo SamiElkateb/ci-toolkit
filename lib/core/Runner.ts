@@ -4,10 +4,15 @@ import Git from './Git';
 import Conf from './Conf';
 import Gitlab from './Gitlab/Gitlab';
 import {
-	assertCommandOptions,
+	assertCommandOptionsValid,
+	assertPath,
+	assertPathExists,
 	assertVarKey,
 } from '../utils/assertions/customTypesAssertions';
-import { assertProperty } from '../utils/assertions/baseTypeAssertions';
+import {
+	assertObject,
+	assertProperty,
+} from '../utils/assertions/baseTypeAssertions';
 import lang from './lang/en';
 import Log from './Log';
 import Tags from './Gitlab/Tags';
@@ -185,7 +190,7 @@ class Runner {
 	};
 
 	prompt = async (options: unknown, _: Conf) => {
-		assertCommandOptions(options, 'prompt');
+		assertCommandOptionsValid(options, 'prompt');
 		const { store, question } = options;
 		assertVarKey(store);
 		prompt.start();
@@ -202,25 +207,32 @@ class Runner {
 	};
 
 	getCurrentBranchName = async (options: unknown, _: Conf) => {
-		assertCommandOptions(options, 'getCurrentBranchName');
+		logger.debug('Getting current branch name');
+		assertCommandOptionsValid(options, 'getCurrentBranchName');
 		const { store } = options;
 		assertVarKey(store);
 		const key = store.replace('$_', '');
 		const branchName = await Git.getBranchName();
+		logger.info(`Current branch name is ${branchName}`);
 		this.store[key] = branchName;
+		logger.debug(`Storing branch name as ${key}`);
 	};
 
 	getCurrentProjectName = async (options: unknown, _: Conf) => {
-		assertCommandOptions(options, 'getCurrentProjectName');
+		logger.debug('Getting current project name');
+		assertCommandOptionsValid(options, 'getCurrentProjectName');
 		const { store } = options;
 		assertVarKey(store);
 		const key = store.replace('$_', '');
 		const projectName = await Git.getProjectName();
+		logger.info(`Current project name is ${projectName}`);
 		this.store[key] = encodeURIComponent(projectName);
+		logger.debug(`Storing project name as ${key}`);
 	};
 
 	getLastTag = async (options: unknown, conf: Conf) => {
-		assertCommandOptions(options, 'getLastTag');
+		logger.debug('Getting last tag');
+		assertCommandOptionsValid(options, 'getLastTag');
 		if (checkIsVarKey(options.project)) {
 			options.project = this.populateVariable(options.project);
 		}
@@ -233,9 +245,28 @@ class Runner {
 			token: conf.getToken(),
 		};
 		const tag = await Tags.fetchLast(fetchOptions);
-		console.log(fetchOptions);
+		logger.info(`Last tag is ${tag}`);
 		const key = store.replace('$_', '');
 		this.store[key] = tag;
+		logger.debug(`Storing project name as ${key}`);
+	};
+
+	getCurrentVersion = async (options: unknown, _: Conf) => {
+		logger.debug('Getting current version');
+		assertCommandOptionsValid(options, 'getCurrentVersion');
+		const { file, store } = options;
+		assertVarKey(store);
+		const key = store.replace('$_', '');
+		assertPath(file);
+		assertPathExists(file);
+		const data = await Conf.getLinkedFile(file);
+		assertObject(data);
+		assertProperty(data, 'version');
+		const version = data.version;
+		assertString(version);
+		logger.info(`Current version is ${version}`);
+		this.store[key] = version;
+		logger.debug(`Storing version as ${key}`);
 	};
 
 	populateVariable = (store: string): string => {

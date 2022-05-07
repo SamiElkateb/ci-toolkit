@@ -57,12 +57,12 @@ function assertSameType<T, K>(
 		throw message || `${val1} and ${val2} are not the same type`;
 }
 
-type assertCommandOptions = (
+type assertCommandOptionsValid = (
 	options: unknown,
 	commandName: commandName
 ) => asserts options is commandOptions[commandName];
 
-function assertCommandOptions<C extends commandName>(
+function assertCommandOptionsValid<C extends commandName>(
 	options: unknown,
 	commandName: C
 ): asserts options is commandOptions[C] {
@@ -91,5 +91,5 @@ export {
 	assertPath,
 	assertPathExists,
 	assertVarKey,
-	assertCommandOptions,
+	assertCommandOptionsValid,
 };
