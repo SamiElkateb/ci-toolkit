@@ -17,5 +17,3 @@ const command_names = [
 ] as const;
 const commandNames = SnakeToCamelCaseArray([...command_names]);
 export { command_names, commandNames };
-export type command_name = typeof command_names[number];
-export type commandName = typeof commandNames[number];

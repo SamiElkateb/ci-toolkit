@@ -1,4 +1,5 @@
-import { commandName, command_name } from '../../constants/commandNames';
+import { commandNames } from '../../constants/commandNames';
+import { commandName } from '../../types/commandNames';
 
 const fs = require('fs');
 const checkIsString = (val: unknown): val is string => {
@@ -34,7 +35,8 @@ const checkPathExists = (path: path) => {
 	return false;
 };
 const checkIsCommandName = (val: unknown): val is commandName => {
-	return true;
+	if (!checkIsString(val)) return false;
+	return commandNames.includes(val as any);
 };
 
 export {

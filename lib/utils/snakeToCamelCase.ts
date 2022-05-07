@@ -1,8 +1,6 @@
 import {
 	checkIsArray,
-	checkIsNumber,
 	checkIsObject,
-	checkIsString,
 } from './validations/basicTypeValidations';
 
 function SnakeToCamelCase<T>(val: T): SnakeToCamelCaseObjectKeys<T> {

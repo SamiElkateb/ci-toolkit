@@ -1,62 +1,28 @@
+type logLevel = 'error' | 'warn' | 'info' | 'debug';
+type version = `${number}.${number}.${number}`;
+type path = `${string}/${string}`;
+type varKey = `$_${string}`;
 type configExtension = 'json' | 'yaml' | 'yml';
 type protocole = 'http' | 'https';
-/* interface configFile {
-	token: string;
+interface configFile {
 	protocole: protocole;
-	domain: string;
-	project_id: string;
+	project_id?: string;
+	domain?: string;
+	token: string;
 	log_level: logLevel;
-	merge_requests: merge_requests;
-	versioning: versioning;
-	deployment: deployment;
-} */
-interface versioning {
-	verify_package: boolean;
-	verify_package_lock: boolean;
+	commands: custom_commands;
+	aggregated_commands?: aggregated_commands;
 }
-interface merge_requests {
-	target_branch: string;
-	requirements: requirements;
-	options: options;
-	creation: creation;
+
+type baseCommands = commandOptions[];
+type base_commands = command_options[];
+
+interface custom_commands {
+	[key: string]: base_commands;
 }
-interface deployment {
-	environments: environnement[];
+
+interface aggregated_commands {
+	[key: string]: custom_commands[];
 }
-interface environnement {
-	name: string;
-	project_id: string;
-	create_mr: boolean;
-	changes: changes[];
-	pipeline: pipeline;
-}
-interface pipeline {
-	await: boolean;
-	retry: number;
-	variables: variables[];
-}
-interface variables {
-	key: string;
-	value: string;
-	type: string;
-}
-interface changes {
-	from_file: string;
-	to_files: string[];
-	values: string;
-}
-interface requirements {
-	min_approvals: number;
-	min_upvotes: number;
-	max_downvotes: number;
-}
-interface options {
-	delete_source_branch: boolean;
-	squash_commits: boolean;
-}
-interface creation {
-	assign_to_me: boolean;
-	approvals_before_merge: number;
-	reviewers: string[];
-	title: string;
-}
+type customCommands = SnakeToCamelCaseObjectKeys<custom_commands>;
+type aggregatedCommands = SnakeToCamelCaseObjectKeys<aggregated_commands>;
