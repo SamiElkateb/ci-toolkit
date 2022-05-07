@@ -1,4 +1,7 @@
-import { assertPath, assertPathExists } from './assertions';
+import {
+	assertPath,
+	assertPathExists,
+} from './assertions/customTypesAssertions';
 const util = require('util');
 const { exec } = require('child_process');
 const execProm = util.promisify(exec);

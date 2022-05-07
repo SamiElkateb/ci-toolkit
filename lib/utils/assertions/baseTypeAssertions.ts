@@ -3,7 +3,8 @@ import {
 	checkIsNumber,
 	checkIsObject,
 	checkIsString,
-} from '../validation';
+	hasOwnProperty,
+} from '../validations/basicTypeValidations';
 
 type assertString = (val: unknown, message?: string) => asserts val is string;
 const assertString: assertString = (
@@ -47,13 +48,6 @@ const assertExists: assertExists = (
 ): asserts val => {
 	if (typeof val === 'undefined') throw message || 'value does not exist';
 };
-
-function hasOwnProperty<X extends {}, Y extends PropertyKey>(
-	obj: X,
-	prop: Y
-): obj is X & Record<Y, unknown> {
-	return obj.hasOwnProperty(prop);
-}
 
 type assertProperty<X extends {}, Y extends PropertyKey> = (
 	obj: X,

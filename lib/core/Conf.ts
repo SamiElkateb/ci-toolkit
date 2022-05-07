@@ -1,26 +1,20 @@
 import Git from './Git';
 import YAML = require('yaml');
 import fs = require('fs');
-import {
-	checkIsArray,
-	checkIsConfigFilePath,
-	checkIsObject,
-	checkIsPath,
-	checkIsString,
-	hasOwnProperty,
-} from '../utils/validation';
+import { hasOwnProperty } from '../utils/validations/basicTypeValidations';
+import { checkIsConfigFilePath } from '../utils/validations/customTypeValidation';
 import { defaultConfig } from './defaultConfig';
 import { fileExists, getAbsolutePath } from '../utils/files';
 import { SnakeToCamelCase } from '../utils/snakeToCamelCase';
 import {
 	assertPathExists,
 	assertProperty,
-} from '../utils/assertions/customTypes';
+} from '../utils/assertions/customTypesAssertions';
 import {
 	assertArray,
 	assertObject,
 	assertString,
-} from '../utils/assertions/baseTypes';
+} from '../utils/assertions/baseTypeAssertions';
 
 class Conf {
 	readonly commands: SnakeToCamelCaseObjectKeys<customCommands>;

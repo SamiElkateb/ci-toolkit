@@ -7,18 +7,18 @@ import {
 	assertCommandOptions,
 	assertProperty,
 	assertVarKey,
-} from '../utils/assertions/customTypes';
+} from '../utils/assertions/customTypesAssertions';
 import lang from './lang/en';
 import Log from './Log';
 import Tags from './Gitlab/Tags';
 import { getAbsolutePath, updatePackageJson } from '../utils/files';
 import { poll } from '../utils/polling';
-import {
-	checkIsArray,
-	checkIsCommandName,
-	checkIsString,
-} from '../utils/validation';
+import { checkIsCommandName } from '../utils/validations/customTypeValidation';
 import { defaultConfig } from './defaultConfig';
+import {
+	assertArray,
+	assertExists,
+} from '../utils/assertions/baseTypeAssertions';
 
 type commands = 'help' | 'deploy' | 'createMergeRequest';
 type options = 'help';

@@ -1,16 +1,12 @@
 import { defaultConfig } from '../../core/defaultConfig';
 import { commandName } from '../../constants/commandNames';
 import {
-	checkIsArray,
-	checkIsNumber,
-	checkIsObject,
 	checkIsVersion,
-	checkIsString,
 	checkIsPath,
 	checkPathExists,
 	checkIsVarKey,
-} from '../validation';
-import { assertObject } from './baseTypes';
+} from '../validations/basicTypeValidations';
+import { assertObject } from './baseTypeAssertions';
 
 type assertPathExists = (val: unknown, message?: string) => asserts val;
 const assertPathExists: assertPathExists = (

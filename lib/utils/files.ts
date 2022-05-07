@@ -1,5 +1,5 @@
 import path = require('path');
-import { assertPath } from './assertions';
+import { assertPath } from './assertions/customTypesAssertions';
 
 const fs = require('fs');
 const util = require('util');

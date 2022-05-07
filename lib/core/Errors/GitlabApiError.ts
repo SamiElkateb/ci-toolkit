@@ -3,8 +3,11 @@ import {
 	assertObject,
 	assertProperty,
 	assertString,
-} from '../../utils/assertions/baseTypes';
-import { checkIsObject, hasOwnProperty } from '../../utils/validation';
+} from '../../utils/assertions/baseTypeAssertions';
+import {
+	checkIsObject,
+	hasOwnProperty,
+} from '../../utils/validations/basicTypeValidations';
 
 class GitlabApiError {
 	readonly message: string;

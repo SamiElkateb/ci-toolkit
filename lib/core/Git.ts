@@ -1,7 +1,6 @@
-import { assertString } from '../utils/assertions/baseTypes';
-import { assertPathExists } from '../utils/assertions/customTypes';
+import { assertString } from '../utils/assertions/baseTypeAssertions';
 import { execCommand } from '../utils/commands';
-import { checkIsString } from '../utils/validation';
+import { checkIsString } from '../utils/validations/basicTypeValidations';
 
 class Git {
 	constructor() {}

@@ -3,7 +3,7 @@ import {
 	checkIsNumber,
 	checkIsObject,
 	checkIsString,
-} from './validation';
+} from './validations/basicTypeValidations';
 
 function SnakeToCamelCase<T>(val: T): SnakeToCamelCaseObjectKeys<T> {
 	if (!checkIsObject(val)) return val as SnakeToCamelCaseObjectKeys<T>;

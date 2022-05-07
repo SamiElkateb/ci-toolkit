@@ -1,7 +1,7 @@
 import Conf from '../Conf';
 import https = require('https');
 import Log from '../Log';
-import { assertVersion } from '../../utils/assertions';
+import { assertVersion } from '../../utils/assertions/customTypesAssertions';
 import GitlabApiError from '../Errors/GitlabApiError';
 type increaseTagsParams = {
 	update: 'patch' | 'minor' | 'major';
