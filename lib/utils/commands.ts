@@ -68,16 +68,19 @@ type execCommandOptions = {
 	command: string;
 	path?: string;
 	message?: string;
+	branch?: string;
 };
 const execCommand = async (options: execCommandOptions) => {
-	const { command: baseCommand, path, message } = options;
+	const { command: baseCommand, path, message, branch } = options;
 	assertIsWhitelistedCommand(baseCommand);
 	let command = baseCommand;
 	if (message) command = appendString(command, message);
+	if (branch) command = appendString(command, branch);
 	if (path) command = prependPath(command, path);
 
 	const data = await execProm(command);
-	return data;
+	if (data.stderr !== '') throw data.stderr;
+	return data.stdout;
 };
 
 export { execCommand };

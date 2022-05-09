@@ -8,7 +8,7 @@ class Git {
 	static getBranchName = async (path?: string) => {
 		const command = 'git rev-parse --abbrev-ref HEAD';
 		const data = await execCommand({ command, path });
-		const branchName = data.stdout.replace('\n', '');
+		const branchName = data.replace('\n', '');
 		assertString(branchName, 'Could not find branch name');
 		return branchName;
 	};
@@ -16,7 +16,7 @@ class Git {
 	static getProjectName = async (path?: string) => {
 		const command = 'git remote -v';
 		const data = await execCommand({ command, path });
-		const [fetch, push] = data.stdout.split('\n');
+		const [fetch, push] = data.split('\n');
 
 		assertString(fetch, 'Could not get Project Name');
 		assertString(push, 'Could not get Project Name');
@@ -39,10 +39,15 @@ class Git {
 		await execCommand({ command, message });
 	};
 
+	static pull = async (branch?: string) => {
+		const command = branch ? 'git pull origin' : 'git pull';
+		await execCommand({ command, branch });
+	};
+
 	static getOriginDomain = async (path?: string) => {
 		const command = 'git remote -v';
 		const data = await execCommand({ command, path });
-		const [fetch, push] = data.stdout.split('\n');
+		const [fetch, push] = data.split('\n');
 		const fetchUrl = fetch.match(/^origin\t(.*) \(fetch\)$/)[1];
 		const pushUrl = push.match(/^origin\t(.*) \(push\)$/)[1];
 		const fetchOriginDomain = fetchUrl.match(/^git@(.*):.*\.git$/)[1];

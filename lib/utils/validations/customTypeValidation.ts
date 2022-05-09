@@ -48,7 +48,7 @@ const checkIsCommitMessageValidLength = (message: unknown) => {
 
 const checkAreCommitMessageCharactersValid = (message: unknown) => {
 	if (!checkIsString(message)) return false;
-	return Boolean(message.match(/^[\w|\d|_|\:| ]+$/));
+	return Boolean(message.match(/^[\w|\d|_|,|\:| ]+$/));
 };
 
 export {

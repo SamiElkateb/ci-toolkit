@@ -23,6 +23,9 @@ const defaultConfig = {
 		commit: {
 			message: 'optional',
 		},
+		pull: {
+			branch: 'optional',
+		},
 	},
 };
 

@@ -11,7 +11,7 @@ const command_names = [
 	'get_last_tag',
 	'get_current_version',
 	'commit',
-	// 'pull',
+	'pull',
 	// 'increment_version',
 	// 'tag',
 	// 'copy_env_diffs',

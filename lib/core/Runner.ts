@@ -271,11 +271,27 @@ class Runner {
 
 	commit = async (options: unknown, _: Conf) => {
 		const branchName = await Git.getBranchName();
-		logger.debug(`Committing changes in branch ${branchName}`);
+		logger.info(`Committing changes in branch ${branchName}`);
 		assertCommandOptionsValid(options, 'commit');
 		const { message } = options;
 		assertString(message);
-		const projectName = await Git.commit(message);
+		await Git.commit(message);
+		logger.debug(`Changes have been committed`);
+	};
+
+	pull = async (options: unknown, _: Conf) => {
+		const currentBranchName = await Git.getBranchName();
+		logger.debug(`Pulling changes`);
+		assertCommandOptionsValid(options, 'pull');
+		const { branch } = options;
+		if (branch) {
+			logger.info(
+				`Pulling changes from origin ${branch} to ${currentBranchName}`
+			);
+		}
+		assertString(branch);
+		await Git.pull(branch);
+		logger.debug(`Pulling successful`);
 	};
 
 	populateVariable = (store: string): string => {

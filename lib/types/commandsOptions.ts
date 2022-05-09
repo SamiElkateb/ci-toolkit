@@ -22,5 +22,8 @@ interface command_options {
 	commit: {
 		message?: string;
 	};
+	pull: {
+		branch?: string;
+	};
 }
 type commandOptions = SnakeToCamelCaseObjectKeys<command_options>;
