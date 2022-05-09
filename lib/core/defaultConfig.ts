@@ -20,6 +20,9 @@ const defaultConfig = {
 			file: 'required',
 			store: 'required',
 		},
+		commit: {
+			message: 'optional',
+		},
 	},
 };
 

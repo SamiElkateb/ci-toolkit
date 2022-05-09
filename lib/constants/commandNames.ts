@@ -10,6 +10,8 @@ const command_names = [
 	// 'create_merge_request',
 	'get_last_tag',
 	'get_current_version',
+	'commit',
+	// 'pull',
 	// 'increment_version',
 	// 'tag',
 	// 'copy_env_diffs',

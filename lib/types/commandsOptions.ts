@@ -19,5 +19,8 @@ interface command_options {
 		file: string;
 		store: string;
 	};
+	commit: {
+		message?: string;
+	};
 }
 type commandOptions = SnakeToCamelCaseObjectKeys<command_options>;

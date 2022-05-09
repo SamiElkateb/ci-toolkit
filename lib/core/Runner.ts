@@ -269,6 +269,15 @@ class Runner {
 		logger.debug(`Storing version as ${key}`);
 	};
 
+	commit = async (options: unknown, _: Conf) => {
+		const branchName = await Git.getBranchName();
+		logger.debug(`Committing changes in branch ${branchName}`);
+		assertCommandOptionsValid(options, 'commit');
+		const { message } = options;
+		assertString(message);
+		const projectName = await Git.commit(message);
+	};
+
 	populateVariable = (store: string): string => {
 		const key = store.replace('$_', '');
 		assertExists(this.store[key]);

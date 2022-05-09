@@ -7,6 +7,8 @@ import {
 	checkPathExists,
 	checkIsVarKey,
 	checkIsSameType,
+	checkIsCommitMessageValidLength,
+	checkAreCommitMessageCharactersValid,
 } from '../validations/customTypeValidation';
 import {
 	assertObject,
@@ -86,10 +88,26 @@ function assertCommandOptionsValid<C extends commandName>(
 	}
 }
 
+function assertCommitMessageValidLength(
+	commitMessage: unknown,
+	message?: string
+) {
+	if (!checkIsCommitMessageValidLength(commitMessage))
+		throw message || `Commit message is to long`;
+}
+function assertCommitMessageValidCharacters(
+	commitMessage: unknown,
+	message?: string
+) {
+	if (!checkAreCommitMessageCharactersValid(commitMessage))
+		throw message || `Unauthorized characters in commit message`;
+}
 export {
 	assertVersion,
 	assertPath,
 	assertPathExists,
 	assertVarKey,
 	assertCommandOptionsValid,
+	assertCommitMessageValidLength,
+	assertCommitMessageValidCharacters,
 };

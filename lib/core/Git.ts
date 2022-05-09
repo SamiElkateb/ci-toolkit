@@ -6,14 +6,16 @@ class Git {
 	constructor() {}
 
 	static getBranchName = async (path?: string) => {
-		const data = await execCommand('git rev-parse --abbrev-ref HEAD', path);
+		const command = 'git rev-parse --abbrev-ref HEAD';
+		const data = await execCommand({ command, path });
 		const branchName = data.stdout.replace('\n', '');
 		assertString(branchName, 'Could not find branch name');
 		return branchName;
 	};
 
 	static getProjectName = async (path?: string) => {
-		const data = await execCommand('git remote -v', path);
+		const command = 'git remote -v';
+		const data = await execCommand({ command, path });
 		const [fetch, push] = data.stdout.split('\n');
 
 		assertString(fetch, 'Could not get Project Name');
@@ -32,8 +34,14 @@ class Git {
 		throw 'Fetch and push origin do not match. Could not deduce project name.';
 	};
 
+	static commit = async (message?: string) => {
+		const command = message ? 'git commit -m' : 'git commit';
+		await execCommand({ command, message });
+	};
+
 	static getOriginDomain = async (path?: string) => {
-		const data = await execCommand('git remote -v', path);
+		const command = 'git remote -v';
+		const data = await execCommand({ command, path });
 		const [fetch, push] = data.stdout.split('\n');
 		const fetchUrl = fetch.match(/^origin\t(.*) \(fetch\)$/)[1];
 		const pushUrl = push.match(/^origin\t(.*) \(push\)$/)[1];

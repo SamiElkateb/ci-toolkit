@@ -1,10 +1,8 @@
 import { commandNames } from '../../constants/commandNames';
 import { commandName } from '../../types/commandNames';
+import { checkIsString } from './basicTypeValidations';
 
 const fs = require('fs');
-const checkIsString = (val: unknown): val is string => {
-	return typeof val === 'string';
-};
 
 const checkIsVersion = (val: unknown): val is version => {
 	if (typeof val !== 'string') return false;
@@ -43,8 +41,17 @@ const checkIsCommandName = (val: unknown): val is commandName => {
 	return commandNames.includes(val as any);
 };
 
+const checkIsCommitMessageValidLength = (message: unknown) => {
+	if (!checkIsString(message)) return false;
+	return message.length < 80;
+};
+
+const checkAreCommitMessageCharactersValid = (message: unknown) => {
+	if (!checkIsString(message)) return false;
+	return Boolean(message.match(/^[\w|\d|_|\:| ]+$/));
+};
+
 export {
-	checkIsString,
 	checkIsVersion,
 	checkIsPath,
 	checkPathExists,
@@ -52,4 +59,6 @@ export {
 	checkIsVarKey,
 	checkIsCommandName,
 	checkIsSameType,
+	checkIsCommitMessageValidLength,
+	checkAreCommitMessageCharactersValid,
 };
