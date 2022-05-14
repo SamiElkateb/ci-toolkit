@@ -1,4 +1,5 @@
 type logLevel = 'error' | 'warn' | 'info' | 'debug';
+type warningAction = 'prompt' | 'standby' | 'skip';
 type version = `${number}.${number}.${number}`;
 type path = `${string}/${string}`;
 type varKey = `$_${string}`;
@@ -10,6 +11,8 @@ interface configFile {
 	domain?: string;
 	token: string;
 	log_level: logLevel;
+	lang: string;
+	warning_action: warningAction;
 	commands: custom_commands;
 	aggregated_commands?: aggregated_commands;
 }

@@ -21,11 +21,15 @@ class Conf {
 	readonly project?: string;
 	readonly token: string;
 	readonly logLevel: logLevel;
+	readonly lang: string;
+	readonly warningAction: warningAction;
 	constructor(conf: configFile) {
 		this.domain = conf.domain;
 		this.project = conf.project;
 		this.token = conf.token;
 		this.logLevel = conf.log_level;
+		this.lang = conf.lang;
+		this.warningAction = conf.warning_action;
 		this.protocole = conf.protocole;
 		this.commands = SnakeToCamelCase(conf.commands);
 	}
@@ -39,7 +43,7 @@ class Conf {
 		return this.domain;
 	};
 	getProtocole = () => {
-		assertString(this.protocole, 'Protocole name is not defined');
+		assertString(this.protocole, 'Protocole is not defined');
 		return this.protocole;
 	};
 	getToken = () => {
@@ -79,6 +83,8 @@ class Conf {
 		const conf = {
 			protocole: 'https',
 			log_level: 'info',
+			lang: 'en',
+			warning_action: 'prompt',
 			...configFile,
 		};
 		console.log(configFile.token);

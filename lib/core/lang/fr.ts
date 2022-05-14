@@ -1,4 +1,4 @@
-const langEN = {
+const langFR = {
 	help: `npx ci-toolkit <command>
 Commands:
         help
@@ -18,17 +18,6 @@ Commands:
 	currentTag: (tag: string) => `current tag is ${tag}`,
 	newTag: (tag: string) => `new tag is ${tag}`,
 	noUser: (username: string) => `user ${username} does not exist`,
-	shouldCommitTreeClean: () => `Should commit but the working tree is clean.`,
-	shouldCommitNoChangeAdded: () =>
-		`Should commit but there is no changes added to commit.`,
-	shouldCommitSomeChangeNotAdded: () =>
-		`Should commit but some changes are not staged for commit.`,
-	continueNoCommit: () => `Continue without committing?`,
-	continueCommitStaged: () => `Continue and commit only staged changes?`,
-	undefinedToken: () => `Token is not defined`,
-	undefinedProtocole: () => `Protocole is not defined`,
-	undefinedDomain: () => `Domain name is not defined`,
-	undefinedProject: () => `Project name is not defined`,
 };
 
-export default langEN;
+export default langFR;

@@ -1,4 +1,4 @@
-import Log from '../Log';
+import Log from '../Logger';
 import GitlabApiError from './GitlabApiError';
 const logger = new Log();
 class ErrorHandler {

@@ -21,6 +21,7 @@ interface command_options {
 	};
 	commit: {
 		message?: string;
+		add?: string;
 	};
 	pull: {
 		branch?: string;

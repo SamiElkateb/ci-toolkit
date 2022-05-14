@@ -1,7 +1,7 @@
 // @ts-nocheck
 import Conf from '../Conf';
 import https = require('https');
-import Log from '../Log';
+import Logger from '../Logger';
 import { assertExists } from '../../utils/assertions/baseTypeAssertions';
 import lang from '../lang/en';
 import GitlabApiError from '../Errors/GitlabApiError';
@@ -17,10 +17,10 @@ type postParams = {
 
 class MergeRequests {
 	private conf: Conf;
-	private logger: Log;
+	private logger: Logger;
 	constructor(conf: Conf) {
 		this.conf = conf;
-		this.logger = new Log(conf.logLevel);
+		this.logger = new Logger(conf.logLevel);
 	}
 
 	get<S extends string>(

@@ -1,6 +1,6 @@
 import Conf from '../Conf';
 import https = require('https');
-import Log from '../Log';
+import Logger from '../Logger';
 import GitlabApiError from '../Errors/GitlabApiError';
 import { assertNumber } from '../../utils/assertions/baseTypeAssertions';
 type pollParams = {
@@ -20,10 +20,10 @@ class Pipelines {
 	private failedPipelines: number[];
 	private successPipelines: number[];
 	private canceledPipelines: number[];
-	private logger: Log;
+	private logger: Logger;
 	constructor(conf: Conf) {
 		this.conf = conf;
-		this.logger = new Log(conf.logLevel);
+		this.logger = new Logger(conf.logLevel);
 		this.runningPipelines = [];
 		this.failedPipelines = [];
 		this.successPipelines = [];

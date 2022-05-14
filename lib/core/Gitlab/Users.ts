@@ -1,6 +1,6 @@
 import Conf from '../Conf';
 import https = require('https');
-import Log from '../Log';
+import Log from '../Logger';
 import { assertExists } from '../../utils/assertions/baseTypeAssertions';
 import lang from '../lang/en';
 import GitlabApiError from '../Errors/GitlabApiError';

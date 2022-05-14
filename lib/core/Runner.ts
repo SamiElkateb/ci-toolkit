@@ -14,7 +14,7 @@ import {
 	assertProperty,
 } from '../utils/assertions/baseTypeAssertions';
 import lang from './lang/en';
-import Log from './Log';
+import Logger from './Logger';
 import Tags from './Gitlab/Tags';
 import { getAbsolutePath, updatePackageJson } from '../utils/files';
 import { poll } from '../utils/polling';
@@ -28,6 +28,7 @@ import {
 	assertExists,
 	assertString,
 } from '../utils/assertions/baseTypeAssertions';
+import { standby } from '../utils/standby';
 
 type commands = 'help' | 'deploy' | 'createMergeRequest';
 type options = 'help';
@@ -38,7 +39,7 @@ type params = {
 interface store {
 	[key: string]: string;
 }
-const logger = new Log();
+const logger = new Logger();
 class Runner {
 	store: store;
 	constructor() {
@@ -81,6 +82,7 @@ class Runner {
 				const data = commandsOptions[commandName];
 				await runner[commandName](commandsOptions[commandName], conf);
 			}
+			standby(1000);
 		}
 		console.log(runner.store);
 	};
@@ -99,6 +101,8 @@ class Runner {
 		const parsedConfig = await Conf.parseConfig(configFile);
 		const conf = new Conf(parsedConfig);
 		logger.setLogLevel(conf.logLevel);
+		logger.setWarningAction(conf.warningAction);
+		logger.setLang(conf.lang);
 		return conf;
 	};
 
@@ -273,9 +277,7 @@ class Runner {
 		const branchName = await Git.getBranchName();
 		logger.info(`Committing changes in branch ${branchName}`);
 		assertCommandOptionsValid(options, 'commit');
-		const { message } = options;
-		assertString(message);
-		await Git.commit(message);
+		await Git.commit(options, logger);
 		logger.debug(`Changes have been committed`);
 	};
 

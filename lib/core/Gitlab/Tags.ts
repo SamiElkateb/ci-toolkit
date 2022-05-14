@@ -1,6 +1,6 @@
 import Conf from '../Conf';
 import https = require('https');
-import Log from '../Log';
+import Logger from '../Logger';
 import { assertVersion } from '../../utils/assertions/customTypesAssertions';
 import GitlabApiError from '../Errors/GitlabApiError';
 type increaseTagsParams = {
@@ -19,13 +19,8 @@ type fetchOptions = {
 	token: string;
 };
 class Tags {
-	private conf: Conf;
-	private logger: Log;
-	constructor(conf: Conf) {
-		this.conf = conf;
-		this.logger = new Log(conf.logLevel);
-	}
-	static fetch = async (options: fetchOptions, logger?: Log) => {
+	constructor() {}
+	static fetch = async (options: fetchOptions, logger?: Logger) => {
 		const { protocole, domain, project, token } = options;
 		const url = `${protocole}://${domain}/api/v4/projects/${project}/repository/tags?access_token=${token}`;
 		logger?.request(url, 'get');
@@ -36,7 +31,7 @@ class Tags {
 			throw new GitlabApiError(error);
 		}
 	};
-	static fetchLast = async (options: fetchOptions, logger?: Log) => {
+	static fetchLast = async (options: fetchOptions, logger?: Logger) => {
 		const data = await Tags.fetch(options, logger);
 		const lastTag = data[0].name;
 		return lastTag;
