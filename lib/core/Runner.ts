@@ -97,12 +97,10 @@ class Runner {
 			const commandsOptions = commands[i];
 			if (checkIsCommandName(commandName)) {
 				assertProperty(commandsOptions, commandName);
-				const data = commandsOptions[commandName];
 				await runner[commandName](commandsOptions[commandName], conf);
 			}
-			standby(1000);
+			await standby(1000);
 		}
-		console.log(runner.store);
 	};
 
 	static getCommandName = (command: object) => {
