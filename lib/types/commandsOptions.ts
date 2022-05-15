@@ -26,5 +26,9 @@ interface command_options {
 	pull: {
 		branch?: string;
 	};
+	push: {
+		branch?: string;
+		await_pipeline?: boolean;
+	};
 }
 type commandOptions = SnakeToCamelCaseObjectKeys<command_options>;

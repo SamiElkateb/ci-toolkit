@@ -1,51 +1,78 @@
 import Conf from '../Conf';
-import https = require('https');
-import Log from '../Logger';
 import { assertExists } from '../../utils/assertions/baseTypeAssertions';
 import lang from '../lang/en';
 import GitlabApiError from '../Errors/GitlabApiError';
-const rejectUnauthorized = false;
-const agent = new https.Agent({ rejectUnauthorized });
+import { getHttpsAgent } from '../../utils/getHttpsAgent';
+import Logger from '../Logger';
 
+interface fetchOptions extends Omit<gitlabApiOptions, 'project'> {
+	username: string;
+}
+interface fetchIdsOptions extends Omit<gitlabApiOptions, 'project'> {
+	usernames: string[];
+}
+type fetchMeOptions = Omit<gitlabApiOptions, 'project'>;
 const axios = require('axios');
 class Users {
 	private conf: Conf;
-	private logger: Log;
+	private logger: Logger;
 	constructor(conf: Conf) {
 		this.conf = conf;
-		this.logger = new Log(conf.logLevel);
+		this.logger = new Logger(conf.logLevel);
 	}
-	get = async (username: string): Promise<user[]> => {
-		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/users?username=${username}&access_token=${this.conf.token}`;
-		this.logger.request(url, 'get');
+	static fetch = async (
+		options: fetchOptions,
+		logger?: Logger
+	): Promise<user[]> => {
+		const {
+			username,
+			protocole,
+			domain,
+			token,
+			allowInsecureCertificate: allowInsecure,
+		} = options;
+		const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
+		const url = `${protocole}://${domain}/api/v4/users?username=${username}&access_token=${token}`;
+		logger?.request(url, 'get');
 		try {
-			const res = await axios.get(url, { httpsAgent: agent });
+			const res = await axios.get(url, axiosOptions);
 			return res.data;
 		} catch (error) {
 			throw new GitlabApiError(error);
 		}
 	};
-	getMe = async (): Promise<user> => {
-		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/user?access_token=${this.conf.token}`;
-		this.logger.request(url, 'get');
+	static fetchMe = async (
+		options: fetchMeOptions,
+		logger?: Logger
+	): Promise<user> => {
+		const {
+			protocole,
+			domain,
+			token,
+			allowInsecureCertificate: allowInsecure,
+		} = options;
+		const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
+		const url = `${protocole}://${domain}/api/v4/user?access_token=${token}`;
+		logger?.request(url, 'get');
 		try {
-			const res = await axios.get(url, { httpsAgent: agent });
+			const res = await axios.get(url, axiosOptions);
 			return res.data;
 		} catch (error) {
 			throw new GitlabApiError(error);
 		}
 	};
-	getId = async (username: string): Promise<number> => {
-		const user = (await this.get(username))[0];
-		assertExists(user, lang.noUser(username));
+	static fetchId = async (options: fetchOptions): Promise<number> => {
+		const user = (await Users.fetch(options))[0];
+		assertExists(user, lang.noUser(options.username));
 		return user.id;
 	};
-	getIds = async (usernames: string[]): Promise<number[]> => {
+	static fetchIds = async (options: fetchIdsOptions): Promise<number[]> => {
 		const userIds = [];
+		const { usernames } = options;
 		for (let i = 0, c = usernames.length; i < c; i++) {
-			const user = (await this.get(usernames[i]))[0];
-			assertExists(user, lang.noUser(usernames[i]));
-			userIds.push(user.id);
+			const fetchOptions = { ...options, username: usernames[i] };
+			const id = await Users.fetchId(fetchOptions);
+			userIds.push(id);
 		}
 		return userIds;
 	};

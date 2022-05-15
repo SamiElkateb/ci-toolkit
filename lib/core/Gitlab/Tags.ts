@@ -1,37 +1,35 @@
-import Conf from '../Conf';
-import https = require('https');
 import Logger from '../Logger';
 import { assertVersion } from '../../utils/assertions/customTypesAssertions';
 import GitlabApiError from '../Errors/GitlabApiError';
+import { getHttpsAgent } from '../../utils/getHttpsAgent';
 type increaseTagsParams = {
 	update: 'patch' | 'minor' | 'major';
 	tag: unknown;
 };
-const rejectUnauthorized = false;
-const agent = new https.Agent({ rejectUnauthorized });
 
 const axios = require('axios');
 
-type fetchOptions = {
-	protocole: protocole;
-	domain: string;
-	project: string;
-	token: string;
-};
 class Tags {
 	constructor() {}
-	static fetch = async (options: fetchOptions, logger?: Logger) => {
-		const { protocole, domain, project, token } = options;
+	static fetch = async (options: gitlabApiOptions, logger?: Logger) => {
+		const {
+			protocole,
+			domain,
+			project,
+			token,
+			allowInsecureCertificate: allowInsecure,
+		} = options;
+		const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
 		const url = `${protocole}://${domain}/api/v4/projects/${project}/repository/tags?access_token=${token}`;
 		logger?.request(url, 'get');
 		try {
-			const res = await axios.get(url, { httpsAgent: agent });
+			const res = await axios.get(url, axiosOptions);
 			return res.data;
 		} catch (error) {
 			throw new GitlabApiError(error);
 		}
 	};
-	static fetchLast = async (options: fetchOptions, logger?: Logger) => {
+	static fetchLast = async (options: gitlabApiOptions, logger?: Logger) => {
 		const data = await Tags.fetch(options, logger);
 		const lastTag = data[0].name;
 		return lastTag;

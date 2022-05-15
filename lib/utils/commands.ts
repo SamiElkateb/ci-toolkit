@@ -112,6 +112,7 @@ const appendString = (command: string, message: string) => {
 		'git commit -a -m',
 		'git add . && git commit -m',
 		'git pull origin',
+		'git push -u origin',
 	];
 	if (!whitelistedCommands.includes(command)) {
 		throw `Appending "${message}" to append message to command "${command}" is not allowed.`;
@@ -137,6 +138,7 @@ const assertIsWhitelistedCommand = (command: string) => {
 		'git add . && git commit',
 		'git add . && git commit -m',
 		'git push',
+		'git push -u origin',
 		'git pull',
 		'git pull origin ',
 		'git status',

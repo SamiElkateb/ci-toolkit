@@ -20,3 +20,29 @@ interface user {
 	avatar_url: string;
 	web_url: string;
 }
+
+interface pipeline {
+	id: number;
+	iid: number;
+	project_id: number;
+	sha: string;
+	ref: string;
+	status: string;
+	source: string;
+	created_at: string;
+	updated_at: string;
+	web_url: string;
+}
+
+interface gitlabApiOptions {
+	allowInsecureCertificate?: boolean;
+	protocole: protocole;
+	domain: string;
+	project: string;
+	token: string;
+}
+interface pipelineVariable {
+	key: string;
+	value: string;
+	type?: string;
+}

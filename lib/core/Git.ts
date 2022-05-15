@@ -3,7 +3,6 @@ import {
 	assertString,
 } from '../utils/assertions/baseTypeAssertions';
 import { execCommand } from '../utils/commands';
-import Conf from './Conf';
 import Logger from './Logger';
 
 type commitOptions = {
@@ -11,12 +10,7 @@ type commitOptions = {
 	add?: string;
 };
 class Git {
-	private conf: Conf;
-	private logger: Logger;
-	constructor(conf: Conf) {
-		this.conf = conf;
-		this.logger = new Logger(conf.logLevel);
-	}
+	constructor() {}
 
 	static getBranchName = async (path?: string) => {
 		const command = 'git rev-parse --abbrev-ref HEAD';
@@ -37,14 +31,17 @@ class Git {
 		const fetchProjectName = Git.getProjectNameFromUrl(fetchUrl);
 		const pushProjectName = Git.getProjectNameFromUrl(pushUrl);
 
-		if (fetchProjectName === pushProjectName) return pushProjectName;
+		if (fetchProjectName === pushProjectName) {
+			const project = encodeURIComponent(pushProjectName);
+			return project;
+		}
 		throw 'Fetch and push origin do not match. Could not deduce project name.';
 	};
 
 	static commit = async (options: commitOptions, logger?: Logger) => {
 		const { message, add } = options;
-		const canCommit = await Git.checkCanCommit(logger);
-		if (!canCommit) return;
+		// const canCommit = await Git.checkCanCommit(logger);
+		// if (!canCommit) return;
 		let command = 'git commit';
 		if (add === 'all') {
 			command = 'git add . && git commit';
@@ -59,6 +56,11 @@ class Git {
 
 	static pull = async (branch?: string) => {
 		const command = branch ? 'git pull origin' : 'git pull';
+		await execCommand({ command, branch });
+	};
+
+	static push = async (branch?: string) => {
+		const command = branch ? 'git push -u origin' : 'git push';
 		await execCommand({ command, branch });
 	};
 

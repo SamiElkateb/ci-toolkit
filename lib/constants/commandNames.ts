@@ -12,6 +12,7 @@ const command_names = [
 	'get_current_version',
 	'commit',
 	'pull',
+	'push',
 	// 'increment_version',
 	// 'tag',
 	// 'copy_env_diffs',

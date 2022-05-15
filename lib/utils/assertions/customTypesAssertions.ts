@@ -77,14 +77,15 @@ function assertCommandOptionsValid<C extends commandName>(
 		const isRequired = requirementLevel === 'required';
 		if (isRequired) {
 			assertProperty(options, property);
-		} else if (hasOwnProperty(options, property)) {
-			assertSameType(options[property], commandOptions[property]);
 		}
+		// else if (hasOwnProperty(options, property)) {
+		// 	assertSameType(options[property], commandOptions[property]);
+		// }
 	}
 	for (const property in options) {
 		assertProperty(commandOptions, property);
 		assertProperty(options, property);
-		assertSameType(options[property], commandOptions[property]);
+		// assertSameType(options[property], commandOptions[property]);
 	}
 }
 

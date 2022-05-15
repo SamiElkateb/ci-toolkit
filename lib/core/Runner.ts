@@ -29,6 +29,8 @@ import {
 	assertString,
 } from '../utils/assertions/baseTypeAssertions';
 import { standby } from '../utils/standby';
+import Users from './Gitlab/Users';
+import Pipelines from './Gitlab/Pipelines';
 
 type commands = 'help' | 'deploy' | 'createMergeRequest';
 type options = 'help';
@@ -242,12 +244,7 @@ class Runner {
 		}
 		const { store, project } = options;
 		assertVarKey(store);
-		const fetchOptions = {
-			project: options.project || conf.getProject(),
-			domain: options.domain || conf.getDomain(),
-			protocole: options.protocole || conf.getProtocole(),
-			token: conf.getToken(),
-		};
+		const fetchOptions = conf.getApiOptions(options);
 		const tag = await Tags.fetchLast(fetchOptions);
 		logger.info(`Last tag is ${tag}`);
 		const key = store.replace('$_', '');
@@ -287,13 +284,62 @@ class Runner {
 		assertCommandOptionsValid(options, 'pull');
 		const { branch } = options;
 		if (branch) {
+			assertString(branch);
 			logger.info(
 				`Pulling changes from origin ${branch} to ${currentBranchName}`
 			);
 		}
-		assertString(branch);
 		await Git.pull(branch);
 		logger.debug(`Pulling successful`);
+	};
+
+	push = async (options: unknown, conf: Conf) => {
+		const currentBranchName = await Git.getBranchName();
+		const project = await Git.getProjectName();
+		logger.debug(`Pushing changes`);
+		assertCommandOptionsValid(options, 'push');
+		const { branch, awaitPipeline } = options;
+		if (branch) {
+			assertString(branch);
+			logger.info(`Pushing changes from ${branch} to origin`);
+		}
+		await Git.push(branch);
+		logger.debug(`Push successful`);
+		if (awaitPipeline) {
+			await Runner.awaitPipelines({ project, ...options }, conf);
+		}
+	};
+
+	static awaitPipelines = async (
+		options: commandOptions[keyof commandOptions],
+		conf: Conf
+	) => {
+		const currentBranchName = await Git.getBranchName();
+		const fetchOptions = conf.getApiOptions(options);
+		const currentUser = await Users.fetchMe(fetchOptions, logger);
+		const username = currentUser.username;
+		const pipelines = new Pipelines(conf);
+		const fetchAllOptions = {
+			username,
+			ref: currentBranchName,
+			source: 'push',
+			...fetchOptions,
+		};
+		const allPipelines = await pipelines.fetchAll(fetchAllOptions);
+		if (allPipelines.length === 0 || allPipelines[0].status === 'success') {
+			return;
+		}
+		pipelines.pushRunningPipeline(allPipelines[0].id);
+		const pollingData = {
+			fn: async () => await pipelines.arePipelineRunning(fetchOptions),
+			timeoutMessage: 'timeout exceeded',
+			pollingLogFn: () => {
+				logger.debug('polling pipelines');
+			},
+		};
+		await poll(pollingData);
+		const failedPipelines = pipelines.getFailedPipelines();
+		if (failedPipelines.length > 0) throw 'Failed pipelines';
 	};
 
 	populateVariable = (store: string): string => {

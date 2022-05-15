@@ -23,13 +23,13 @@ class MergeRequests {
 		this.logger = new Logger(conf.logLevel);
 	}
 
-	get<S extends string>(
+	fetch<S extends string>(
 		x?: S
 	): S extends string ? Promise<mergeRequest> : Promise<mergeRequest[]>;
 
-	async get(sourceBranch?: string): Promise<mergeRequest | mergeRequest[]> {
-		if (sourceBranch) return await this.getRequest(sourceBranch);
-		return await this.getRequests();
+	async fetch(sourceBranch?: string): Promise<mergeRequest | mergeRequest[]> {
+		if (sourceBranch) return await this.fetchRequest(sourceBranch);
+		return await this.fetchRequests();
 	}
 	async post(params: postParams): Promise<mergeRequest | mergeRequest[]> {
 		const { sourceBranch, assigneeId, reviewerIds } = params;
@@ -53,7 +53,7 @@ class MergeRequests {
 			throw new GitlabApiError(error);
 		}
 	}
-	getRequests = async (): Promise<mergeRequest[]> => {
+	fetchRequests = async (): Promise<mergeRequest[]> => {
 		const mine = '&scope=assigned_to_me';
 		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/projects/${this.conf.projectId}/merge_requests?state=opened&access_token=${this.conf.token}`;
 		this.logger.request(url, 'get');
@@ -64,8 +64,8 @@ class MergeRequests {
 			throw new GitlabApiError(error);
 		}
 	};
-	getRequest = async (sourceBranch: string): Promise<mergeRequest> => {
-		const mergeRequests = await this.getRequests();
+	fetchRequest = async (sourceBranch: string): Promise<mergeRequest> => {
+		const mergeRequests = await this.fetchRequests();
 		const mergeRequest = mergeRequests.find(
 			(mergeRequest: mergeRequest) =>
 				mergeRequest.source_branch === sourceBranch

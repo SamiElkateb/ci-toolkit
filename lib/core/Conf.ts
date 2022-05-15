@@ -1,7 +1,10 @@
 import Git from './Git';
 import YAML = require('yaml');
 import fs = require('fs');
-import { hasOwnProperty } from '../utils/validations/basicTypeValidations';
+import {
+	checkIsObject,
+	hasOwnProperty,
+} from '../utils/validations/basicTypeValidations';
 import { checkIsConfigFilePath } from '../utils/validations/customTypeValidation';
 import { defaultConfig } from './defaultConfig';
 import { fileExists, getAbsolutePath } from '../utils/files';
@@ -12,6 +15,7 @@ import {
 	assertObject,
 	assertString,
 	assertProperty,
+	assertExists,
 } from '../utils/assertions/baseTypeAssertions';
 
 class Conf {
@@ -20,6 +24,7 @@ class Conf {
 	readonly domain?: string;
 	readonly project?: string;
 	readonly token: string;
+	readonly allowInsecureCertificate: boolean;
 	readonly logLevel: logLevel;
 	readonly lang: string;
 	readonly warningAction: warningAction;
@@ -27,6 +32,7 @@ class Conf {
 		this.domain = conf.domain;
 		this.project = conf.project;
 		this.token = conf.token;
+		this.allowInsecureCertificate = conf.allow_insecure_certificate;
 		this.logLevel = conf.log_level;
 		this.lang = conf.lang;
 		this.warningAction = conf.warning_action;
@@ -34,22 +40,33 @@ class Conf {
 		this.commands = SnakeToCamelCase(conf.commands);
 	}
 
-	getProject = () => {
-		assertString(this.project, 'Project name is not defined');
-		return this.project;
+	getApiOptions = (options?: commandOptions[keyof commandOptions]) => {
+		let project, domain, protocole;
+		if (checkIsObject(options)) {
+			if (hasOwnProperty(options, 'project')) {
+				project = options.project as string;
+			}
+			if (hasOwnProperty(options, 'domain')) {
+				domain = options.domain as string;
+			}
+			if (hasOwnProperty(options, 'protocole')) {
+				protocole = options.protocole as protocole;
+			}
+		}
+		const apiOptions = {
+			allowInsecureCertificate: this.allowInsecureCertificate,
+			project: project || this.project,
+			domain: domain || this.domain,
+			protocole: protocole || this.protocole,
+			token: this.token,
+		};
+		assertString(apiOptions.project, 'Project name is not defined');
+		assertString(apiOptions.domain, 'Domain name is not defined');
+		assertString(apiOptions.protocole, 'Protocole is not defined');
+		assertString(apiOptions.token, 'Token is not defined');
+		return apiOptions as gitlabApiOptions;
 	};
-	getDomain = () => {
-		assertString(this.domain, 'Domain name is not defined');
-		return this.domain;
-	};
-	getProtocole = () => {
-		assertString(this.protocole, 'Protocole is not defined');
-		return this.protocole;
-	};
-	getToken = () => {
-		assertString(this.token, 'Token is not defined');
-		return this.token;
-	};
+
 	static parseConfig = async (configFile: unknown): Promise<configFile> => {
 		assertObject(configFile);
 		assertProperty(configFile, 'token');
@@ -85,9 +102,9 @@ class Conf {
 			log_level: 'info',
 			lang: 'en',
 			warning_action: 'prompt',
+			allow_insecure_certificate: false,
 			...configFile,
 		};
-		console.log(configFile.token);
 		return conf as configFile;
 	};
 

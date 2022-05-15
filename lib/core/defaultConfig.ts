@@ -27,6 +27,10 @@ const defaultConfig = {
 		pull: {
 			branch: 'optional',
 		},
+		push: {
+			branch: 'optional',
+			awaitPipeline: 'optional',
+		},
 	},
 };
 

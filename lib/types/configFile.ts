@@ -9,6 +9,7 @@ interface configFile {
 	protocole: protocole;
 	project?: string;
 	domain?: string;
+	allow_insecure_certificate: boolean;
 	token: string;
 	log_level: logLevel;
 	lang: string;
