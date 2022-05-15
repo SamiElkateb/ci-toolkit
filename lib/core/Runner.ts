@@ -244,9 +244,9 @@ class Runner {
 		logger.debug(`Storing project name as ${key}`);
 	};
 
-	getLastTag = async (options: unknown, conf: Conf) => {
+	fetchLastTag = async (options: unknown, conf: Conf) => {
 		logger.debug('Getting last tag');
-		assertCommandOptionsValid(options, 'getLastTag');
+		assertCommandOptionsValid(options, 'fetchLastTag');
 		options.project = this.populateVariable(options.project);
 		const { store } = options;
 		assertVarKey(store);
@@ -258,9 +258,9 @@ class Runner {
 		logger.debug(`Storing project name as ${key}`);
 	};
 
-	getCurrentVersion = async (options: unknown, _: Conf) => {
+	readCurrentVersion = async (options: unknown, _: Conf) => {
 		logger.debug('Getting current version');
-		assertCommandOptionsValid(options, 'getCurrentVersion');
+		assertCommandOptionsValid(options, 'readCurrentVersion');
 		const { file, store } = options;
 		assertVarKey(store);
 		const key = store.replace('$_', '');

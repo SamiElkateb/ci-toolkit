@@ -16,7 +16,7 @@ const defaultConfig = {
 			protocole: 'optional',
 			domain: 'optional',
 		},
-		getCurrentVersion: {
+		readCurrentVersion: {
 			file: 'required',
 			store: 'required',
 		},

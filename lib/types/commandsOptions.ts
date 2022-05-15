@@ -9,13 +9,13 @@ interface command_options {
 	get_current_project_name: {
 		store: string;
 	};
-	get_last_tag: {
+	fetch_last_tag: {
 		project: string;
 		store: string;
 		protocole?: protocole;
 		domain?: string;
 	};
-	get_current_version: {
+	read_current_version: {
 		file: string;
 		store: string;
 	};
