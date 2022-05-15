@@ -7,6 +7,7 @@ import {
 } from './assertions/customTypesAssertions';
 import {
 	checkIsObject,
+	checkIsString,
 	hasOwnProperty,
 } from './validations/basicTypeValidations';
 
@@ -56,44 +57,23 @@ const execProm = (command: string): Promise<string> => {
 					if (error.stderr instanceof Buffer) {
 						errorMessage = error.stderr.toString();
 					}
-					if (
-						typeof error.stderr === 'string' &&
-						errorMessage.length === 0
-					) {
+					if (!errorMessage && checkIsString(error.stderr)) {
 						errorMessage = error.stderr;
 					}
 				}
-				if (
-					hasOwnProperty(error, 'message') &&
-					errorMessage.length === 0
-				) {
-					if (
-						error.message instanceof Buffer &&
-						errorMessage.length === 0
-					) {
+				if (!errorMessage && hasOwnProperty(error, 'message')) {
+					if (!errorMessage && error.message instanceof Buffer) {
 						errorMessage = error.message.toString();
 					}
-					if (
-						typeof error.message === 'string' &&
-						errorMessage.length === 0
-					) {
+					if (!errorMessage && checkIsString(error.message)) {
 						errorMessage = error.message;
 					}
 				}
-				if (
-					hasOwnProperty(error, 'stdout') &&
-					errorMessage.length === 0
-				) {
-					if (
-						error.stdout instanceof Buffer &&
-						errorMessage.length === 0
-					) {
+				if (!errorMessage && hasOwnProperty(error, 'stdout')) {
+					if (error.stdout instanceof Buffer && !errorMessage) {
 						errorMessage = error.stdout.toString();
 					}
-					if (
-						typeof error.stdout === 'string' &&
-						errorMessage.length === 0
-					) {
+					if (checkIsString(error.stdout) && !errorMessage) {
 						errorMessage = error.stdout;
 					}
 				}
