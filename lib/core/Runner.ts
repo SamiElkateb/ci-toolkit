@@ -222,6 +222,36 @@ class Runner {
 		}
 	};
 
+	mergeMergeRequest = async (options: unknown, conf: Conf) => {
+		logger.debug('Merging merge request');
+		assertCommandOptionsValid(options, 'mergeMergeRequest');
+		options.project = this.populateVariable(options.project);
+		options.sourceBranch = this.populateVariable(options.sourceBranch);
+		options.targetBranch = this.populateVariable(options.targetBranch);
+		const apiOptions = conf.getApiOptions(options);
+		const mergeOptions = {
+			...apiOptions,
+			targetBranch: options.targetBranch,
+			sourceBranch: options.sourceBranch,
+			deleteSourceBranch: options.deleteSourceBranch || undefined,
+			squashCommits: options.squashCommits || undefined,
+		};
+		const mergeRequest = await MergeRequests.fetch(mergeOptions);
+
+		MergeRequests.verify(options, mergeRequest);
+		await MergeRequests.merge(mergeOptions, mergeRequest, logger);
+		logger.info('Merge request merged');
+		if (options.awaitPipeline) {
+			const awaitPipelineParams = {
+				options,
+				conf,
+				source: 'push',
+				ref: options.targetBranch,
+			};
+			await Runner.awaitPipeline(awaitPipelineParams);
+		}
+	};
+
 	static parseArgs = (
 		arg: string
 	): { command?: commands; option?: options } => {

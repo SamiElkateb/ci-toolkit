@@ -23,6 +23,8 @@ interface mergeRequest {
 	downvotes: number;
 	merge_status: string;
 	should_remove_source_branch: string;
+	has_conflicts: boolean;
+	blocking_discussions_resolved: boolean;
 }
 interface user {
 	id: number;

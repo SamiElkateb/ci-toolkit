@@ -16,6 +16,16 @@ interface command_options {
 		reviewers?: string[];
 		label?: string;
 	};
+	merge_merge_request: {
+		project: string;
+		source_branch: string;
+		target_branch: string;
+		await_pipeline?: boolean;
+		min_upvotes?: number;
+		max_downvotes?: number;
+		delete_source_branch?: boolean;
+		squash_commits?: boolean;
+	};
 	get_current_branch_name: {
 		store: string;
 	};

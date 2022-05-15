@@ -23,6 +23,16 @@ const defaultConfig = {
 			reviewers: 'optional',
 			label: 'optional',
 		},
+		mergeMergeRequest: {
+			project: 'required',
+			sourceBranch: 'required',
+			targetBranch: 'required',
+			awaitPipeline: 'optional',
+			minUpvotes: 'optional',
+			maxDownvotes: 'optional',
+			deleteSourceBranch: 'optional',
+			squashCommits: 'optional',
+		},
 		fetchLastTag: {
 			project: 'required',
 			store: 'required',

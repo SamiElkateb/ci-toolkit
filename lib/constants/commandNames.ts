@@ -8,6 +8,7 @@ const command_names = [
 	'prompt',
 	'get_current_project_name',
 	'create_merge_request',
+	'merge_merge_request',
 	'fetch_last_tag',
 	'read_current_version',
 	'write_version',

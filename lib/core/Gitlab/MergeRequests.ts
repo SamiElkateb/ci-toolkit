@@ -9,8 +9,8 @@ import { hasOwnProperty } from '../../utils/validations/basicTypeValidations';
 const axios = require('axios');
 
 interface verifyOptions {
-	minUpvotes: number;
-	maxDownvotes: number;
+	minUpvotes?: number;
+	maxDownvotes?: number;
 	targetBranch: string;
 }
 
@@ -18,8 +18,8 @@ interface fetchOptions extends gitlabApiOptions {
 	sourceBranch: string;
 }
 interface mergeOptions extends gitlabApiOptions {
-	squashCommits: boolean;
-	deleteSourceBranch: boolean;
+	squashCommits?: boolean;
+	deleteSourceBranch?: boolean;
 }
 
 class MergeRequests {
@@ -30,9 +30,10 @@ class MergeRequests {
 		this.logger = new Logger(conf.logLevel);
 	}
 
-	static fetch<S extends string>(
-		x?: S
-	): S extends string ? Promise<mergeRequest> : Promise<mergeRequest[]>;
+	static fetch<S extends fetchOptions | gitlabApiOptions>(
+		options: S,
+		logger?: Logger
+	): S extends fetchOptions ? Promise<mergeRequest> : Promise<mergeRequest[]>;
 
 	static async fetch(
 		options: fetchOptions | gitlabApiOptions,
@@ -118,13 +119,25 @@ class MergeRequests {
 		return mergeRequest;
 	};
 	static verify = (options: verifyOptions, mergeRequest: mergeRequest) => {
-		const { maxDownvotes, minUpvotes, targetBranch } = options;
-		if (mergeRequest.upvotes < minUpvotes)
-			throw "merge request doesn't meet minimum upvotes";
-		if (mergeRequest.downvotes >= maxDownvotes)
-			throw 'merge request exceeds maximum downvotes';
-		if (mergeRequest.target_branch !== targetBranch)
-			throw 'target branch error';
+		const { maxDownvotes = 0, minUpvotes = 0, targetBranch } = options;
+		if (mergeRequest.has_conflicts) {
+			throw 'Please resolve merge request conflicts before merging';
+		}
+		if (mergeRequest.blocking_discussions_resolved === false) {
+			throw 'Please resolve active threads before merging';
+		}
+		if (mergeRequest.upvotes < minUpvotes) {
+			throw "Merge request doesn't meet minimum upvotes";
+		}
+		if (mergeRequest.downvotes >= maxDownvotes) {
+			throw 'Merge request exceeds maximum downvotes';
+		}
+		if (mergeRequest.target_branch !== targetBranch) {
+			throw 'Target branch error';
+		}
+		if (mergeRequest.merge_status !== 'can_be_merged') {
+			throw 'Merge request can not be merged for an unknown reason, please merge manually';
+		}
 	};
 	static merge = async (
 		options: mergeOptions,
