@@ -49,6 +49,10 @@ type awaitPipelineParams = {
 	source: string;
 	ref?: string;
 };
+
+interface awaitMergeAvailableOptions extends gitlabApiOptions {
+	sourceBranch: string;
+}
 interface store {
 	[key: string]: string;
 }
@@ -237,8 +241,14 @@ class Runner {
 			squashCommits: options.squashCommits || undefined,
 		};
 		const mergeRequest = await MergeRequests.fetch(mergeOptions);
-
 		MergeRequests.verify(options, mergeRequest);
+		if (mergeRequest.merge_status !== 'can_be_merged') {
+			logger.info(
+				'merge request cannot be merged at the moment, checking if pipelines are running for merge request.'
+			);
+			await Runner.awaitMergeAvailable(mergeOptions, conf);
+		}
+
 		await MergeRequests.merge(mergeOptions, mergeRequest, logger);
 		logger.info('Merge request merged');
 		if (options.awaitPipeline) {
@@ -415,6 +425,20 @@ class Runner {
 			await Runner.awaitPipeline(awaitPipelineParams);
 		}
 	};
+	static awaitMergeAvailable = async (
+		options: awaitMergeAvailableOptions,
+		conf: Conf
+	) => {
+		const awaitPipelineParams = {
+			options,
+			conf,
+			source: 'push',
+			ref: options.sourceBranch,
+		};
+		await Runner.awaitPipeline(awaitPipelineParams);
+		awaitPipelineParams.source = 'merge_request_event';
+		await Runner.awaitPipeline(awaitPipelineParams);
+	};
 
 	static awaitPipeline = async (params: awaitPipelineParams) => {
 		await standby(5000);
@@ -429,6 +453,7 @@ class Runner {
 			...fetchOptions,
 		};
 		const allPipelines = await pipelines.fetchAll(fetchAllOptions);
+
 		if (allPipelines.length === 0 || allPipelines[0].status === 'success') {
 			return;
 		}

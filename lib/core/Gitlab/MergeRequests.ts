@@ -135,9 +135,6 @@ class MergeRequests {
 		if (mergeRequest.target_branch !== targetBranch) {
 			throw 'Target branch error';
 		}
-		if (mergeRequest.merge_status !== 'can_be_merged') {
-			throw 'Merge request can not be merged for an unknown reason, please merge manually';
-		}
 	};
 	static merge = async (
 		options: mergeOptions,
