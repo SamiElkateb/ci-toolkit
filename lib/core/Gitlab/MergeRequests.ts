@@ -1,19 +1,32 @@
-// @ts-nocheck
 import Conf from '../Conf';
-import https = require('https');
 import Logger from '../Logger';
 import { assertExists } from '../../utils/assertions/baseTypeAssertions';
 import lang from '../lang/en';
 import GitlabApiError from '../Errors/GitlabApiError';
-const rejectUnauthorized = false;
-const agent = new https.Agent({ rejectUnauthorized });
+import { getHttpsAgent } from '../../utils/getHttpsAgent';
+import { hasOwnProperty } from '../../utils/validations/basicTypeValidations';
 
 const axios = require('axios');
-type postParams = {
+
+interface verifyOptions {
+	minUpvotes: number;
+	maxDownvotes: number;
+	targetBranch: string;
+}
+interface postOptions extends gitlabApiOptions {
+	title: string;
+	targetBranch: string;
 	sourceBranch: string;
 	assigneeId?: number;
 	reviewerIds: number[];
-};
+}
+interface fetchOptions extends gitlabApiOptions {
+	sourceBranch: string;
+}
+interface mergeOptions extends gitlabApiOptions {
+	squashCommits: boolean;
+	deleteSourceBranch: boolean;
+}
 
 class MergeRequests {
 	private conf: Conf;
@@ -23,81 +36,120 @@ class MergeRequests {
 		this.logger = new Logger(conf.logLevel);
 	}
 
-	fetch<S extends string>(
+	static fetch<S extends string>(
 		x?: S
 	): S extends string ? Promise<mergeRequest> : Promise<mergeRequest[]>;
 
-	async fetch(sourceBranch?: string): Promise<mergeRequest | mergeRequest[]> {
-		if (sourceBranch) return await this.fetchRequest(sourceBranch);
-		return await this.fetchRequests();
+	static async fetch(
+		options: fetchOptions | gitlabApiOptions,
+		logger?: Logger
+	): Promise<mergeRequest | mergeRequest[]> {
+		if (hasOwnProperty(options, 'sourceBranch')) {
+			return await MergeRequests.fetchRequest(options, logger);
+		}
+		return await MergeRequests.fetchRequests(options, logger);
 	}
-	async post(params: postParams): Promise<mergeRequest | mergeRequest[]> {
-		const { sourceBranch, assigneeId, reviewerIds } = params;
-		const title = this.conf.mergeRequests.creation.title.replace(
-			/\[branch_name\]/,
-			params.sourceBranch
-		);
-		const data = {
-			source_branch: sourceBranch,
-			target_branch: this.conf.mergeRequests.targetBranch,
+	static async post(
+		options: postOptions,
+		logger?: Logger
+	): Promise<mergeRequest | mergeRequest[]> {
+		const {
 			title,
-			assignee_id: assigneeId,
-			reviewer_ids: reviewerIds,
+			protocole,
+			domain,
+			project,
+			token,
+			allowInsecureCertificate: allowInsecure,
+		} = options;
+		const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
+		// const title = this.conf.mergeRequests.creation.title.replace(
+		// 	/\[branch_name\]/,
+		// 	sourceBranch
+		// );
+		const data = {
+			source_branch: options.sourceBranch,
+			target_branch: options.targetBranch,
+			title,
+			assignee_id: options.assigneeId,
+			reviewer_ids: options.reviewerIds,
 		};
-		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/projects/${this.conf.projectId}/merge_requests?access_token=${this.conf.token}`;
-		this.logger.request(url, 'post');
+		const url = `${protocole}://${domain}/api/v4/projects/${project}/merge_requests?access_token=${token}`;
+		logger?.request(url, 'post');
 		try {
-			const res = await axios.post(url, data, { httpsAgent: agent });
+			const res = await axios.post(url, data, axiosOptions);
 			return res.data;
 		} catch (error) {
 			throw new GitlabApiError(error);
 		}
 	}
-	fetchRequests = async (): Promise<mergeRequest[]> => {
-		const mine = '&scope=assigned_to_me';
-		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/projects/${this.conf.projectId}/merge_requests?state=opened&access_token=${this.conf.token}`;
-		this.logger.request(url, 'get');
+	static fetchRequests = async (
+		options: gitlabApiOptions,
+		logger?: Logger
+	): Promise<mergeRequest[]> => {
+		const {
+			protocole,
+			domain,
+			project,
+			token,
+			allowInsecureCertificate: allowInsecure,
+		} = options;
+		const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
+		// const mine = '&scope=assigned_to_me';
+		const url = `${protocole}://${domain}/api/v4/projects/${project}/merge_requests?state=opened&access_token=${token}`;
+		logger?.request(url, 'get');
 		try {
-			const res = await axios.get(url, { httpsAgent: agent });
+			const res = await axios.get(url, axiosOptions);
 			return res.data;
 		} catch (error) {
 			throw new GitlabApiError(error);
 		}
 	};
-	fetchRequest = async (sourceBranch: string): Promise<mergeRequest> => {
-		const mergeRequests = await this.fetchRequests();
+	static fetchRequest = async (
+		options: fetchOptions,
+		logger?: Logger
+	): Promise<mergeRequest> => {
+		const mergeRequests = await MergeRequests.fetchRequests(
+			options,
+			logger
+		);
 		const mergeRequest = mergeRequests.find(
 			(mergeRequest: mergeRequest) =>
-				mergeRequest.source_branch === sourceBranch
+				mergeRequest.source_branch === options.sourceBranch
 		);
-		assertExists(mergeRequest, lang.noMergeRequest(sourceBranch));
+		assertExists(mergeRequest, lang.noMergeRequest(options.sourceBranch));
 		return mergeRequest;
 	};
-	verify = (mergeRequest: mergeRequest) => {
-		if (
-			mergeRequest.upvotes <
-			this.conf.mergeRequests.requirements.minUpvotes
-		)
+	static verify = (options: verifyOptions, mergeRequest: mergeRequest) => {
+		const { maxDownvotes, minUpvotes, targetBranch } = options;
+		if (mergeRequest.upvotes < minUpvotes)
 			throw "merge request doesn't meet minimum upvotes";
-		if (
-			mergeRequest.downvotes >=
-			this.conf.mergeRequests.requirements.maxDownvotes
-		)
+		if (mergeRequest.downvotes >= maxDownvotes)
 			throw 'merge request exceeds maximum downvotes';
-		if (mergeRequest.target_branch !== this.conf.mergeRequests.targetBranch)
+		if (mergeRequest.target_branch !== targetBranch)
 			throw 'target branch error';
 	};
-	merge = async (mergeRequest: mergeRequest) => {
+	static merge = async (
+		options: mergeOptions,
+		mergeRequest: mergeRequest,
+		logger?: Logger
+	) => {
+		const {
+			protocole,
+			domain,
+			project,
+			token,
+			allowInsecureCertificate: allowInsecure,
+		} = options;
+		const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
 		const mergeRequestIid = mergeRequest.iid;
 		const data = {
-			squash: this.conf.mergeRequests.options.squashCommits,
-			should_remove_source_branch:
-				this.conf.mergeRequests.options.deleteSourceBranch,
+			squash: options.squashCommits,
+			should_remove_source_branch: options.deleteSourceBranch,
 		};
-		const url = `${this.conf.protocole}://${this.conf.domain}/api/v4/projects/${this.conf.projectId}/merge_requests/${mergeRequestIid}/merge?access_token=${this.conf.token}`;
-		this.logger.request(url, 'put');
+		const url = `${protocole}://${domain}/api/v4/projects/${project}/merge_requests/${mergeRequestIid}/merge?access_token=${token}`;
+		logger?.request(url, 'put');
 		try {
-			const res = await axios.put(url, data, { httpsAgent: agent });
+			const res = await axios.put(url, data, axiosOptions);
 			return res.data;
 		} catch (error) {
 			throw new GitlabApiError(error);
