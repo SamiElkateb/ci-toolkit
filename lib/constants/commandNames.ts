@@ -7,7 +7,7 @@ const command_names = [
 	'get_current_branch_name',
 	'prompt',
 	'get_current_project_name',
-	// 'create_merge_request',
+	'create_merge_request',
 	'fetch_last_tag',
 	'read_current_version',
 	'write_version',

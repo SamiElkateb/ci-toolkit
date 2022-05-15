@@ -1,4 +1,15 @@
 type versionIncrement = 'patch' | 'minor' | 'major';
+interface mergeRequestsPostOptions extends gitlabApiOptions {
+	title: string;
+	targetBranch: string;
+	sourceBranch: string;
+	squashCommits: boolean;
+	deleteSourceBranch: boolean;
+	label?: string;
+	assigneeId?: number;
+	minApprovals: number;
+	reviewerIds: number[];
+}
 interface mergeRequest {
 	id: number;
 	iid: number;

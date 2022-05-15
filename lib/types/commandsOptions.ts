@@ -3,6 +3,19 @@ interface command_options {
 		store: string;
 		question: string;
 	};
+	create_merge_request: {
+		title: string;
+		project: string;
+		source_branch: string;
+		target_branch: string;
+		await_pipeline?: boolean;
+		min_approvals?: number;
+		assign_to_me?: boolean;
+		delete_source_branch?: boolean;
+		squash_commits?: boolean;
+		reviewers?: string[];
+		label?: string;
+	};
 	get_current_branch_name: {
 		store: string;
 	};

@@ -6,6 +6,7 @@ import {
 } from '../../utils/assertions/baseTypeAssertions';
 import {
 	checkIsObject,
+	checkIsString,
 	hasOwnProperty,
 } from '../../utils/validations/basicTypeValidations';
 
@@ -31,6 +32,9 @@ class GitlabApiError {
 			return data.error;
 		}
 		assertProperty(data, 'message');
+		if (checkIsString(data.message)) {
+			return data.message;
+		}
 		if (
 			checkIsObject(data.message) &&
 			hasOwnProperty(data.message, 'base')

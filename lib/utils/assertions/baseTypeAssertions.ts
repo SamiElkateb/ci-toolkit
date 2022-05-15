@@ -46,7 +46,7 @@ const assertExists: assertExists = (
 	val: unknown,
 	message?: string
 ): asserts val => {
-	if (typeof val === 'undefined') throw message || 'value does not exist';
+	if (typeof val === 'undefined') throw message || `${val} does not exist`;
 };
 
 type assertProperty<X extends {}, Y extends PropertyKey> = (

@@ -13,13 +13,7 @@ interface verifyOptions {
 	maxDownvotes: number;
 	targetBranch: string;
 }
-interface postOptions extends gitlabApiOptions {
-	title: string;
-	targetBranch: string;
-	sourceBranch: string;
-	assigneeId?: number;
-	reviewerIds: number[];
-}
+
 interface fetchOptions extends gitlabApiOptions {
 	sourceBranch: string;
 }
@@ -50,7 +44,7 @@ class MergeRequests {
 		return await MergeRequests.fetchRequests(options, logger);
 	}
 	static async post(
-		options: postOptions,
+		options: mergeRequestsPostOptions,
 		logger?: Logger
 	): Promise<mergeRequest | mergeRequest[]> {
 		const {
@@ -72,6 +66,10 @@ class MergeRequests {
 			title,
 			assignee_id: options.assigneeId,
 			reviewer_ids: options.reviewerIds,
+			approvals_before_merge: options.minApprovals,
+			remove_source_branch: options.deleteSourceBranch,
+			squash: options.squashCommits,
+			labels: options.label,
 		};
 		const url = `${protocole}://${domain}/api/v4/projects/${project}/merge_requests?access_token=${token}`;
 		logger?.request(url, 'post');

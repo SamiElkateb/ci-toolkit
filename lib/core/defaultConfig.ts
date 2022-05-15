@@ -10,7 +10,20 @@ const defaultConfig = {
 		getCurrentProjectName: {
 			store: 'required',
 		},
-		getLastTag: {
+		createMergeRequest: {
+			title: 'required',
+			project: 'required',
+			sourceBranch: 'required',
+			targetBranch: 'required',
+			awaitPipeline: 'optional',
+			minApprovals: 'optional',
+			assignToMe: 'optional',
+			deleteSourceBranch: 'optional',
+			squashCommits: 'optional',
+			reviewers: 'optional',
+			label: 'optional',
+		},
+		fetchLastTag: {
 			project: 'required',
 			store: 'required',
 			protocole: 'optional',

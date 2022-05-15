@@ -72,11 +72,6 @@ class Pipelines {
 		if (username) params.append('username', username);
 		if (source) params.append('source', source);
 		if (ref) params.append('ref', ref);
-		// params.append('ref', 'branchName');
-		// params.append('username', 'myName');
-		// params.append('source', 'push');
-		// params.append('order_by', 'updated_at');
-		// params.append('sort', 'desc');
 		const url = `${protocole}://${domain}/api/v4/projects/${project}/pipelines/?${params.toString()}`;
 		this.logger.request(url, 'get');
 		try {

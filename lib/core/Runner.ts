@@ -33,6 +33,8 @@ import {
 import { standby } from '../utils/standby';
 import Users from './Gitlab/Users';
 import Pipelines from './Gitlab/Pipelines';
+import MergeRequests from './Gitlab/MergeRequests';
+import { checkIsArray } from '../utils/validations/basicTypeValidations';
 
 type commands = 'help' | 'deploy' | 'createMergeRequest';
 type options = 'help';
@@ -45,6 +47,7 @@ type awaitPipelineParams = {
 	conf: Conf;
 	options: Partial<gitlabApiOptions>;
 	source: string;
+	ref?: string;
 };
 interface store {
 	[key: string]: string;
@@ -174,24 +177,50 @@ class Runner {
 		logger.info(lang.newTag(newTag));
 	}; */
 
-	// static createMergeRequest = async (params: params) => {
-	// 	const { options, conf } = params;
-	// 	const shouldAssignToMe = conf.mergeRequests.creation.assignToMe;
-	// 	const gitlab = new Gitlab(conf);
-	// 	const sourceBranch = await Git.getBranchName();
-	// 	logger.info(lang.currentBranchIs(sourceBranch));
-	// 	const assigneeId = shouldAssignToMe
-	// 		? (await gitlab.users.getMe()).id
-	// 		: undefined;
-	// 	const reviewers = conf.mergeRequests.creation.reviewers;
-	// 	const reviewerIds = await gitlab.users.getIds(reviewers);
-	// 	await gitlab.mergeRequests.post({
-	// 		assigneeId,
-	// 		sourceBranch,
-	// 		reviewerIds,
-	// 	});
-	// 	logger.info('Merge request created');
-	// };
+	createMergeRequest = async (options: unknown, conf: Conf) => {
+		logger.debug('Creating merge request');
+		assertCommandOptionsValid(options, 'createMergeRequest');
+		options.project = this.populateVariable(options.project);
+		options.title = this.populateVariable(options.title);
+		options.sourceBranch = this.populateVariable(options.sourceBranch);
+		options.targetBranch = this.populateVariable(options.targetBranch);
+		const apiOptions = conf.getApiOptions(options);
+		const postOptions: mergeRequestsPostOptions = {
+			...apiOptions,
+			title: options.title,
+			targetBranch: options.targetBranch,
+			sourceBranch: options.sourceBranch,
+			minApprovals: options.minApprovals || 0,
+			deleteSourceBranch: options.deleteSourceBranch || false,
+			squashCommits: options.squashCommits || false,
+			label: options.label,
+			assigneeId: undefined,
+			reviewerIds: [],
+		};
+		if (options.assignToMe === true) {
+			const myUserData = await Users.fetchMe(apiOptions, logger);
+			const myId = myUserData.id;
+			postOptions.assigneeId = myId;
+		}
+		if (checkIsArray(options.reviewers)) {
+			const reviewers = options.reviewers;
+			const reviewerIds = await Users.fetchIds({
+				...apiOptions,
+				usernames: reviewers,
+			});
+			postOptions.reviewerIds = reviewerIds;
+		}
+		await MergeRequests.post(postOptions, logger);
+		logger.info('Merge request created');
+		if (options.awaitPipeline) {
+			const awaitPipelineParams = {
+				options,
+				conf,
+				source: 'merge_request_event',
+			};
+			await Runner.awaitPipeline(awaitPipelineParams);
+		}
+	};
 
 	static parseArgs = (
 		arg: string
@@ -240,7 +269,7 @@ class Runner {
 		const key = store.replace('$_', '');
 		const projectName = await Git.getProjectName();
 		logger.info(`Current project name is ${projectName}`);
-		this.store[key] = encodeURIComponent(projectName);
+		this.store[key] = projectName;
 		logger.debug(`Storing project name as ${key}`);
 	};
 
@@ -351,6 +380,7 @@ class Runner {
 				options: { project, ...options },
 				conf,
 				source: 'push',
+				ref: currentBranchName,
 			};
 			await Runner.awaitPipeline(awaitPipelineParams);
 		}
@@ -358,15 +388,13 @@ class Runner {
 
 	static awaitPipeline = async (params: awaitPipelineParams) => {
 		await standby(5000);
-		const { options, conf, source } = params;
-		const currentBranchName = await Git.getBranchName();
+		const { options, conf, source, ref } = params;
 		const fetchOptions = conf.getApiOptions(options);
 		const currentUser = await Users.fetchMe(fetchOptions, logger);
-		const username = currentUser.username;
 		const pipelines = new Pipelines(conf);
 		const fetchAllOptions = {
-			username,
-			ref: currentBranchName,
+			username: currentUser.username,
+			ref,
 			source,
 			...fetchOptions,
 		};
@@ -389,7 +417,9 @@ class Runner {
 
 	populateVariable = (store: string): string => {
 		if (!checkIsVarKey(store)) return store;
-		const key = store.replace('$_', '');
+		const varKey = store.match(/\$\_\w*/);
+		if (!varKey || varKey?.length === 0) return store;
+		const key = varKey[0].replace('$_', '');
 		assertExists(this.store[key]);
 		return this.store[key];
 	};
