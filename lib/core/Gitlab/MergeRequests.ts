@@ -129,7 +129,7 @@ class MergeRequests {
 		if (mergeRequest.upvotes < minUpvotes) {
 			throw "Merge request doesn't meet minimum upvotes";
 		}
-		if (mergeRequest.downvotes >= maxDownvotes) {
+		if (mergeRequest.downvotes > maxDownvotes) {
 			throw 'Merge request exceeds maximum downvotes';
 		}
 		if (mergeRequest.target_branch !== targetBranch) {

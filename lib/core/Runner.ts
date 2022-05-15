@@ -34,7 +34,11 @@ import { standby } from '../utils/standby';
 import Users from './Gitlab/Users';
 import Pipelines from './Gitlab/Pipelines';
 import MergeRequests from './Gitlab/MergeRequests';
-import { checkIsArray } from '../utils/validations/basicTypeValidations';
+import {
+	checkIsArray,
+	checkIsString,
+	hasOwnProperty,
+} from '../utils/validations/basicTypeValidations';
 
 type commands = 'help' | 'deploy' | 'createMergeRequest';
 type options = 'help';
@@ -85,7 +89,6 @@ class Runner {
 		});
 	};
 	static runCustomCommand = async (customCommandKey: string, conf: Conf) => {
-		console.log(conf.commands);
 		assertProperty(conf.commands, customCommandKey);
 		const commands = conf.commands[customCommandKey];
 		assertArray(commands);
@@ -407,6 +410,13 @@ class Runner {
 		const project = await Git.getProjectName();
 		logger.debug(`Pushing changes`);
 		assertCommandOptionsValid(options, 'push');
+
+		if (
+			hasOwnProperty(options, 'branch') &&
+			checkIsString(options.branch)
+		) {
+			options.branch = this.populateVariable(options.branch);
+		}
 		const { branch, awaitPipeline } = options;
 		if (branch) {
 			assertString(branch);

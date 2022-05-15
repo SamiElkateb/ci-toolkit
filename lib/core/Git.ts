@@ -40,8 +40,8 @@ class Git {
 
 	static commit = async (options: commitOptions, logger?: Logger) => {
 		const { message, add } = options;
-		// const canCommit = await Git.checkCanCommit(logger);
-		// if (!canCommit) return;
+		const canCommit = await Git.checkCanCommit(add, logger);
+		if (!canCommit) return;
 		let command = 'git commit';
 		if (add === 'all') {
 			command = 'git add . && git commit';
@@ -100,7 +100,7 @@ class Git {
 		return originDomainArray[1];
 	};
 
-	static checkCanCommit = async (logger?: Logger) => {
+	static checkCanCommit = async (add?: string, logger?: Logger) => {
 		const command = 'git status';
 		const response = await execCommand({ command });
 		const cleanTreeMessage = 'nothing to commit, working tree clean';
@@ -119,6 +119,7 @@ class Git {
 		}
 		if (response.includes(noStagedChangesMessage)) {
 			// await standby(60000);
+			if (add === 'all' || add === 'tracked') return true;
 			if (logger) {
 				const text = logger.text.shouldCommitNoChangeAdded();
 				const continueText = logger.text.continueNoCommit();
@@ -130,6 +131,7 @@ class Git {
 			response.includes(changesNotCommittedMessage) &&
 			response.includes(changesToCommitMessage)
 		) {
+			if (add === 'all') return true;
 			if (logger) {
 				const text = logger.text.shouldCommitSomeChangeNotAdded();
 				const continueText = logger.text.continueCommitStaged();

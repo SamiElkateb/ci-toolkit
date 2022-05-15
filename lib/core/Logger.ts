@@ -5,6 +5,7 @@ import Lang from './lang/Lang';
 class Logger {
 	private red: string;
 	private yellow: string;
+	private bright: string;
 	private logLevel: logLevel;
 	private warningAction: warningAction;
 	public text: Lang['language'];
@@ -12,6 +13,7 @@ class Logger {
 		const lang = new Lang();
 		this.red = '\x1b[31m%s\x1b[0m';
 		this.yellow = '\x1b[33m%s\x1b[0m';
+		this.bright = '\x1b[1m%s\x1b[0m';
 		this.logLevel = 'info';
 		this.warningAction = 'prompt';
 		this.setLogLevel(logLevel);
@@ -74,7 +76,7 @@ class Logger {
 	}
 	info(text: string) {
 		if (this.logLevel !== 'info' && this.logLevel !== 'debug') return;
-		console.info(`info: ${text}`);
+		console.info(this.bright, `info: ${text}`);
 	}
 	debug(text: string) {
 		if (this.logLevel !== 'debug') return;

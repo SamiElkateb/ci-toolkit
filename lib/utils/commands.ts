@@ -86,20 +86,31 @@ const execProm = (command: string): Promise<string> => {
 		}
 	});
 };
-const appendString = (command: string, message: string) => {
+const appendCommitMessage = (command: string, message: string) => {
 	const whitelistedCommands = [
 		'git commit -m',
 		'git commit -a -m',
 		'git add . && git commit -m',
-		'git pull origin',
-		'git push -u origin',
 	];
 	if (!whitelistedCommands.includes(command)) {
-		throw `Appending "${message}" to append message to command "${command}" is not allowed.`;
+		throw `Appending "${message}" to command "${command}" is not allowed.`;
 	}
 	assertCommitMessageValidLength(message);
 	assertCommitMessageValidCharacters(message);
 	return `${command} "${message}"`;
+};
+
+const appendBranch = (command: string, branch: string) => {
+	const whitelistedCommands = ['git pull origin', 'git push -u origin'];
+	if (!whitelistedCommands.includes(command)) {
+		throw `Appending "${branch}" to command "${command}" is not allowed.`;
+	}
+	assertCommitMessageValidLength(branch);
+	assertCommitMessageValidCharacters(branch);
+	if (command === 'git pull origin') {
+		return `${command} ${branch} --ff`;
+	}
+	return `${command} ${branch}`;
 };
 
 const prependPath = (command: string, path: string) => {
@@ -120,7 +131,7 @@ const assertIsWhitelistedCommand = (command: string) => {
 		'git push',
 		'git push -u origin',
 		'git pull',
-		'git pull origin ',
+		'git pull origin',
 		'git status',
 	];
 	if (!whitelistedCommands.includes(command)) throw 'Invalid command';
@@ -135,10 +146,10 @@ const execCommand = async (options: execCommandOptions) => {
 	const { command: baseCommand, path, message, branch } = options;
 	assertIsWhitelistedCommand(baseCommand);
 	let command = baseCommand;
-	if (message) command = appendString(command, message);
-	if (branch) command = appendString(command, branch);
+	if (message) command = appendCommitMessage(command, message);
+	if (branch) command = appendBranch(command, branch);
 	if (path) command = prependPath(command, path);
-
+	//! should log command before executing?
 	const data = await execProm(command);
 	return data;
 };

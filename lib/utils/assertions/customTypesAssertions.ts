@@ -114,6 +114,7 @@ function assertCommitMessageValidCharacters(
 	message?: string
 ) {
 	if (!checkAreCommitMessageCharactersValid(commitMessage)) {
+		console.log(commitMessage);
 		throw message || `Unauthorized characters in commit message`;
 	}
 }
