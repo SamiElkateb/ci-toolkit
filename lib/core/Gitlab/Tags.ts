@@ -2,9 +2,9 @@ import Logger from '../Logger';
 import { assertVersion } from '../../utils/assertions/customTypesAssertions';
 import GitlabApiError from '../Errors/GitlabApiError';
 import { getHttpsAgent } from '../../utils/getHttpsAgent';
-type increaseTagsParams = {
-	update: 'patch' | 'minor' | 'major';
-	tag: unknown;
+type incrementVersionParams = {
+	incrementBy: versionIncrement;
+	version: unknown;
 };
 
 const axios = require('axios');
@@ -34,16 +34,16 @@ class Tags {
 		const lastTag = data[0].name;
 		return lastTag;
 	};
-	static increaseTag = (params: increaseTagsParams): version => {
-		const { tag, update } = params;
-		assertVersion(tag);
-		let [, major, minor, patch] = tag.match(/(\d*)\.(\d*)\.(\d*)/) as [
+	static incrementVersion = (params: incrementVersionParams): version => {
+		const { version, incrementBy } = params;
+		assertVersion(version);
+		let [, major, minor, patch] = version.match(/(\d*)\.(\d*)\.(\d*)/) as [
 			string,
 			string,
 			string,
 			string
 		];
-		switch (update) {
+		switch (incrementBy) {
 			case 'patch':
 				patch = (+patch + 1).toString();
 				break;

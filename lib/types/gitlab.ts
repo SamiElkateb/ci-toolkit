@@ -1,3 +1,4 @@
+type versionIncrement = 'patch' | 'minor' | 'major';
 interface mergeRequest {
 	id: number;
 	iid: number;

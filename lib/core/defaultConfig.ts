@@ -20,6 +20,15 @@ const defaultConfig = {
 			file: 'required',
 			store: 'required',
 		},
+		writeVersion: {
+			files: 'required',
+			newVersion: 'required',
+		},
+		incrementVersion: {
+			incrementFrom: 'required',
+			incrementBy: 'required',
+			store: 'required',
+		},
 		commit: {
 			message: 'optional',
 			add: 'optional',

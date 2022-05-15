@@ -33,6 +33,19 @@ const assertVersion: assertVersion = (
 	if (!checkIsVersion(val)) throw message || `${val} is not a version number`;
 };
 
+type assertVersionIncrement = (
+	val: unknown,
+	message?: string
+) => asserts val is versionIncrement;
+const assertVersionIncrement: assertVersionIncrement = (
+	val: unknown,
+	message?: string
+): asserts val is versionIncrement => {
+	assertString(val);
+	if (!['major', 'minor', 'patch'].includes(val))
+		throw message || `${val} should be major|minor|patch`;
+};
+
 type assertVarKey = (val: unknown, message?: string) => asserts val is varKey;
 const assertVarKey: assertVarKey = (
 	val: unknown,
@@ -105,6 +118,7 @@ function assertCommitMessageValidCharacters(
 }
 export {
 	assertVersion,
+	assertVersionIncrement,
 	assertPath,
 	assertPathExists,
 	assertVarKey,

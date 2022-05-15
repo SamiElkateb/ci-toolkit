@@ -1,5 +1,8 @@
 import path = require('path');
-import { assertPath } from './assertions/customTypesAssertions';
+import {
+	assertPath,
+	assertPathExists,
+} from './assertions/customTypesAssertions';
 
 const fs = require('fs');
 const util = require('util');
@@ -18,14 +21,13 @@ const getAbsolutePath = (filePath: string): path => {
 	return path.resolve(process.cwd(), filePath) as path;
 };
 
-const updatePackageJson = async () => {
-	const currentPath = process.cwd();
-	const filePath = `${currentPath}/package.json`;
-	if (!fileExists(filePath)) throw 'package.json does not exist';
-	const packageJson = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-	packageJson.version = '0.0.1';
+const writeVersion = async (path: path, version: version) => {
+	const absolutePath = getAbsolutePath(path);
+	assertPathExists(absolutePath);
+	const packageJson = JSON.parse(fs.readFileSync(absolutePath, 'utf8'));
+	packageJson.version = version;
 	const packageString = JSON.stringify(packageJson, null, '\t') + '\n';
-	fs.writeFileSync(filePath, packageString, { encoding: 'utf-8' });
+	fs.writeFileSync(absolutePath, packageString, { encoding: 'utf-8' });
 };
 
-export { updatePackageJson, fileExists, getAbsolutePath };
+export { writeVersion, fileExists, getAbsolutePath };

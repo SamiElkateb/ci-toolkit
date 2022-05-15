@@ -19,6 +19,15 @@ interface command_options {
 		file: string;
 		store: string;
 	};
+	write_version: {
+		files: string[];
+		new_version: string;
+	};
+	increment_version: {
+		increment_from: string;
+		increment_by: string;
+		store: string;
+	};
 	commit: {
 		message?: string;
 		add?: string;

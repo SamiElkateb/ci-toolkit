@@ -40,7 +40,7 @@ class Conf {
 		this.commands = SnakeToCamelCase(conf.commands);
 	}
 
-	getApiOptions = (options?: commandOptions[keyof commandOptions]) => {
+	getApiOptions = (options: Partial<gitlabApiOptions>) => {
 		let project, domain, protocole;
 		if (checkIsObject(options)) {
 			if (hasOwnProperty(options, 'project')) {

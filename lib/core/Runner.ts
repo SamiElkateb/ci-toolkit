@@ -8,6 +8,8 @@ import {
 	assertPath,
 	assertPathExists,
 	assertVarKey,
+	assertVersion,
+	assertVersionIncrement,
 } from '../utils/assertions/customTypesAssertions';
 import {
 	assertObject,
@@ -16,7 +18,7 @@ import {
 import lang from './lang/en';
 import Logger from './Logger';
 import Tags from './Gitlab/Tags';
-import { getAbsolutePath, updatePackageJson } from '../utils/files';
+import { getAbsolutePath, writeVersion } from '../utils/files';
 import { poll } from '../utils/polling';
 import {
 	checkIsCommandName,
@@ -37,6 +39,12 @@ type options = 'help';
 type params = {
 	conf: Conf;
 	options?: options[];
+};
+
+type awaitPipelineParams = {
+	conf: Conf;
+	options: Partial<gitlabApiOptions>;
+	source: string;
 };
 interface store {
 	[key: string]: string;
@@ -239,10 +247,8 @@ class Runner {
 	getLastTag = async (options: unknown, conf: Conf) => {
 		logger.debug('Getting last tag');
 		assertCommandOptionsValid(options, 'getLastTag');
-		if (checkIsVarKey(options.project)) {
-			options.project = this.populateVariable(options.project);
-		}
-		const { store, project } = options;
+		options.project = this.populateVariable(options.project);
+		const { store } = options;
 		assertVarKey(store);
 		const fetchOptions = conf.getApiOptions(options);
 		const tag = await Tags.fetchLast(fetchOptions);
@@ -267,6 +273,41 @@ class Runner {
 		assertString(version);
 		logger.info(`Current version is ${version}`);
 		this.store[key] = version;
+		logger.debug(`Storing version as ${key}`);
+	};
+
+	writeVersion = async (options: unknown, _: Conf) => {
+		logger.debug('Setting new version');
+		assertCommandOptionsValid(options, 'writeVersion');
+		options.newVersion = this.populateVariable(options.newVersion);
+		const { files, newVersion } = options;
+		assertVersion(newVersion);
+		files.forEach((file) => {
+			assertPath(file);
+			assertPathExists(file);
+		});
+		for (let i = 0, c = files.length; i < c; i++) {
+			const file = files[i] as path;
+			writeVersion(file, newVersion);
+			logger.info(`Setting version to ${newVersion} in ${file}`);
+		}
+	};
+
+	incrementVersion = async (options: unknown, _: Conf) => {
+		logger.debug(`Incrementing version`);
+		assertCommandOptionsValid(options, 'incrementVersion');
+		options.incrementBy = this.populateVariable(options.incrementBy);
+		options.incrementFrom = this.populateVariable(options.incrementFrom);
+		const { incrementBy, incrementFrom, store } = options;
+		assertVarKey(store);
+		const key = store.replace('$_', '');
+		assertVersionIncrement(incrementBy);
+		const incrementedVersion = Tags.incrementVersion({
+			incrementBy,
+			version: incrementFrom,
+		});
+		logger.info(`Incremented version is ${incrementedVersion}`);
+		this.store[key] = incrementedVersion;
 		logger.debug(`Storing version as ${key}`);
 	};
 
@@ -306,14 +347,18 @@ class Runner {
 		await Git.push(branch);
 		logger.debug(`Push successful`);
 		if (awaitPipeline) {
-			await Runner.awaitPipelines({ project, ...options }, conf);
+			const awaitPipelineParams = {
+				options: { project, ...options },
+				conf,
+				source: 'push',
+			};
+			await Runner.awaitPipeline(awaitPipelineParams);
 		}
 	};
 
-	static awaitPipelines = async (
-		options: commandOptions[keyof commandOptions],
-		conf: Conf
-	) => {
+	static awaitPipeline = async (params: awaitPipelineParams) => {
+		await standby(5000);
+		const { options, conf, source } = params;
 		const currentBranchName = await Git.getBranchName();
 		const fetchOptions = conf.getApiOptions(options);
 		const currentUser = await Users.fetchMe(fetchOptions, logger);
@@ -322,7 +367,7 @@ class Runner {
 		const fetchAllOptions = {
 			username,
 			ref: currentBranchName,
-			source: 'push',
+			source,
 			...fetchOptions,
 		};
 		const allPipelines = await pipelines.fetchAll(fetchAllOptions);
@@ -343,6 +388,7 @@ class Runner {
 	};
 
 	populateVariable = (store: string): string => {
+		if (!checkIsVarKey(store)) return store;
 		const key = store.replace('$_', '');
 		assertExists(this.store[key]);
 		return this.store[key];
