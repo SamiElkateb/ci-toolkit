@@ -85,6 +85,7 @@ class Runner {
 		});
 	};
 	static runCustomCommand = async (customCommandKey: string, conf: Conf) => {
+		console.log(conf.commands);
 		assertProperty(conf.commands, customCommandKey);
 		const commands = conf.commands[customCommandKey];
 		assertArray(commands);

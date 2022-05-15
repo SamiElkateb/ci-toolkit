@@ -37,7 +37,10 @@ class Conf {
 		this.lang = conf.lang;
 		this.warningAction = conf.warning_action;
 		this.protocole = conf.protocole;
-		this.commands = SnakeToCamelCase(conf.commands);
+		for (const command in conf.commands) {
+			conf.commands[command] = SnakeToCamelCase(conf.commands[command]);
+		}
+		this.commands = conf.commands;
 	}
 
 	getApiOptions = (options: Partial<gitlabApiOptions>) => {
