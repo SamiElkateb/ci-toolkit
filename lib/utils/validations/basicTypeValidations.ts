@@ -4,7 +4,11 @@ const checkIsString = (val: unknown): val is string => {
 };
 
 const checkIsNumber = (val: unknown): val is number => {
-	return typeof val === 'number';
+	return typeof val === 'number' && !isNaN(val);
+};
+
+const checkIsBoolean = (val: unknown): val is boolean => {
+	return typeof val === 'boolean';
 };
 const checkIsObject = (val: unknown): val is object => {
 	return typeof val === 'object' && val !== null;
@@ -26,6 +30,7 @@ function hasOwnProperty<X extends {}, Y extends PropertyKey>(
 }
 
 export {
+	checkIsBoolean,
 	checkIsString,
 	checkIsArray,
 	checkIsObject,

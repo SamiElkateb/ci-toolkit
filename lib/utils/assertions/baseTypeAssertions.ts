@@ -1,5 +1,6 @@
 import {
 	checkIsArray,
+	checkIsBoolean,
 	checkIsNumber,
 	checkIsObject,
 	checkIsString,
@@ -14,12 +15,20 @@ const assertString: assertString = (
 	if (!checkIsString(val)) throw message || `${val} is not a string`;
 };
 
+type assertBoolean = (val: unknown, message?: string) => asserts val is boolean;
+const assertBoolean: assertBoolean = (
+	val: unknown,
+	message?: string
+): asserts val is boolean => {
+	if (!checkIsBoolean(val)) throw message || `${val} is not a boolean`;
+};
+
 type assertNumber = (val: unknown, message?: string) => asserts val is number;
 const assertNumber: assertNumber = (
 	val: unknown,
 	message?: string
 ): asserts val is number => {
-	if (!checkIsNumber(val)) throw message || 'value is not a number';
+	if (!checkIsNumber(val)) throw message || `${val} is not a number`;
 };
 
 type assertArray = (
@@ -30,7 +39,7 @@ const assertArray: assertArray = (
 	val: unknown,
 	message?: string
 ): asserts val is Array<unknown> => {
-	if (!checkIsArray(val)) throw message || 'value is not an array';
+	if (!checkIsArray(val)) throw message || `${val} is not an array`;
 };
 
 type assertObject = (val: unknown, message?: string) => asserts val is object;
@@ -60,11 +69,12 @@ function assertProperty<X extends {}, Y extends PropertyKey>(
 	message?: string
 ): asserts obj is X & Record<Y, unknown> {
 	if (!hasOwnProperty(obj, prop))
-		throw message || `does not have property ${prop}`;
+		throw message || `${obj} does not have property ${prop}`;
 }
 
 export {
 	assertExists,
+	assertBoolean,
 	assertString,
 	assertProperty,
 	assertObject,
