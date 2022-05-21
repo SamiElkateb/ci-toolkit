@@ -10,6 +10,20 @@ const defaultConfig = {
 		getCurrentProjectName: {
 			store: 'required',
 		},
+		getDiffs: {
+			file: 'required',
+			sourceBranch: 'required',
+			targetBranch: 'required',
+			store: 'required',
+		},
+		promptDiffs: {
+			diffs: 'required',
+			store: 'required',
+		},
+		applyDiffs: {
+			diffs: 'required',
+			files: 'required',
+		},
 		createMergeRequest: {
 			title: 'required',
 			project: 'required',

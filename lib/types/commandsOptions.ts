@@ -32,6 +32,20 @@ interface command_options {
 	get_current_project_name: {
 		store: string;
 	};
+	get_diffs: {
+		file: string;
+		source_branch: string;
+		target_branch: string;
+		store: string;
+	};
+	prompt_diffs: {
+		diffs: string;
+		store: string;
+	};
+	apply_diffs: {
+		diffs: string;
+		files: string[];
+	};
 	fetch_last_tag: {
 		project: string;
 		store: string;

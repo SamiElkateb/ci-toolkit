@@ -2,7 +2,16 @@ import ErrorHandler from './Errors/ErrorHandler';
 import prompt = require('prompt');
 import Git from './Git';
 import Conf from './Conf';
+import YAML = require('yaml');
 import Gitlab from './Gitlab/Gitlab';
+import {
+	diff,
+	addedDiff,
+	deletedDiff,
+	updatedDiff,
+	detailedDiff,
+} from 'deep-object-diff';
+
 import {
 	assertCommandOptionsValid,
 	assertPath,
@@ -39,6 +48,9 @@ import {
 	checkIsString,
 	hasOwnProperty,
 } from '../utils/validations/basicTypeValidations';
+import { diffsToKeyValuePairs } from '../utils/diffs';
+import DiffsService from './DiffsService';
+import { assertContinue } from '../utils/assertions/assertContinue';
 
 type commands = 'help' | 'deploy' | 'createMergeRequest';
 type options = 'help';
@@ -53,18 +65,23 @@ type awaitPipelineParams = {
 	source: string;
 	ref?: string;
 };
-
 interface awaitMergeAvailableOptions extends gitlabApiOptions {
 	sourceBranch: string;
 }
+
 interface store {
 	[key: string]: string;
+}
+interface diffStore {
+	[key: string]: diffType;
 }
 const logger = new Logger();
 class Runner {
 	store: store;
+	diffStore: diffStore;
 	constructor() {
 		this.store = {};
+		this.diffStore = {};
 	}
 
 	static help = (params?: params) => {
@@ -315,6 +332,57 @@ class Runner {
 		logger.debug(`Storing project name as ${key}`);
 	};
 
+	getDiffs = async (options: unknown, _: Conf) => {
+		logger.debug('Getting Diffs');
+		assertCommandOptionsValid(options, 'getDiffs');
+		options.sourceBranch = this.populateVariable(options.sourceBranch);
+		options.targetBranch = this.populateVariable(options.targetBranch);
+		const { store, sourceBranch, targetBranch } = options;
+		const sourceFile = await Git.show(sourceBranch, options.file);
+		const sourceObj = YAML.parse(sourceFile);
+		const targetFile = await Git.show(targetBranch, options.file);
+		const targetObj = YAML.parse(targetFile);
+		const diffs = detailedDiff(sourceObj, targetObj) as diffType;
+		assertVarKey(store);
+		const key = store.replace('$_', '');
+		// console.dir(JSON.stringify(diffs, null, 4));
+		// logger.info(`Current branch name is ${diffs}`);
+		this.diffStore[key] = diffs;
+		logger.debug(`Storing diffs as ${key}`);
+	};
+
+	promptDiffs = async (options: unknown, _: Conf) => {
+		logger.debug('Prompt Diffs');
+		assertCommandOptionsValid(options, 'promptDiffs');
+		const diffs = this.populateDiffs(options.diffs);
+		const add = DiffsService.parseThroughDiffs(diffs?.added);
+		const remove = DiffsService.parseThroughDiffs(diffs?.deleted);
+		const update = DiffsService.parseThroughDiffs(diffs?.updated);
+		logger.diffs({ add, remove, update });
+		await assertContinue('Continue?');
+	};
+
+	applyDiffs = async (options: unknown, _: Conf) => {
+		logger.debug('Prompt Diffs');
+		assertCommandOptionsValid(options, 'applyDiffs');
+		const diffs = this.populateDiffs(options.diffs);
+		const { files } = options;
+
+		for (let i = 0, c = files.length; i < c; i++) {
+			const file = files[i];
+			const path = getAbsolutePath(file);
+			YAML.parse(fs.readFileSync(path, 'utf8'));
+		}
+		// const targetObj = YAML.parse(targetFile);
+		// const diffs = detailedDiff(sourceObj, targetObj) as diffType;
+		// assertVarKey(store);
+		// const key = store.replace('$_', '');
+		// // console.dir(JSON.stringify(diffs, null, 4));
+		// // logger.info(`Current branch name is ${diffs}`);
+		// this.diffStore[key] = diffs;
+		// logger.debug(`Storing diffs as ${key}`);
+	};
+
 	fetchLastTag = async (options: unknown, conf: Conf) => {
 		logger.debug('Getting last tag');
 		assertCommandOptionsValid(options, 'fetchLastTag');
@@ -486,6 +554,15 @@ class Runner {
 		const key = varKey[0].replace('$_', '');
 		assertExists(this.store[key]);
 		return this.store[key];
+	};
+
+	populateDiffs = (store: string): diffType | undefined => {
+		if (!checkIsVarKey(store)) return;
+		const varKey = store.match(/\$\_\w*/);
+		if (!varKey || varKey?.length === 0) return;
+		const key = varKey[0].replace('$_', '');
+		assertExists(this.diffStore[key]);
+		return this.diffStore[key];
 	};
 }
 export default Runner;

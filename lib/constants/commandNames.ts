@@ -5,6 +5,9 @@ import {
 
 const command_names = [
 	'get_current_branch_name',
+	'get_diffs',
+	'prompt_diffs',
+	'apply_diffs',
 	'prompt',
 	'get_current_project_name',
 	'create_merge_request',

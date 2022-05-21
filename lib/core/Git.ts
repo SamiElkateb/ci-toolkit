@@ -2,12 +2,22 @@ import {
 	assertArray,
 	assertString,
 } from '../utils/assertions/baseTypeAssertions';
-import { execCommand } from '../utils/commands';
+import {
+	assertPath,
+	assertPathExists,
+} from '../utils/assertions/customTypesAssertions';
+import { execCommand, execProm } from '../utils/commands';
+import { getAbsolutePath } from '../utils/files';
 import Logger from './Logger';
 
 type commitOptions = {
 	message?: string;
 	add?: string;
+};
+type diffsOptions = {
+	sourceBranch: string;
+	targetBranch: string;
+	file: string;
 };
 class Git {
 	constructor() {}
@@ -57,6 +67,36 @@ class Git {
 	static pull = async (branch?: string) => {
 		const command = branch ? 'git pull origin' : 'git pull';
 		await execCommand({ command, branch });
+	};
+	static show = async (branch: string, file: string) => {
+		const path = getAbsolutePath(file);
+		const command = 'git show';
+		return await execCommand({
+			command,
+			branch: branch + ':',
+			pathToAppend: file,
+		});
+	};
+
+	static diffs = async (options: diffsOptions) => {
+		const { sourceBranch, targetBranch, file } = options;
+		const path = getAbsolutePath(file);
+		const command = 'git diff -U99999';
+		const branches = [sourceBranch, targetBranch];
+		const diffs = await execCommand({
+			command,
+			branches,
+			pathToAppend: path,
+		});
+		const diffsArray = diffs.split('\n');
+		const added = diffsArray
+			.filter((line) => !line.match(/^\+\+\+.*/) && line.match(/^\+.*/))
+			.map((line) => line.replace('+', ''));
+		const removed = diffsArray
+			.filter((line) => !line.match(/^\-\-\-.*/) && line.match(/^\-.*/))
+			.map((line) => line.replace('-', ''));
+		console.log(diffs);
+		return { added, removed };
 	};
 
 	static push = async (branch?: string) => {

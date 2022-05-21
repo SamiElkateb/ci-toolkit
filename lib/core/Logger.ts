@@ -1,8 +1,20 @@
 import { assertContinue } from '../utils/assertions/assertContinue';
+import { assertProperty } from '../utils/assertions/baseTypeAssertions';
 import { standby } from '../utils/standby';
+import {
+	checkIsArray,
+	checkIsObject,
+	checkIsStrictObject,
+} from '../utils/validations/basicTypeValidations';
 import Lang from './lang/Lang';
+type diffsLog = {
+	add: unknown;
+	remove: unknown;
+	update: unknown;
+};
 
 class Logger {
+	private green: string;
 	private red: string;
 	private yellow: string;
 	private bright: string;
@@ -11,6 +23,7 @@ class Logger {
 	public text: Lang['language'];
 	constructor(logLevel?: string, warningAction?: string) {
 		const lang = new Lang();
+		this.green = '\x1b[32m%s\x1b[0m';
 		this.red = '\x1b[31m%s\x1b[0m';
 		this.yellow = '\x1b[33m%s\x1b[0m';
 		this.bright = '\x1b[1m%s\x1b[0m';
@@ -81,6 +94,53 @@ class Logger {
 	debug(text: string) {
 		if (this.logLevel !== 'debug') return;
 		console.debug(`debug: ${text}`);
+	}
+
+	diffs(diffs: diffsLog) {
+		if (checkIsStrictObject(diffs.add)) {
+			diffs.add = [diffs.add];
+		}
+		if (checkIsStrictObject(diffs.remove)) {
+			diffs.remove = [diffs.remove];
+		}
+		if (checkIsStrictObject(diffs.update)) {
+			diffs.update = [diffs.update];
+		}
+		const { add, remove, update } = diffs;
+		this.info(`Diffs:`);
+		if (checkIsArray(add)) {
+			console.info(this.green, `	Add:`);
+			add.forEach((diff: unknown) => {
+				if (checkIsObject(diff)) {
+					for (const key in diff) {
+						assertProperty(diff, key);
+						console.info(`	+ ${key}: ${diff[key]}`);
+					}
+				}
+			});
+		}
+		if (checkIsArray(remove)) {
+			console.info(this.red, `	Remove:`);
+			remove.forEach((diff: unknown) => {
+				if (checkIsObject(diff)) {
+					for (const key in diff) {
+						assertProperty(diff, key);
+						console.info(`	- ${key}: ${diff[key]}`);
+					}
+				}
+			});
+		}
+		if (checkIsArray(update)) {
+			console.info(this.yellow, `	Update:`);
+			update.forEach((diff: unknown) => {
+				if (checkIsObject(diff)) {
+					for (const key in diff) {
+						assertProperty(diff, key);
+						console.info(`	\u2213 ${key}: ${diff[key]}`);
+					}
+				}
+			});
+		}
 	}
 
 	request(url: string, type?: string) {

@@ -101,10 +101,17 @@ const appendCommitMessage = (command: string, message: string) => {
 };
 
 const appendBranch = (command: string, branch: string) => {
-	const whitelistedCommands = ['git pull origin', 'git push -u origin'];
+	const whitelistedCommands = [
+		'git pull origin',
+		'git push -u origin',
+		'git diff',
+		'git diff -U99999',
+		'git show',
+	];
 	if (!whitelistedCommands.includes(command)) {
 		throw `Appending "${branch}" to command "${command}" is not allowed.`;
 	}
+	console.log(branch);
 	assertCommitMessageValidLength(branch);
 	assertCommitMessageValidCharacters(branch);
 	if (command === 'git pull origin') {
@@ -112,10 +119,38 @@ const appendBranch = (command: string, branch: string) => {
 	}
 	return `${command} ${branch}`;
 };
-
+const appendBranches = (command: string, branches: string[]) => {
+	const whitelistedCommands = [
+		'git pull origin',
+		'git push -u origin',
+		'git diff',
+		'git diff -U99999',
+		'git show',
+	];
+	if (!whitelistedCommands.includes(command)) {
+		throw `Appending "${branches}" to command "${command}" is not allowed.`;
+	}
+	branches.forEach((branch) => {
+		assertCommitMessageValidLength(branch);
+		assertCommitMessageValidCharacters(branch);
+	});
+	const finalCommand = branches.reduce(
+		(acc, branch) => `${acc} ${branch}`,
+		command
+	);
+	if (command === 'git pull origin') {
+		return `${finalCommand} --ff`;
+	}
+	return finalCommand;
+};
 const prependPath = (command: string, path: string) => {
 	if (path) assertPathExists(path);
 	return `cd "${path}" && ${command}`;
+};
+
+const appendPath = (command: string, path: string) => {
+	if (path) assertPathExists(path);
+	return `${command}${path}`;
 };
 
 const assertIsWhitelistedCommand = (command: string) => {
@@ -133,25 +168,40 @@ const assertIsWhitelistedCommand = (command: string) => {
 		'git pull',
 		'git pull origin',
 		'git status',
+		'git show',
+		'git diff',
+		'git diff -U99999',
 	];
 	if (!whitelistedCommands.includes(command)) throw 'Invalid command';
 };
 type execCommandOptions = {
 	command: string;
 	path?: string;
+	pathToAppend?: string;
 	message?: string;
 	branch?: string;
+	branches?: string[];
 };
 const execCommand = async (options: execCommandOptions) => {
-	const { command: baseCommand, path, message, branch } = options;
+	const {
+		command: baseCommand,
+		path,
+		message,
+		branch,
+		branches,
+		pathToAppend,
+	} = options;
 	assertIsWhitelistedCommand(baseCommand);
 	let command = baseCommand;
 	if (message) command = appendCommitMessage(command, message);
 	if (branch) command = appendBranch(command, branch);
+	if (branches) command = appendBranches(command, branches);
 	if (path) command = prependPath(command, path);
+	if (pathToAppend) command = appendPath(command, pathToAppend);
 	//! should log command before executing?
+	console.log(command);
 	const data = await execProm(command);
 	return data;
 };
 
-export { execCommand };
+export { execCommand, execProm };
