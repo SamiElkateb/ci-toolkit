@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import {
 	assertArray,
 	assertObject,
@@ -14,6 +15,7 @@ class GitlabApiError {
 	readonly message: string;
 	constructor(error: unknown) {
 		try {
+			// const errorSchema = z.object({response: z.object({data: z.string()})})
 			assertObject(error);
 			assertProperty(error, 'response');
 			assertObject(error.response);

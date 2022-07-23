@@ -69,7 +69,7 @@ function assertProperty<X extends {}, Y extends PropertyKey>(
 	message?: string
 ): asserts obj is X & Record<Y, unknown> {
 	if (!hasOwnProperty(obj, prop))
-		throw message || `${obj} does not have property ${prop}`;
+		throw message || `${obj} does not have property ${String(prop)}`;
 }
 
 export {

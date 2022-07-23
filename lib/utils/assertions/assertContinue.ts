@@ -1,7 +1,7 @@
 import prompt = require('prompt');
 import { assertString } from './baseTypeAssertions';
 
-const assertContinue = async (question: string) => {
+const assertContinue = async (question: string): Promise<true> => {
 	prompt.start();
 	const { answer } = await prompt.get([
 		{
@@ -13,7 +13,7 @@ const assertContinue = async (question: string) => {
 	assertString(answer);
 	if (['yes', 'Y'].includes(answer)) return true;
 	if (['no', 'n'].includes(answer)) throw 'Aborted by user';
-	assertContinue(question);
+	return await assertContinue(question);
 };
 
 export { assertContinue };

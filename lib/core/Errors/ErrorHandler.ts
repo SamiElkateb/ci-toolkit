@@ -1,3 +1,4 @@
+import { checkIsObject, checkIsString, hasOwnProperty } from '../../utils/validations/basicTypeValidations';
 import Log from '../Logger';
 import GitlabApiError from './GitlabApiError';
 const logger = new Log();
@@ -7,11 +8,16 @@ class ErrorHandler {
 		try {
 			await callback();
 		} catch (error: unknown) {
-			if (typeof error === 'string') logger.error(error);
+			if (typeof error === 'string') logger.error(error)
+			if (error instanceof Error) logger.error(error.message);
 			if (error instanceof TypeError)
 				logger.error(error.message, 'Type Error');
 			if (error instanceof GitlabApiError)
 				logger.error(error.message, 'Gitlab Api Error');
+
+			if(checkIsObject(error) && hasOwnProperty(error, 'stack') && checkIsString(error.stack)) {
+				logger.stack(error.stack)
+			}
 		}
 	};
 }

@@ -1,8 +1,11 @@
 import ErrorHandler from './Errors/ErrorHandler';
 import prompt = require('prompt');
 import Git from './Git';
+import fs = require('fs');
 import Conf from './Conf';
-import YAML = require('yaml');
+import YAML = require('yaml')
+import omit = require('lodash.omit');
+import merge = require('lodash.merge')
 import Gitlab from './Gitlab/Gitlab';
 import {
 	diff,
@@ -51,6 +54,8 @@ import {
 import { diffsToKeyValuePairs } from '../utils/diffs';
 import DiffsService from './DiffsService';
 import { assertContinue } from '../utils/assertions/assertContinue';
+import ERROR_MESSAGES from '../constants/ErrorMessages';
+import getObjectPaths from '../utils/flattenObject';
 
 type commands = 'help' | 'deploy' | 'createMergeRequest';
 type options = 'help';
@@ -90,22 +95,16 @@ class Runner {
 	};
 
 	static start = async () => {
-		// const runner = new Runner();
-		// const options = {
-		// 	question: 'What version?',
-		// 	store: '$_increment',
-		// };
-		// runner.assertPromptOptions(options);
-		// runner.prompt(options);
-		// return;
 		const args = process.argv;
 		const command = args[2];
 		ErrorHandler.try(async () => {
+			assertExists(command, 'No command provided');
 			const conf = await Runner.getConf();
 			await Runner.runCustomCommand(command, conf);
 		});
 	};
 	static runCustomCommand = async (customCommandKey: string, conf: Conf) => {
+		
 		assertProperty(conf.commands, customCommandKey);
 		const commands = conf.commands[customCommandKey];
 		assertArray(commands);
@@ -132,7 +131,7 @@ class Runner {
 	static getConf = async () => {
 		logger.debug('getting config file');
 		const configFile = Conf.readConfigFile();
-		if (!configFile) throw 'No config file was found';
+		if (!configFile) throw new Error(ERROR_MESSAGES.noConfig);
 		logger.debug('parsing config file');
 		const parsedConfig = await Conf.parseConfig(configFile);
 		const conf = new Conf(parsedConfig);
@@ -355,10 +354,11 @@ class Runner {
 		logger.debug('Prompt Diffs');
 		assertCommandOptionsValid(options, 'promptDiffs');
 		const diffs = this.populateDiffs(options.diffs);
-		const add = DiffsService.parseThroughDiffs(diffs?.added);
-		const remove = DiffsService.parseThroughDiffs(diffs?.deleted);
-		const update = DiffsService.parseThroughDiffs(diffs?.updated);
+		const add = getObjectPaths(diffs?.added)
+		const remove = getObjectPaths(diffs?.deleted)
+		const update = getObjectPaths(diffs?.updated)
 		logger.diffs({ add, remove, update });
+		// store verified diffs and add modification
 		await assertContinue('Continue?');
 	};
 
@@ -371,16 +371,15 @@ class Runner {
 		for (let i = 0, c = files.length; i < c; i++) {
 			const file = files[i];
 			const path = getAbsolutePath(file);
-			YAML.parse(fs.readFileSync(path, 'utf8'));
+			const baseObject = YAML.parse(fs.readFileSync(path, 'utf8'));
+			const paths = Object.keys(getObjectPaths(diffs?.deleted));
+			const deletedDiffs = omit(baseObject, paths);
+			const addedDiffs = merge(deletedDiffs, diffs?.added); 
+			const updatedDiffs = merge(addedDiffs, diffs?.updated);
+			const newFile = YAML.stringify(updatedDiffs, null, 4);
+	
+			fs.writeFileSync(path, newFile, { encoding: 'utf-8' });
 		}
-		// const targetObj = YAML.parse(targetFile);
-		// const diffs = detailedDiff(sourceObj, targetObj) as diffType;
-		// assertVarKey(store);
-		// const key = store.replace('$_', '');
-		// // console.dir(JSON.stringify(diffs, null, 4));
-		// // logger.info(`Current branch name is ${diffs}`);
-		// this.diffStore[key] = diffs;
-		// logger.debug(`Storing diffs as ${key}`);
 	};
 
 	fetchLastTag = async (options: unknown, conf: Conf) => {

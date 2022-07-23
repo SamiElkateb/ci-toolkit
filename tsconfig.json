@@ -8,5 +8,6 @@
 		"allowJs": true,
 		"outDir": "./dist"
 	},
-	"include": ["lib/**/*"]
+	"include": ["lib/**/*"],
+	"exclude":["lib/__test__/**/*"]
 }

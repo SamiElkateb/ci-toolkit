@@ -33,6 +33,7 @@ class Logger {
 		this.setWarningAction(warningAction);
 		this.text = lang.language;
 	}
+
 	setLogLevel = (logLevel?: string) => {
 		if (logLevel === 'debug') {
 			this.logLevel = 'debug';
@@ -48,6 +49,7 @@ class Logger {
 		}
 		this.logLevel = 'info';
 	};
+
 	setWarningAction = (warningAction?: string) => {
 		if (warningAction === 'skip') {
 			this.warningAction = 'skip';
@@ -63,13 +65,15 @@ class Logger {
 		const lang = new Lang(language);
 		this.text = lang.language;
 	};
+
 	error(text: string, errorType?: string) {
 		if (typeof errorType !== 'undefined') {
 			console.error(this.red, `${errorType}: ${text}`);
 		} else {
-			console.error(this.red, `error: ${text}`);
+			console.error(this.red, `Error: ${text}`);
 		}
 	}
+
 	async warn(text: string, continuePrompt: string) {
 		if (
 			this.logLevel !== 'info' &&
@@ -87,13 +91,20 @@ class Logger {
 		}
 		await assertContinue(continuePrompt);
 	}
+
 	info(text: string) {
 		if (this.logLevel !== 'info' && this.logLevel !== 'debug') return;
-		console.info(this.bright, `info: ${text}`);
+		console.info(this.bright, `Info: ${text}`);
 	}
+
 	debug(text: string) {
 		if (this.logLevel !== 'debug') return;
-		console.debug(`debug: ${text}`);
+		console.debug(`Debug: ${text}`);
+	}
+
+	stack(text: string) {
+		const textWithoutError = text.replace(/.*\n/, 'Stack: \n');
+		console.log(textWithoutError);
 	}
 
 	diffs(diffs: diffsLog) {
@@ -114,7 +125,8 @@ class Logger {
 				if (checkIsObject(diff)) {
 					for (const key in diff) {
 						assertProperty(diff, key);
-						console.info(`	+ ${key}: ${diff[key]}`);
+						const path = key.replace(/\.([0-9]+)/, '[' + '$1' + ']');
+						console.info(`	+ ${path}: ${diff[key]}`);
 					}
 				}
 			});
@@ -125,7 +137,8 @@ class Logger {
 				if (checkIsObject(diff)) {
 					for (const key in diff) {
 						assertProperty(diff, key);
-						console.info(`	- ${key}: ${diff[key]}`);
+						const path = key.replace(/\.([0-9]+)/, '[' + '$1' + ']');
+						console.info(`	- ${path}: ${diff[key]}`);
 					}
 				}
 			});
@@ -136,7 +149,8 @@ class Logger {
 				if (checkIsObject(diff)) {
 					for (const key in diff) {
 						assertProperty(diff, key);
-						console.info(`	\u2213 ${key}: ${diff[key]}`);
+						const path = key.replace(/\.([0-9]+)/, '[' + '$1' + ']');
+						console.info(`	\u2213 ${path}: ${diff[key]}`);
 					}
 				}
 			});
@@ -151,10 +165,10 @@ class Logger {
 		);
 		if (typeof type !== 'undefined') {
 			console.debug(
-				`debug: sending ${type} request to ${obfuscatedTokenUrl}`
+				`Debug: sending ${type} request to ${obfuscatedTokenUrl}`
 			);
 		} else {
-			console.debug(`debug: sending request to ${obfuscatedTokenUrl}`);
+			console.debug(`Debug: sending request to ${obfuscatedTokenUrl}`);
 		}
 	}
 }

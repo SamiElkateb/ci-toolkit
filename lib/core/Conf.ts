@@ -45,6 +45,7 @@ class Conf {
 
 	getApiOptions = (options: Partial<gitlabApiOptions>) => {
 		let project, domain, protocole;
+		console.log('endConf')
 		if (checkIsObject(options)) {
 			if (hasOwnProperty(options, 'project')) {
 				project = options.project as string;
