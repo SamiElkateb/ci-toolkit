@@ -1,3 +1,4 @@
+import { ZodError } from 'zod';
 import { checkIsObject, checkIsString, hasOwnProperty } from '../../utils/validations/basicTypeValidations';
 import Log from '../Logger';
 import GitlabApiError from './GitlabApiError';
@@ -8,6 +9,7 @@ class ErrorHandler {
 		try {
 			await callback();
 		} catch (error: unknown) {
+			if (error instanceof ZodError) return error.errors.forEach(e => logger.error(e.message));
 			if (typeof error === 'string') logger.error(error)
 			if (error instanceof Error) logger.error(error.message);
 			if (error instanceof TypeError)

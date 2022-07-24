@@ -19,7 +19,7 @@ const command_names = [
 	'pull',
 	'push',
 	'increment_version',
-	// 'tag',
+	'create_tag',
 	// 'copy_env_diffs',
 	// 'start_pipeline',
 ] as const;

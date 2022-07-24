@@ -6,12 +6,7 @@ import Conf from './Conf';
 import YAML = require('yaml')
 import omit = require('lodash.omit');
 import merge = require('lodash.merge')
-import Gitlab from './Gitlab/Gitlab';
 import {
-	diff,
-	addedDiff,
-	deletedDiff,
-	updatedDiff,
 	detailedDiff,
 } from 'deep-object-diff';
 
@@ -36,7 +31,6 @@ import {
 	checkIsCommandName,
 	checkIsVarKey,
 } from '../utils/validations/customTypeValidation';
-import { defaultConfig } from './defaultConfig';
 import {
 	assertArray,
 	assertExists,
@@ -51,11 +45,11 @@ import {
 	checkIsString,
 	hasOwnProperty,
 } from '../utils/validations/basicTypeValidations';
-import { diffsToKeyValuePairs } from '../utils/diffs';
-import DiffsService from './DiffsService';
 import { assertContinue } from '../utils/assertions/assertContinue';
 import ERROR_MESSAGES from '../constants/ErrorMessages';
 import getObjectPaths from '../utils/flattenObject';
+import { z } from 'zod';
+import { applyDiffsOptionSchema, fetchLastTagOptionSchema, createTagOptionSchema} from '../models/config';
 
 type commands = 'help' | 'deploy' | 'createMergeRequest';
 type options = 'help';
@@ -67,7 +61,7 @@ type params = {
 type awaitPipelineParams = {
 	conf: Conf;
 	options: Partial<gitlabApiOptions>;
-	source: string;
+	source?: string;
 	ref?: string;
 };
 interface awaitMergeAvailableOptions extends gitlabApiOptions {
@@ -362,9 +356,10 @@ class Runner {
 		await assertContinue('Continue?');
 	};
 
-	applyDiffs = async (options: unknown, _: Conf) => {
+	applyDiffs = async (userOptions: unknown, _: Conf) => {
 		logger.debug('Prompt Diffs');
-		assertCommandOptionsValid(options, 'applyDiffs');
+		
+		const options = applyDiffsOptionSchema.parse(userOptions)
 		const diffs = this.populateDiffs(options.diffs);
 		const { files } = options;
 
@@ -382,18 +377,15 @@ class Runner {
 		}
 	};
 
-	fetchLastTag = async (options: unknown, conf: Conf) => {
+	fetchLastTag = async (userOptions: unknown, conf: Conf) => {
 		logger.debug('Getting last tag');
-		assertCommandOptionsValid(options, 'fetchLastTag');
+		const options = fetchLastTagOptionSchema.parse(userOptions)
 		options.project = this.populateVariable(options.project);
 		const { store } = options;
-		assertVarKey(store);
 		const fetchOptions = conf.getApiOptions(options);
 		const tag = await Tags.fetchLast(fetchOptions);
 		logger.info(`Last tag is ${tag}`);
-		const key = store.replace('$_', '');
-		this.store[key] = tag;
-		logger.debug(`Storing project name as ${key}`);
+		this.addToStore(store, tag);
 	};
 
 	readCurrentVersion = async (options: unknown, _: Conf) => {
@@ -412,6 +404,33 @@ class Runner {
 		logger.info(`Current version is ${version}`);
 		this.store[key] = version;
 		logger.debug(`Storing version as ${key}`);
+	};
+
+	createTag = async (userOptions: unknown, conf: Conf) => {
+		logger.debug('Creating a new tag on the remote');
+		const options = createTagOptionSchema.parse(userOptions)
+
+		options.project = this.populateVariable(options.project)
+		options.tagName = this.populateVariable(options.tagName)
+		options.targetBranch = this.populateVariable(options.targetBranch)
+
+		const { awaitPipeline} = options;
+		const apiOptions = conf.getApiOptions(options);
+		const postTagData = {
+			...apiOptions,
+			ref: options.targetBranch,
+			tagName: options.tagName
+		};
+		await Tags.post(postTagData, logger)	
+		if (awaitPipeline) {
+			const awaitPipelineParams = {
+				options,
+				conf,
+				ref: options.tagName,
+				source: 'push'
+			};
+			await Runner.awaitPipeline(awaitPipelineParams);
+		}
 	};
 
 	writeVersion = async (options: unknown, _: Conf) => {
@@ -501,6 +520,15 @@ class Runner {
 			await Runner.awaitPipeline(awaitPipelineParams);
 		}
 	};
+
+	startPipeline = (options: unknown, _: Conf) => {
+		// TODO: start pipeline possible await pipeline
+	}
+
+	startJob = (options: unknown, _: Conf) => {
+		// TODO: start a job
+	}
+
 	static awaitMergeAvailable = async (
 		options: awaitMergeAvailableOptions,
 		conf: Conf
@@ -546,6 +574,12 @@ class Runner {
 		if (failedPipelines.length > 0) throw 'Failed pipelines';
 	};
 
+	addToStore = (userKey: string, value: string) => {
+		const key = userKey.replace('$_', '');
+		this.store[key] = value;
+		logger.debug(`Storing ${value} as ${key}`);
+	};
+
 	populateVariable = (store: string): string => {
 		if (!checkIsVarKey(store)) return store;
 		const varKey = store.match(/\$\_\w*/);
@@ -560,7 +594,7 @@ class Runner {
 		const varKey = store.match(/\$\_\w*/);
 		if (!varKey || varKey?.length === 0) return;
 		const key = varKey[0].replace('$_', '');
-		assertExists(this.diffStore[key]);
+		assertExists(this.diffStore[key], `${store} does not exist`);
 		return this.diffStore[key];
 	};
 }

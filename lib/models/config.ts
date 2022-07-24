@@ -1,5 +1,43 @@
 import { z } from "zod";
 
+export const fetchLastTagOptionSchema = z.object({
+    project: z.string({
+        required_error: "fetch_current_tag.project is required",
+        invalid_type_error: "fetch_current_tag.project must be a string containing the project name or associated with a stored variable (ex: $_currentProject)",
+    }),
+    store: z.string({
+        required_error: "fetch_current_tag.store is required",
+        invalid_type_error: "fetch_current_tag.store must be a string associated with a stored variable (ex: $_currentTag)",
+    }).startsWith("$_", {message: 'fetch_current_tag.store must start with $_'}),
+}).strict();
+
+export const createTagOptionSchema = z.object({
+    project: z.string({
+        required_error: "create_tag.project is required",
+        invalid_type_error: "create_tag.project must be a string containing the project name or associated with a stored variable (ex: $_currentProject)",
+    }), 
+    targetBranch: z.string({
+        required_error: "create_tag.target_branch is required",
+        invalid_type_error: "create_tag.target_branch must be a string containing the branch name or associated with a stored variable (ex: $_targetBranch)",
+    }),
+    tagName: z.string({
+        required_error: "create_tag.tag is required",
+        invalid_type_error: "create_tag.tag must be a string containing the tag name or associated with a stored variable (ex: $_newTag)",
+    }),
+    awaitPipeline: z.boolean({
+        invalid_type_error: "create_tag.await_pipeline must be a boolean",
+    }).default(false)
+}).strict();
+
+export const applyDiffsOptionSchema = z.object({
+    diffs: z.string({
+        required_error: "apply_diffs.diffs is required",
+        invalid_type_error: "apply_diffs.diffs must be a string associated with a stored variable (ex: $_diffs)",
+    }).startsWith("$_", {message: 'apply_diffs.diffs must start with $_'}),
+    files: z.array(z.string())
+}).strict();
+
+
 const defaultConfig = z.object({
     commands: z.object({
         prompt: z.object({

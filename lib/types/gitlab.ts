@@ -60,3 +60,5 @@ interface pipelineVariable {
 	value: string;
 	type?: string;
 }
+
+type source = 'push'| 'web'| 'trigger'| 'schedule'| 'api'| 'external'| 'pipeline'| 'chat'| 'webide'| 'merge_request_event'| 'external_pull_request_event'| 'parent_pipeline'| 'ondemand_dast_scan'| 'ondemand_dast_validation'

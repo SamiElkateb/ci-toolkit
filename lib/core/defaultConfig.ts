@@ -57,6 +57,12 @@ const defaultConfig = {
 			file: 'required',
 			store: 'required',
 		},
+		createTag: {
+			project: 'required',
+			tagName: 'required',
+			targetBranch: 'required',
+			awaitPipeline: 'optional'
+		},
 		writeVersion: {
 			files: 'required',
 			newVersion: 'required',

@@ -6,6 +6,10 @@ type incrementVersionParams = {
 	incrementBy: versionIncrement;
 	version: unknown;
 };
+interface postOptions extends gitlabApiOptions {
+	tagName: string;
+	ref: string; 
+}
 
 const axios = require('axios');
 
@@ -29,6 +33,32 @@ class Tags {
 			throw new GitlabApiError(error);
 		}
 	};
+
+	static post = async (options: postOptions, logger?: Logger) => {
+		const {
+			protocole,
+			domain,
+			project,
+			token,
+			ref,
+			tagName,
+			allowInsecureCertificate: allowInsecure,
+		} = options;
+		const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
+		const url = `${protocole}://${domain}/api/v4/projects/${project}/repository/tags?access_token=${token}`;
+		const data = {
+			ref,
+			tag_name: tagName	
+		};
+		logger?.request(url, 'post');
+		try {
+			const res = await axios.post(url, data, axiosOptions);
+			return res.data;
+		} catch (error) {
+			throw new GitlabApiError(error);
+		}
+	};
+
 	static fetchLast = async (options: gitlabApiOptions, logger?: Logger) => {
 		const data = await Tags.fetch(options, logger);
 		const lastTag = data[0].name;

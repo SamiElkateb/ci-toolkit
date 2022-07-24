@@ -56,6 +56,12 @@ interface command_options {
 		file: string;
 		store: string;
 	};
+	create_tag: {
+		project: string;
+		target_branch: string;
+		tag_name: string;
+		await_pipeline?: boolean;
+	};
 	write_version: {
 		files: string[];
 		new_version: string;
