@@ -68,6 +68,7 @@ class Git {
         const command = branch ? 'git pull origin' : 'git pull';
         await execCommand({ command, branch });
     };
+
     static show = async (branch: string, file: string) => {
         const path = getAbsolutePath(file);
         const command = 'git show';
@@ -153,12 +154,9 @@ class Git {
                 const continueText = logger.text.continueNoCommit();
                 await logger.warn(text, continueText);
             }
-            // logger.warn('commit skipped');
-            // await standby(1000);
             return false;
         }
         if (response.includes(noStagedChangesMessage)) {
-            // await standby(60000);
             if (add === 'all' || add === 'tracked') return true;
             if (logger) {
                 const text = logger.text.shouldCommitNoChangeAdded();

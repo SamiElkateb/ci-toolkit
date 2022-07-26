@@ -56,6 +56,42 @@ export const createTagOptionSchema = z
     })
     .strict();
 
+export const startPipelineOptionSchema = z
+    .object({
+        project: z.string({
+            required_error: ERROR_MESSAGES.isRequired('start_pipeline.project'),
+            invalid_type_error: ERROR_MESSAGES.shouldBeString(
+                'start_pipeline.project'
+            ),
+        }),
+        ref: z.string({
+            required_error: ERROR_MESSAGES.isRequired('start_pipeline.ref'),
+            invalid_type_error:
+                ERROR_MESSAGES.shouldBeString('start_pipeline.ref'),
+        }),
+        retries: z
+            .number({
+                invalid_type_error: ERROR_MESSAGES.shouldBeNumber(
+                    'start_pipeline.retries'
+                ),
+            })
+            .default(0),
+        awaitPipeline: z
+            .boolean({
+                invalid_type_error: ERROR_MESSAGES.shouldBeBoolean(
+                    'create_tag.await_pipeline'
+                ),
+            })
+            .default(false),
+        variables: z.array(
+            z.object({
+                key: z.string(),
+                value: z.string(),
+                type: z.string(),
+            })
+        ),
+    })
+    .strict();
 export const applyDiffsOptionSchema = z
     .object({
         diffs: z

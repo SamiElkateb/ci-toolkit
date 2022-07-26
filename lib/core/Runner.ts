@@ -51,6 +51,7 @@ import {
     commitOptionSchema,
     pullOptionSchema,
     pushOptionSchema,
+    startPipelineOptionSchema,
 } from '../models/config';
 import { packageSchema } from '../models/others';
 
@@ -434,30 +435,28 @@ class Runner {
     };
 
     startPipeline = async (userOptions: unknown, conf: Conf) => {
-        // TODO: start pipeline possible await pipeline
-        logger.debug('Creating a new tag on the remote');
-        const options = createTagOptionSchema.parse(userOptions);
+        logger.debug('Starting pipeline');
+        const options = startPipelineOptionSchema.parse(userOptions);
 
         options.project = this.populateVariable(options.project);
-        options.tagName = this.populateVariable(options.tagName);
-        options.targetBranch = this.populateVariable(options.targetBranch);
+        options.ref = this.populateVariable(options.ref);
 
         const pipelines = new Pipelines(conf);
-        // pipelines.post()
-        const { awaitPipeline } = options;
+        const { awaitPipeline, ref, project } = options;
         const apiOptions = conf.getApiOptions(options);
-        const postTagData = {
+        const pipelineData = {
             ...apiOptions,
-            ref: options.targetBranch,
-            tagName: options.tagName,
+            ref,
+            project,
         };
-        await Tags.post(postTagData, logger);
+
+        await pipelines.post(pipelineData);
         if (awaitPipeline) {
             const awaitPipelineParams = {
                 options,
                 conf,
-                ref: options.tagName,
-                source: 'push',
+                ref,
+                source: 'api',
             };
             await Runner.awaitPipeline(awaitPipelineParams);
         }

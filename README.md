@@ -111,6 +111,14 @@ Example of a workflow for incrementing the packages version before merging and t
 
 Prompt for a value that can be used later
 
+**Values:**
+
+mandatory:
+```
+question: string
+store: variable
+```
+Example:
 ```
 - prompt:
     question: How to increment the version? (major|minor|patch)
@@ -121,6 +129,13 @@ Prompt for a value that can be used later
 
 Retrieves the name of the active branch
 
+**Values:**
+
+mandatory:
+```
+store: variable
+```
+Example:
 ```
 - get_current_branch_name:
     store: $_currentBranch
@@ -130,6 +145,13 @@ Retrieves the name of the active branch
 
 Retrieves the name of the current project from the url of the remote
 
+**Values:**
+
+mandatory:
+```
+store: variable
+```
+Example:
 ```
 - get_current_project_name:
     store: $_currentProject
@@ -139,6 +161,14 @@ Retrieves the name of the current project from the url of the remote
 
 Retrieves the last tag from gitlab
 
+**Values:**
+
+mandatory:
+```
+project: string|variable
+store: variable
+```
+Example:
 ```
 fetch_last_tag:
     project: $_currentProject
@@ -153,8 +183,17 @@ The version supplied must be written as MAJOR.MINOR.PATCH
 
 The increment_by value can be major, minor or patch.
 
+**Values:**
+
+mandatory:
 ```
-increment_version:
+increment_from: string|variable
+increment_by: major|minor|patch|variable
+store: variable
+```
+Example
+```
+- increment_version:
     increment_from: $_currentVersion
     increment_by: $_increment
     store: $_currentVersion
@@ -164,8 +203,16 @@ increment_version:
 
 Replaces the package version with the new version
 
+**Values:**
+
+mandatory:
 ```
-write_version:
+files: string[] 
+new_version: string|variable
+```
+Example:
+```
+- write_version:
     files: ["./package.json", "./package-lock.json"]
     new_version: $_newVersion
 ```
@@ -179,7 +226,7 @@ Creates a new commit
 mandatory:
 
 ```
-message: $_variableName | string
+message: string|variable 
 ```
 
 optional:
@@ -191,13 +238,32 @@ add: all|tracked
 Example:
 
 ```
-commit:
+- commit:
     add: all
     message: 'auto: ci-toolkit commit'
 ```
 
 ### push
 
+
+Pushes the branch from the project directory to the remote (active branch by default)
+
+**Values:**
+
+optional:
+
+```
+branch: string or variable 
+await_pipeline: boolean
+```
+
+Example:
+
+```
+push:
+    branch: $_currentBranch
+    await_pipeline: true
+```
 ### create_tag
 
 ### get_diffs
