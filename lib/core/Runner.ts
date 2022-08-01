@@ -52,8 +52,11 @@ import {
     pullOptionSchema,
     pushOptionSchema,
     startPipelineOptionSchema,
+    startJobOptionSchema,
 } from '../models/config';
 import { packageSchema } from '../models/others';
+import { gitlabRunJobApiResponseSchema } from '../models/Gitlab/Jobs';
+import Jobs from './Gitlab/Jobs';
 
 type commands = 'help' | 'deploy' | 'createMergeRequest';
 type options = 'help';
@@ -442,7 +445,7 @@ class Runner {
         options.ref = this.populateVariable(options.ref);
 
         const pipelines = new Pipelines(conf);
-        const { awaitPipeline, ref, project } = options;
+        const { awaitPipeline, ref, project, store } = options;
         const apiOptions = conf.getApiOptions(options);
         const pipelineData = {
             ...apiOptions,
@@ -450,7 +453,11 @@ class Runner {
             project,
         };
 
-        await pipelines.post(pipelineData);
+        const data = await pipelines.post(pipelineData);
+        if (store) {
+            this.addToStore(store, data.id);
+        }
+
         if (awaitPipeline) {
             const awaitPipelineParams = {
                 options,
@@ -462,8 +469,48 @@ class Runner {
         }
     };
 
-    startJob = (options: unknown, _: Conf) => {
-        // TODO: start a job
+    startJob = async (userOptions: unknown, conf: Conf) => {
+        const options = startJobOptionSchema.parse(userOptions);
+
+        options.project = this.populateVariable(options.project);
+        options.pipeline = this.populateVariable(options.pipeline);
+        options.name = this.populateVariable(options.name);
+
+        const { project, store, awaitJob } = options;
+        const pipelines = new Pipelines(conf);
+        const apiOptions = conf.getApiOptions(options);
+        const pipelineData = {
+            ...apiOptions,
+            id: parseInt(options.pipeline, 10),
+            project,
+        };
+
+        const resJobs = await pipelines.fetchJobs(pipelineData);
+        const job = gitlabRunJobApiResponseSchema.parse(
+            resJobs.find((job) => job.name === options.name)
+        );
+
+        const jobId = job.id;
+        const jobs = new Jobs(conf);
+        const startJobsOptions = {
+            ...apiOptions,
+            jobId,
+            project,
+        };
+        const startedJob = await jobs.start(startJobsOptions);
+        if (store) {
+            this.addToStore(store, startedJob.id.toString());
+        }
+        // TODO: add awaitJob
+        // if (awaitJob) {
+        //     const awaitPipelineParams = {
+        //         options,
+        //         conf,
+        //         ref,
+        //         source: 'api',
+        //     };
+        //     await Runner.awaitPipeline(awaitPipelineParams);
+        // }
     };
 
     static awaitMergeAvailable = async (

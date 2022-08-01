@@ -73,6 +73,12 @@ interface command_options {
         variables?: pipelineVariable[];
         retries: number;
     };
+    start_job: {
+        project: string;
+        pipeline: string;
+        await_job?: boolean;
+        retries: number;
+    };
     increment_version: {
         increment_from: string;
         increment_by: string;

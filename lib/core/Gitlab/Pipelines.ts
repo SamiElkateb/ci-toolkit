@@ -3,6 +3,7 @@ import Logger from '../Logger';
 import GitlabApiError from '../Errors/GitlabApiError';
 import { assertNumber } from '../../utils/assertions/baseTypeAssertions';
 import { getHttpsAgent } from '../../utils/getHttpsAgent';
+import { gitlabRunJobApiResponse } from '../../types/Gitlab/Jobs';
 type pollParams = {
     fn: () => unknown;
     validate: (value: unknown) => boolean;
@@ -28,6 +29,7 @@ class Pipelines {
     private failedPipelines: number[];
     private successPipelines: number[];
     private canceledPipelines: number[];
+    private manualPipelines: number[];
     private logger: Logger;
     constructor(conf: Conf) {
         this.logger = new Logger(conf.logLevel);
@@ -35,6 +37,7 @@ class Pipelines {
         this.failedPipelines = [];
         this.successPipelines = [];
         this.canceledPipelines = [];
+        this.manualPipelines = [];
     }
     fetch = async (options: fetchOptions): Promise<pipeline> => {
         const {
@@ -56,6 +59,31 @@ class Pipelines {
             throw new GitlabApiError(error);
         }
     };
+
+    fetchJobs = async (
+        options: fetchOptions
+    ): Promise<gitlabRunJobApiResponse[]> => {
+        const {
+            id,
+            protocole,
+            domain,
+            project,
+            token,
+            allowInsecureCertificate: allowInsecure,
+        } = options;
+        const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
+        const params = new URLSearchParams({ access_token: token });
+        const url = `${protocole}://${domain}/api/v4/projects/${project}/pipelines/${id}/jobs?${params.toString()}`;
+        this.logger.request(url, 'get');
+        try {
+            const res = await axios.get(url, axiosOptions);
+            if (res.data.status === 'running') 'd';
+            return res.data;
+        } catch (error) {
+            throw new GitlabApiError(error);
+        }
+    };
+
     fetchAll = async (options: fetchAllOptions): Promise<pipeline[]> => {
         const {
             protocole,
@@ -114,6 +142,7 @@ class Pipelines {
         const failedPipelines = [...this.failedPipelines];
         const successPipelines = [...this.successPipelines];
         const canceledPipelines = [...this.canceledPipelines];
+        const manualPipelines = [...this.manualPipelines];
         for (let i = 0, c = this.runningPipelines.length; i < c; i++) {
             const populatedOption = {
                 ...options,
@@ -130,6 +159,9 @@ class Pipelines {
                 case 'canceled':
                     canceledPipelines.push(pipeline.id);
                     break;
+                case 'manual':
+                    manualPipelines.push(pipeline.id);
+                    break;
                 default:
                     runningPipelines.push(pipeline.id);
                     break;
@@ -139,17 +171,26 @@ class Pipelines {
         this.failedPipelines = [...new Set(failedPipelines)];
         this.successPipelines = [...new Set(successPipelines)];
         this.canceledPipelines = [...new Set(canceledPipelines)];
+        this.manualPipelines = [...new Set(manualPipelines)];
         return this.runningPipelines.length === 0;
     };
+
     getFailedPipelines = () => {
         return this.failedPipelines;
     };
+
     getSuccessPipelines = () => {
         return this.successPipelines;
     };
+
     getCanceledPipelines = () => {
         return this.canceledPipelines;
     };
+
+    getManualPipelines = () => {
+        return this.manualPipelines;
+    };
+
     pushRunningPipeline = (pipelineId: number) => {
         const runningPipelines = [...this.runningPipelines, pipelineId];
         this.runningPipelines = runningPipelines;

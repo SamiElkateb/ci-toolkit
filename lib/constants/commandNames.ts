@@ -22,6 +22,7 @@ const command_names = [
     'create_tag',
     // 'copy_env_diffs',
     'start_pipeline',
+    'start_job',
 ] as const;
 const commandNames = SnakeToCamelCaseArray([...command_names]);
 export { command_names, commandNames };

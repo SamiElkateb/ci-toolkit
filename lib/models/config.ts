@@ -31,8 +31,9 @@ export const createTagOptionSchema = z
     .object({
         project: z.string({
             required_error: ERROR_MESSAGES.isRequired('create_tag.project'),
-            invalid_type_error:
-                ERROR_MESSAGES.shouldBeString('create_tag.project'),
+            invalid_type_error: ERROR_MESSAGES.shouldBeString(
+                'create_tag.project'
+            ),
         }),
         targetBranch: z.string({
             required_error: ERROR_MESSAGES.isRequired(
@@ -66,8 +67,9 @@ export const startPipelineOptionSchema = z
         }),
         ref: z.string({
             required_error: ERROR_MESSAGES.isRequired('start_pipeline.ref'),
-            invalid_type_error:
-                ERROR_MESSAGES.shouldBeString('start_pipeline.ref'),
+            invalid_type_error: ERROR_MESSAGES.shouldBeString(
+                'start_pipeline.ref'
+            ),
         }),
         retries: z
             .number({
@@ -79,7 +81,7 @@ export const startPipelineOptionSchema = z
         awaitPipeline: z
             .boolean({
                 invalid_type_error: ERROR_MESSAGES.shouldBeBoolean(
-                    'create_tag.await_pipeline'
+                    'start_pipeline.await_pipeline'
                 ),
             })
             .default(false),
@@ -90,15 +92,72 @@ export const startPipelineOptionSchema = z
                 type: z.string(),
             })
         ),
+        store: z
+            .string({
+                invalid_type_error: ERROR_MESSAGES.shouldBeString(
+                    'start_pipeline.store'
+                ),
+            })
+            .startsWith('$_', {
+                message: ERROR_MESSAGES.shouldStartWith('start_pipeline.store'),
+            })
+            .optional(),
     })
     .strict();
+
+export const startJobOptionSchema = z
+    .object({
+        project: z.string({
+            required_error: ERROR_MESSAGES.isRequired('start_job.project'),
+            invalid_type_error: ERROR_MESSAGES.shouldBeString(
+                'start_job.project'
+            ),
+        }),
+        pipeline: z.string({
+            required_error: ERROR_MESSAGES.isRequired('start_job.pipeline'),
+            invalid_type_error: ERROR_MESSAGES.shouldBeString(
+                'start_job.pipeline'
+            ),
+        }),
+        store: z
+            .string({
+                invalid_type_error: ERROR_MESSAGES.shouldBeString(
+                    'start_job.store'
+                ),
+            })
+            .startsWith('$_', {
+                message: ERROR_MESSAGES.shouldStartWith('start_job.store'),
+            })
+            .optional(),
+        name: z.string({
+            required_error: ERROR_MESSAGES.isRequired('start_job.name'),
+            invalid_type_error: ERROR_MESSAGES.shouldBeString('start_job.name'),
+        }),
+        retries: z
+            .number({
+                invalid_type_error: ERROR_MESSAGES.shouldBeNumber(
+                    'start_job.retries'
+                ),
+            })
+            .default(0),
+        awaitJob: z
+            .boolean({
+                invalid_type_error: ERROR_MESSAGES.shouldBeBoolean(
+                    'start_job.await_job'
+                ),
+            })
+            .default(false),
+    })
+    .strict();
+
 export const applyDiffsOptionSchema = z
     .object({
         diffs: z
             .string({
                 required_error: ERROR_MESSAGES.isRequired('apply_diffs.diffs'),
-                invalid_type_error:
-                    ERROR_MESSAGES.shouldBeString('apply_diffs.diffs'),
+                invalid_type_error: ERROR_MESSAGES.shouldBeString(
+                    'apply_diffs.diffs'
+                ),
             })
             .startsWith('$_', {
                 message: ERROR_MESSAGES.shouldStartWith('apply_diffs.diffs'),
@@ -149,14 +208,16 @@ export const promptOptionSchema = z
     .object({
         question: z.string({
             required_error: ERROR_MESSAGES.isRequired('prompt.question'),
-            invalid_type_error:
-                ERROR_MESSAGES.shouldBeString('prompt.question'),
+            invalid_type_error: ERROR_MESSAGES.shouldBeString(
+                'prompt.question'
+            ),
         }),
         store: z
             .string({
                 required_error: ERROR_MESSAGES.isRequired('prompt.store'),
-                invalid_type_error:
-                    ERROR_MESSAGES.shouldBeString('prompt.store'),
+                invalid_type_error: ERROR_MESSAGES.shouldBeString(
+                    'prompt.store'
+                ),
             })
             .startsWith('$_', {
                 message: ERROR_MESSAGES.shouldStartWith('prompt.store'),
@@ -201,8 +262,9 @@ export const getDiffsOptionSchema = z
         file: z
             .string({
                 required_error: ERROR_MESSAGES.isRequired('get_diffs.file'),
-                invalid_type_error:
-                    ERROR_MESSAGES.shouldBeString('get_diffs.file'),
+                invalid_type_error: ERROR_MESSAGES.shouldBeString(
+                    'get_diffs.file'
+                ),
             })
             .regex(
                 /^(\.{1,2}\/)?(\/|\w|_|-|\.)+$/,
@@ -220,8 +282,9 @@ export const getDiffsOptionSchema = z
         store: z
             .string({
                 required_error: ERROR_MESSAGES.isRequired('get_diffs.store'),
-                invalid_type_error:
-                    ERROR_MESSAGES.shouldBeString('get_diffs.store'),
+                invalid_type_error: ERROR_MESSAGES.shouldBeString(
+                    'get_diffs.store'
+                ),
             })
             .startsWith('$_', {
                 message: ERROR_MESSAGES.shouldStartWith('get_diffs.store'),
@@ -233,14 +296,16 @@ export const promptDiffsOptionSchema = z
     .object({
         diffs: z.string({
             required_error: ERROR_MESSAGES.isRequired('prompt_diffs.diffs'),
-            invalid_type_error:
-                ERROR_MESSAGES.shouldBeString('prompt_diffs.diffs'),
+            invalid_type_error: ERROR_MESSAGES.shouldBeString(
+                'prompt_diffs.diffs'
+            ),
         }),
         store: z
             .string({
                 required_error: ERROR_MESSAGES.isRequired('prompt_diffs.store'),
-                invalid_type_error:
-                    ERROR_MESSAGES.shouldBeString('prompt_diffs.store'),
+                invalid_type_error: ERROR_MESSAGES.shouldBeString(
+                    'prompt_diffs.store'
+                ),
             })
             .startsWith('$_', {
                 message: ERROR_MESSAGES.shouldStartWith('prompt_diffs.store'),

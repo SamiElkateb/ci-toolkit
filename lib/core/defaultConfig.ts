@@ -74,6 +74,12 @@ const defaultConfig = {
             awaitPipeline: 'optional',
             variables: 'optional',
         },
+        startJob: {
+            project: 'required',
+            pipeline: 'required',
+            retries: 'optional',
+            awaitJob: 'optional',
+        },
         incrementVersion: {
             incrementFrom: 'required',
             incrementBy: 'required',
