@@ -27,7 +27,7 @@ class Conf {
 
   readonly token: string;
 
-  readonly allowInsecureCertificate: boolean;
+  readonly allowInsecureCertificates: boolean;
 
   readonly logLevel: logLevel;
 
@@ -35,18 +35,20 @@ class Conf {
 
   readonly warningAction: warningAction;
 
-  constructor(conf: configFile) {
+  constructor(userConf: configFile) {
+    const conf = { ...userConf };
     this.domain = conf.domain;
     this.project = conf.project;
     this.token = conf.token;
-    this.allowInsecureCertificate = conf.allow_insecure_certificate;
+    this.allowInsecureCertificates = conf.allow_insecure_certificates;
     this.logLevel = conf.log_level;
     this.lang = conf.lang;
     this.warningAction = conf.warning_action;
     this.protocole = conf.protocole;
-    for (const command in conf.commands) {
+    const commands = Object.keys(conf);
+    commands.forEach((command) => {
       conf.commands[command] = SnakeToCamelCase(conf.commands[command]);
-    }
+    });
     this.commands = conf.commands;
   }
 
@@ -65,7 +67,7 @@ class Conf {
       }
     }
     const apiOptions = {
-      allowInsecureCertificate: this.allowInsecureCertificate,
+      allowInsecureCertificates: this.allowInsecureCertificates,
       project: project || this.project,
       domain: domain || this.domain,
       protocole: protocole || this.protocole,
@@ -113,7 +115,7 @@ class Conf {
       log_level: 'info',
       lang: 'en',
       warning_action: 'prompt',
-      allow_insecure_certificate: false,
+      allow_insecure_certificates: false,
       ...configFile,
     };
     return conf as configFile;
@@ -128,7 +130,7 @@ class Conf {
     if (typeof defaultConf !== typeof customConf) {
       const defaultConfType = typeof defaultConf;
       const customConfType = typeof customConf;
-      throw `ConfigFile: ${propName} is of type ${customConfType}, should be of type ${defaultConfType} or undefined`;
+      throw new Error(`ConfigFile: ${propName} is of type ${customConfType}, should be of type ${defaultConfType} or undefined`);
     }
     if (typeof defaultConf !== 'object' || Array.isArray(defaultConf)) { return customConf as T; }
 
@@ -178,12 +180,13 @@ class Conf {
 
   static readConfigFile = (): unknown => {
     const extensions = ['yml', 'yaml', 'json'] as configExtension[];
-    for (let i = 0, c = extensions.length; i < c; i++) {
+    for (let i = 0, c = extensions.length; i < c; i += 1) {
       const currentPath = process.cwd();
       const filePath = `${currentPath}/ci-toolkit.${extensions[i]}`;
       const config = Conf.findConfigFile(filePath, extensions[i]);
       if (config) return config;
     }
+    return undefined;
   };
 
   static findConfigFile = (path: string, extension: configExtension) => {

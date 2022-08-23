@@ -607,3 +607,71 @@ export const commandsUnion = z.union([
 ]);
 
 export const arrayCommands = z.array(commandsUnion);
+
+export const configSchema = z
+  .object({
+    token: z.string({
+      required_error: ERROR_MESSAGES.isRequired(
+        'token',
+      ),
+      invalid_type_error: ERROR_MESSAGES.shouldBeString(
+        'token',
+      ),
+    }).regex(
+      /^(\.{1,2}\/)?(\/|\w|_|-|\.)+$/,
+      ERROR_MESSAGES.shouldBeValidPath('token'),
+    ),
+    aggregated_commands: z.map(z.string(), z.array(z.string())),
+    commands: z.map(z.string(), commandsUnion),
+    log_level: z
+      .string({
+        invalid_type_error: ERROR_MESSAGES.shouldBeString(
+          'log_level',
+        ),
+      }).regex(
+        /^(debug|info|warn|error)$/,
+        ERROR_MESSAGES.shouldBeOneOf('log_level', 'debug|info|warn|error'),
+      )
+      .default('info'),
+    domain: z
+      .string({
+        invalid_type_error: ERROR_MESSAGES.shouldBeString(
+          'domain',
+        ),
+      })
+      .default('gitlab.com'),
+    lang: z
+      .string({
+        invalid_type_error: ERROR_MESSAGES.shouldBeString(
+          'lang',
+        ),
+      })
+      .default('en'),
+    allow_insecure_certificates: z
+      .boolean({
+        invalid_type_error: ERROR_MESSAGES.shouldBeBoolean(
+          'allow_insecure_certificates',
+        ),
+      })
+      .default(false),
+    warning_action: z
+      .string({
+        invalid_type_error: ERROR_MESSAGES.shouldBeString(
+          'warning_action',
+        ),
+      }).regex(
+        /^(prompt|standby|skip)$/,
+        ERROR_MESSAGES.shouldBeOneOf('warning_action', 'prompt|standby|skip'),
+      )
+      .default('prompt'),
+    protocole: z
+      .string({
+        invalid_type_error: ERROR_MESSAGES.shouldBeString(
+          'protocole',
+        ),
+      }).regex(
+        /^(http|https)$/,
+        ERROR_MESSAGES.shouldBeOneOf('protocoles', 'http|https'),
+      )
+      .default('https'),
+  }).strict();

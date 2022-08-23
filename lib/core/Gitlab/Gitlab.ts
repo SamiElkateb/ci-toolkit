@@ -16,7 +16,7 @@ class Gitlab {
   constructor(conf: Conf) {
     this.mergeRequests = new MergeRequests();
     this.tags = new Tags();
-    this.users = new Users(conf);
+    this.users = new Users();
     this.pipelines = new Pipelines(conf);
   }
 }

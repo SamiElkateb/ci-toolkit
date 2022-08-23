@@ -9,6 +9,7 @@ const ERROR_MESSAGES = {
   shouldBeValidPath: (property: string) => `${property} should be a valid file path`,
   shouldBeValidPaths: (property: string) => `${property} should be a valid file paths`,
   shouldBeArrayOfStrings: (property: string) => `${property} should be an array of strings`,
+  shouldBeOneOf: (property: string, validValues:string) => `${property} should be one of ${validValues}`,
 };
 
 export default ERROR_MESSAGES;

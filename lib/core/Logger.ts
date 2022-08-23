@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import assertContinue from '../utils/assertions/assertContinue';
 import { assertProperty } from '../utils/assertions/baseTypeAssertions';
-import { standby } from '../utils/standby';
+import standby from '../utils/standby';
 import {
   checkIsArray,
   checkIsObject,

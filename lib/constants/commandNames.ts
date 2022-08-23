@@ -1,8 +1,8 @@
 import {
-  SnakeToCamelCase,
   SnakeToCamelCaseArray,
 } from '../utils/snakeToCamelCase';
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const command_names = [
   'get_current_branch_name',
   'get_diffs',

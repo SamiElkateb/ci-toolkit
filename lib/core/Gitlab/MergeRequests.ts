@@ -2,7 +2,7 @@ import Logger from '../Logger';
 import { assertExists } from '../../utils/assertions/baseTypeAssertions';
 import lang from '../lang/en';
 import GitlabApiError from '../Errors/GitlabApiError';
-import { getHttpsAgent } from '../../utils/getHttpsAgent';
+import getHttpsAgent from '../../utils/getHttpsAgent';
 import { hasOwnProperty } from '../../utils/validations/basicTypeValidations';
 
 const axios = require('axios');
@@ -47,7 +47,7 @@ class MergeRequests {
       domain,
       project,
       token,
-      allowInsecureCertificate: allowInsecure,
+      allowInsecureCertificates: allowInsecure,
     } = options;
     const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
     const data = {
@@ -80,7 +80,7 @@ class MergeRequests {
       domain,
       project,
       token,
-      allowInsecureCertificate: allowInsecure,
+      allowInsecureCertificates: allowInsecure,
     } = options;
     const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
     const url = `${protocole}://${domain}/api/v4/projects/${project}/merge_requests?state=opened&access_token=${token}`;
@@ -137,7 +137,7 @@ class MergeRequests {
       domain,
       project,
       token,
-      allowInsecureCertificate: allowInsecure,
+      allowInsecureCertificates: allowInsecure,
     } = options;
     const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
     const mergeRequestIid = mergeRequest.iid;

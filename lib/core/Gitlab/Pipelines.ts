@@ -2,7 +2,7 @@ import Conf from '../Conf';
 import Logger from '../Logger';
 import GitlabApiError from '../Errors/GitlabApiError';
 import { assertNumber } from '../../utils/assertions/baseTypeAssertions';
-import { getHttpsAgent } from '../../utils/getHttpsAgent';
+import getHttpsAgent from '../../utils/getHttpsAgent';
 import { gitlabRunJobApiResponse } from '../../types/Gitlab/Jobs';
 
 interface FetchOptions extends gitlabApiOptions {
@@ -49,7 +49,7 @@ class Pipelines {
       domain,
       project,
       token,
-      allowInsecureCertificate: allowInsecure,
+      allowInsecureCertificates: allowInsecure,
     } = options;
     const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
     const url = `${protocole}://${domain}/api/v4/projects/${project}/pipelines/${id}?access_token=${token}`;
@@ -71,7 +71,7 @@ class Pipelines {
       domain,
       project,
       token,
-      allowInsecureCertificate: allowInsecure,
+      allowInsecureCertificates: allowInsecure,
     } = options;
     const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
     const params = new URLSearchParams({ access_token: token });
@@ -94,7 +94,7 @@ class Pipelines {
       username,
       ref,
       source,
-      allowInsecureCertificate: allowInsecure,
+      allowInsecureCertificates: allowInsecure,
     } = options;
     const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
     const params = new URLSearchParams({ access_token: token });
@@ -119,7 +119,7 @@ class Pipelines {
       domain,
       project,
       token,
-      allowInsecureCertificate: allowInsecure,
+      allowInsecureCertificates: allowInsecure,
     } = options;
     const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
     const url = `${protocole}://${domain}/api/v4/projects/${project}/pipeline?access_token=${token}`;

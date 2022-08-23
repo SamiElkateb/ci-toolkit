@@ -1,7 +1,7 @@
 import Logger from '../Logger';
 import { assertVersion } from '../../utils/assertions/customTypesAssertions';
 import GitlabApiError from '../Errors/GitlabApiError';
-import { getHttpsAgent } from '../../utils/getHttpsAgent';
+import getHttpsAgent from '../../utils/getHttpsAgent';
 
 type IncrementVersionParams = {
   incrementBy: versionIncrement;
@@ -21,7 +21,7 @@ class Tags {
       domain,
       project,
       token,
-      allowInsecureCertificate: allowInsecure,
+      allowInsecureCertificates: allowInsecure,
     } = options;
     const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
     const url = `${protocole}://${domain}/api/v4/projects/${project}/repository/tags?access_token=${token}`;
@@ -42,7 +42,7 @@ class Tags {
       token,
       ref,
       tagName,
-      allowInsecureCertificate: allowInsecure,
+      allowInsecureCertificates: allowInsecure,
     } = options;
     const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
     const url = `${protocole}://${domain}/api/v4/projects/${project}/repository/tags?access_token=${token}`;

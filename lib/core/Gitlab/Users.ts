@@ -1,7 +1,7 @@
 import { assertExists } from '../../utils/assertions/baseTypeAssertions';
 import lang from '../lang/en';
 import GitlabApiError from '../Errors/GitlabApiError';
-import { getHttpsAgent } from '../../utils/getHttpsAgent';
+import getHttpsAgent from '../../utils/getHttpsAgent';
 import Logger from '../Logger';
 
 interface FetchOptions extends Omit<gitlabApiOptions, 'project'> {
@@ -23,7 +23,7 @@ class Users {
       protocole,
       domain,
       token,
-      allowInsecureCertificate: allowInsecure,
+      allowInsecureCertificates: allowInsecure,
     } = options;
     const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
     const url = `${protocole}://${domain}/api/v4/users?username=${username}&access_token=${token}`;
@@ -44,7 +44,7 @@ class Users {
       protocole,
       domain,
       token,
-      allowInsecureCertificate: allowInsecure,
+      allowInsecureCertificates: allowInsecure,
     } = options;
     const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
     const url = `${protocole}://${domain}/api/v4/user?access_token=${token}`;

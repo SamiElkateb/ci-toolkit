@@ -49,7 +49,7 @@ interface pipeline {
 }
 
 interface gitlabApiOptions {
-  allowInsecureCertificate?: boolean;
+  allowInsecureCertificates?: boolean;
   protocole: protocole;
   domain: string;
   project: string;

@@ -10,17 +10,17 @@ type CommitOptions = {
   add?: string;
 };
 class Git {
-  static getBranchName = async (path?: string) => {
+  static getBranchName = async (logger: Logger, path?: string) => {
     const command = 'git rev-parse --abbrev-ref HEAD';
-    const data = await execCommand({ command, path });
+    const data = await execCommand({ command, path, logger });
     const branchName = data.replace('\n', '');
     assertString(branchName, 'Could not find branch name');
     return branchName;
   };
 
-  static getProjectName = async (path?: string) => {
+  static getProjectName = async (logger: Logger, path?: string) => {
     const command = 'git remote -v';
-    const data = await execCommand({ command, path });
+    const data = await execCommand({ command, path, logger });
     const [fetch, push] = data.split('\n');
 
     const fetchUrl = Git.getUrlFromGitRemote(fetch);
@@ -36,9 +36,9 @@ class Git {
     throw new Error('Fetch and push origin do not match. Could not deduce project name.');
   };
 
-  static commit = async (options: CommitOptions, logger?: Logger) => {
+  static commit = async (options: CommitOptions, logger: Logger) => {
     const { message, add } = options;
-    const canCommit = await Git.checkCanCommit(add, logger);
+    const canCommit = await Git.checkCanCommit(logger, add);
     if (!canCommit) return;
     let command = 'git commit';
     if (add === 'all') {
@@ -49,31 +49,32 @@ class Git {
       throw new Error('when committing authorized "add" values are "all" to stage all files and "tracked" to stage only tracked files');
     }
     command = message ? `${command} -m` : command;
-    await execCommand({ command, message });
+    await execCommand({ command, message, logger });
   };
 
-  static pull = async (branch?: string) => {
+  static pull = async (logger: Logger, branch?: string) => {
     const command = branch ? 'git pull origin' : 'git pull';
-    await execCommand({ command, branch });
+    await execCommand({ command, branch, logger });
   };
 
-  static show = async (branch: string, file: string) => {
+  static show = async (logger:Logger, branch: string, file: string) => {
     const command = 'git show';
     return execCommand({
       command,
       branch: `${branch}:`,
       pathToAppend: file,
+      logger,
     });
   };
 
-  static push = async (branch?: string) => {
+  static push = async (logger:Logger, branch?: string) => {
     const command = branch ? 'git push -u origin' : 'git push';
-    await execCommand({ command, branch });
+    await execCommand({ command, branch, logger });
   };
 
-  static getOriginDomain = async (path?: string) => {
+  static getOriginDomain = async (logger: Logger, path?: string) => {
     const command = 'git remote -v';
-    const data = await execCommand({ command, path });
+    const data = await execCommand({ command, path, logger });
     const [fetch, push] = data.split('\n');
 
     const fetchUrl = Git.getUrlFromGitRemote(fetch);
@@ -107,9 +108,9 @@ class Git {
     return originDomainArray[1];
   };
 
-  static checkCanCommit = async (add?: string, logger?: Logger) => {
+  static checkCanCommit = async (logger: Logger, add?: string) => {
     const command = 'git status';
-    const response = await execCommand({ command });
+    const response = await execCommand({ command, logger });
     const cleanTreeMessage = 'nothing to commit, working tree clean';
     const noStagedChangesMessage = 'no changes added to commit';
     const changesToCommitMessage = 'Changes to be committed';

@@ -19,9 +19,9 @@ import lang from './lang/en';
 import Logger from './Logger';
 import Tags from './Gitlab/Tags';
 import { getAbsolutePath, writeVersion } from '../utils/files';
-import { poll } from '../utils/polling';
+import poll from '../utils/polling';
 import { checkIsCommandName, checkIsVarKey } from '../utils/validations/customTypeValidation';
-import { standby } from '../utils/standby';
+import standby from '../utils/standby';
 import Users from './Gitlab/Users';
 import Pipelines from './Gitlab/Pipelines';
 import MergeRequests from './Gitlab/MergeRequests';
@@ -223,7 +223,7 @@ class Runner {
     logger.debug('Getting current branch name');
     const options = getCurrentBranchNameOptionSchema.parse(userOptions);
     const { store } = options;
-    const branchName = await Git.getBranchName();
+    const branchName = await Git.getBranchName(logger);
     logger.info(`Current branch name is ${branchName}`);
     this.addToStore(store, branchName);
   };
@@ -232,7 +232,7 @@ class Runner {
     logger.debug('Getting current project name');
     const options = getCurrentProjectNameOptionSchema.parse(userOptions);
     const { store } = options;
-    const projectName = await Git.getProjectName();
+    const projectName = await Git.getProjectName(logger);
     logger.info(`Current project name is ${projectName}`);
     this.addToStore(store, projectName);
   };
@@ -243,9 +243,9 @@ class Runner {
     options.sourceBranch = this.populateVariable(options.sourceBranch);
     options.targetBranch = this.populateVariable(options.targetBranch);
     const { store, sourceBranch, targetBranch } = options;
-    const sourceFile = await Git.show(sourceBranch, options.file);
+    const sourceFile = await Git.show(logger, sourceBranch, options.file);
     const sourceObj = YAML.parse(sourceFile);
-    const targetFile = await Git.show(targetBranch, options.file);
+    const targetFile = await Git.show(logger, targetBranch, options.file);
     const targetObj = YAML.parse(targetFile);
     const diffs = detailedDiff(sourceObj, targetObj) as diffType;
     this.addToDiffStore(store, diffs);
@@ -360,7 +360,7 @@ class Runner {
   };
 
   commit = async (userOptions: unknown) => {
-    const branchName = await Git.getBranchName();
+    const branchName = await Git.getBranchName(logger);
     logger.info(`Committing changes in branch ${branchName}`);
     const options = commitOptionSchema.parse(userOptions);
     await Git.commit(options, logger);
@@ -368,20 +368,20 @@ class Runner {
   };
 
   pull = async (userOptions: unknown) => {
-    const currentBranchName = await Git.getBranchName();
+    const currentBranchName = await Git.getBranchName(logger);
     logger.debug('Pulling changes');
     const options = pullOptionSchema.parse(userOptions);
     const { branch } = options;
     if (branch) {
       logger.info(`Pulling changes from origin ${branch} to ${currentBranchName}`);
     }
-    await Git.pull(branch);
+    await Git.pull(logger, branch);
     logger.debug('Pulling successful');
   };
 
   push = async (userOptions: unknown, conf: Conf) => {
-    const currentBranchName = await Git.getBranchName();
-    const project = await Git.getProjectName();
+    const currentBranchName = await Git.getBranchName(logger);
+    const project = await Git.getProjectName(logger);
     logger.debug('Pushing changes');
     const options = pushOptionSchema.parse(userOptions);
 
@@ -391,7 +391,7 @@ class Runner {
     }
 
     const { branch, awaitPipeline } = options;
-    await Git.push(branch);
+    await Git.push(logger, branch);
     logger.debug('Push successful');
 
     if (awaitPipeline) {

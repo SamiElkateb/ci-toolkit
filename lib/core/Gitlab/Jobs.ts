@@ -2,7 +2,7 @@ import { ZodError } from 'zod';
 import Conf from '../Conf';
 import Logger from '../Logger';
 import GitlabApiError from '../Errors/GitlabApiError';
-import { getHttpsAgent } from '../../utils/getHttpsAgent';
+import getHttpsAgent from '../../utils/getHttpsAgent';
 import { gitlabRunJobApiResponseSchema } from '../../models/Gitlab/Jobs';
 
 interface FetchOptions extends gitlabApiOptions {
@@ -42,7 +42,7 @@ class Jobs {
       domain,
       project,
       token,
-      allowInsecureCertificate: allowInsecure,
+      allowInsecureCertificates: allowInsecure,
     } = options;
     const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
     const url = `${protocole}://${domain}/api/v4/projects/${project}/jobs/${id}?access_token=${token}`;
@@ -64,7 +64,7 @@ class Jobs {
       retry,
       project,
       token,
-      allowInsecureCertificate: allowInsecure,
+      allowInsecureCertificates: allowInsecure,
     } = options;
 
     const retryParam = retry ? '/retry' : '/play';
