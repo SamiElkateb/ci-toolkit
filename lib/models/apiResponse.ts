@@ -1,7 +1,8 @@
 type apiResponse<T> = {
-    success: true;
-    response: T;
+  success: true;
+  response: T;
 } | {
-    success: false;
-    error: Error;
-}
+  success: false;
+  error: Error;
+};
+

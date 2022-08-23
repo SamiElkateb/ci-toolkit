@@ -5,7 +5,7 @@ import {
   hasOwnProperty,
 } from '../utils/validations/basicTypeValidations';
 import { checkIsConfigFilePath } from '../utils/validations/customTypeValidation';
-import { defaultConfig } from './defaultConfig';
+import defaultConfig from './defaultConfig';
 import { fileExists, getAbsolutePath } from '../utils/files';
 import { SnakeToCamelCase } from '../utils/snakeToCamelCase';
 import { assertPathExists } from '../utils/assertions/customTypesAssertions';
@@ -173,7 +173,7 @@ class Conf {
       const configFile = Conf.findConfigFile(path, 'json');
       if (configFile) return configFile;
     }
-    throw `File: ${path} does not exist`;
+    throw new Error(`File: ${path} does not exist`);
   };
 
   static readConfigFile = (): unknown => {
@@ -187,7 +187,7 @@ class Conf {
   };
 
   static findConfigFile = (path: string, extension: configExtension) => {
-    if (!fileExists(path)) return;
+    if (!fileExists(path)) return undefined;
     switch (extension) {
       case 'txt':
         return fs.readFileSync(path, 'utf8');
@@ -196,6 +196,8 @@ class Conf {
       case 'yaml':
       case 'yml':
         return YAML.parse(fs.readFileSync(path, 'utf8'));
+      default:
+        return undefined;
     }
   };
 }

@@ -1,4 +1,3 @@
-import Conf from '../Conf';
 import { assertExists } from '../../utils/assertions/baseTypeAssertions';
 import lang from '../lang/en';
 import GitlabApiError from '../Errors/GitlabApiError';
@@ -15,15 +14,6 @@ type FetchMeOptions = Omit<gitlabApiOptions, 'project'>;
 const axios = require('axios');
 
 class Users {
-  private conf: Conf;
-
-  private logger: Logger;
-
-  constructor(conf: Conf) {
-    this.conf = conf;
-    this.logger = new Logger(conf.logLevel);
-  }
-
   static fetch = async (
     options: FetchOptions,
     logger?: Logger,

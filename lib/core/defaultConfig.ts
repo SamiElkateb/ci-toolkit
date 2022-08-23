@@ -99,4 +99,4 @@ const defaultConfig = {
   },
 };
 
-export { defaultConfig };
+export default defaultConfig;

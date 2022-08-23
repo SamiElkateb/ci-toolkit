@@ -100,6 +100,7 @@ Example of a workflow for incrementing the packages version before merging and t
 -   write_version
 -   commit
 -   push
+-   pull
 -   create_tag
 -   get_diffs
 -   prompt_diffs

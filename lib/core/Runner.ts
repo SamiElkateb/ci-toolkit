@@ -1,32 +1,33 @@
-import prompt = require("prompt");
-import fs = require("fs");
-import YAML = require("yaml");
-import omit = require("lodash.omit");
-import merge = require("lodash.merge");
-import { detailedDiff } from "deep-object-diff";
-import { z } from "zod";
-import ErrorHandler from "./Errors/ErrorHandler";
-import Git from "./Git";
-import Conf from "./Conf";
+/* eslint-disable class-methods-use-this */
+import prompt = require('prompt');
+import fs = require('fs');
+import YAML = require('yaml');
+import omit = require('lodash.omit');
+import merge = require('lodash.merge');
+import { detailedDiff } from 'deep-object-diff';
+import { z } from 'zod';
+import ErrorHandler from './Errors/ErrorHandler';
+import Git from './Git';
+import Conf from './Conf';
 
 import {
   assertPathExists,
-  assertVersionIncrement
-} from "../utils/assertions/customTypesAssertions";
-import { assertProperty, assertArray, assertExists } from "../utils/assertions/baseTypeAssertions";
-import lang from "./lang/en";
-import Logger from "./Logger";
-import Tags from "./Gitlab/Tags";
-import { getAbsolutePath, writeVersion } from "../utils/files";
-import { poll } from "../utils/polling";
-import { checkIsCommandName, checkIsVarKey } from "../utils/validations/customTypeValidation";
-import { standby } from "../utils/standby";
-import Users from "./Gitlab/Users";
-import Pipelines from "./Gitlab/Pipelines";
-import MergeRequests from "./Gitlab/MergeRequests";
-import { assertContinue } from "../utils/assertions/assertContinue";
-import ERROR_MESSAGES from "../constants/ErrorMessages";
-import getObjectPaths from "../utils/flattenObject";
+  assertVersionIncrement,
+} from '../utils/assertions/customTypesAssertions';
+import { assertProperty, assertArray, assertExists } from '../utils/assertions/baseTypeAssertions';
+import lang from './lang/en';
+import Logger from './Logger';
+import Tags from './Gitlab/Tags';
+import { getAbsolutePath, writeVersion } from '../utils/files';
+import { poll } from '../utils/polling';
+import { checkIsCommandName, checkIsVarKey } from '../utils/validations/customTypeValidation';
+import { standby } from '../utils/standby';
+import Users from './Gitlab/Users';
+import Pipelines from './Gitlab/Pipelines';
+import MergeRequests from './Gitlab/MergeRequests';
+import assertContinue from '../utils/assertions/assertContinue';
+import ERROR_MESSAGES from '../constants/ErrorMessages';
+import getObjectPaths from '../utils/flattenObject';
 import {
   applyDiffsOptionSchema,
   fetchLastTagOptionSchema,
@@ -45,56 +46,43 @@ import {
   pullOptionSchema,
   pushOptionSchema,
   startPipelineOptionSchema,
-  startJobOptionSchema
-} from "../models/config";
-import { packageSchema } from "../models/others";
-import { gitlabRunJobApiResponseSchema } from "../models/Gitlab/Jobs";
-import Jobs from "./Gitlab/Jobs";
+  startJobOptionSchema,
+} from '../models/config';
+import { packageSchema } from '../models/others';
+import { gitlabRunJobApiResponseSchema } from '../models/Gitlab/Jobs';
+import Jobs from './Gitlab/Jobs';
 
-type commands = "help" | "deploy" | "createMergeRequest";
-type options = "help";
-type params = {
-  conf: Conf;
-  options?: options[];
-};
-
-type awaitPipelineParams = {
+type AwaitPipelineParams = {
   conf: Conf;
   options: Partial<gitlabApiOptions>;
   source?: string;
   ref?: string;
 };
-interface awaitMergeAvailableOptions extends gitlabApiOptions {
+interface AwaitMergeAvailableOptions extends gitlabApiOptions {
   sourceBranch: string;
 }
 
-interface store {
-  [key: string]: string;
-}
-interface diffStore {
-  [key: string]: diffType;
-}
 const logger = new Logger();
 class Runner {
-  store: store;
+  store: Map<string, string>;
 
-  diffStore: diffStore;
+  diffStore: Map<string, diffType>;
 
   constructor() {
-    this.store = {};
-    this.diffStore = {};
+    this.store = new Map();
+    this.diffStore = new Map();
   }
 
-  static help = (params?: params) => {
+  static help = () => {
     const message = lang.help;
-    console.log(message);
+    logger.info(message);
   };
 
   static start = async () => {
     const args = process.argv;
     const command = args[2];
     ErrorHandler.try(async () => {
-      assertExists(command, "No command provided");
+      assertExists(command, 'No command provided');
       const conf = await Runner.getConf();
       await Runner.runCustomCommand(command, conf);
     });
@@ -105,29 +93,27 @@ class Runner {
     const commands = conf.commands[customCommandKey];
     assertArray(commands);
     const runner = new Runner();
-    for (let i = 0, c = commands.length; i < c; i++) {
+    for (let i = 0, c = commands.length; i < c; i += 1) {
       const commandName = Runner.getCommandName(commands[i]);
       assertExists(commandName);
       const commandsOptions = commands[i];
       if (checkIsCommandName(commandName)) {
         assertProperty(commandsOptions, commandName);
+        // eslint-disable-next-line no-await-in-loop
         await runner[commandName](commandsOptions[commandName], conf);
       }
+      // eslint-disable-next-line no-await-in-loop
       await standby(1000);
     }
   };
 
-  static getCommandName = (command: object) => {
-    for (const property in command) {
-      return property;
-    }
-  };
+  static getCommandName = (command: object) => Object.keys(command)[0];
 
   static getConf = async () => {
-    logger.debug("getting config file");
+    logger.debug('getting config file');
     const configFile = Conf.readConfigFile();
     if (!configFile) throw new Error(ERROR_MESSAGES.noConfig);
-    logger.debug("parsing config file");
+    logger.debug('parsing config file');
     const parsedConfig = await Conf.parseConfig(configFile);
     const conf = new Conf(parsedConfig);
     logger.setLogLevel(conf.logLevel);
@@ -137,7 +123,7 @@ class Runner {
   };
 
   createMergeRequest = async (userOptions: unknown, conf: Conf) => {
-    logger.debug("Creating merge request");
+    logger.debug('Creating merge request');
     const options = createMergeRequestOptionSchema.parse(userOptions);
     options.project = this.populateVariable(options.project);
     options.title = this.populateVariable(options.title);
@@ -154,7 +140,7 @@ class Runner {
       squashCommits: options.squashCommits || false,
       label: options.label,
       assigneeId: undefined,
-      reviewerIds: []
+      reviewerIds: [],
     };
 
     if (options.assignToMe) {
@@ -166,24 +152,24 @@ class Runner {
     const { reviewers } = options;
     const reviewerIds = await Users.fetchIds({
       ...apiOptions,
-      usernames: reviewers
+      usernames: reviewers,
     });
     postOptions.reviewerIds = reviewerIds;
 
     await MergeRequests.post(postOptions, logger);
-    logger.info("Merge request created");
+    logger.info('Merge request created');
     if (options.awaitPipeline) {
       const awaitPipelineParams = {
         options,
         conf,
-        source: "merge_request_event"
+        source: 'merge_request_event',
       };
       await Runner.awaitPipeline(awaitPipelineParams);
     }
   };
 
   mergeMergeRequest = async (userOptions: unknown, conf: Conf) => {
-    logger.debug("Merging merge request");
+    logger.debug('Merging merge request');
     const options = mergeMergeRequestOptionSchema.parse(userOptions);
     options.project = this.populateVariable(options.project);
     options.sourceBranch = this.populateVariable(options.sourceBranch);
@@ -194,55 +180,47 @@ class Runner {
       targetBranch: options.targetBranch,
       sourceBranch: options.sourceBranch,
       deleteSourceBranch: options.deleteSourceBranch || undefined,
-      squashCommits: options.squashCommits || undefined
+      squashCommits: options.squashCommits || undefined,
     };
     const mergeRequest = await MergeRequests.fetch(mergeOptions);
     MergeRequests.verify(options, mergeRequest);
-    if (mergeRequest.merge_status !== "can_be_merged") {
+    if (mergeRequest.merge_status !== 'can_be_merged') {
       logger.info(
-        "merge request cannot be merged at the moment, checking if pipelines are running for merge request."
+        'merge request cannot be merged at the moment, checking if pipelines are running for merge request.',
       );
       await Runner.awaitMergeAvailable(mergeOptions, conf);
     }
 
     await MergeRequests.merge(mergeOptions, mergeRequest, logger);
-    logger.info("Merge request merged");
+    logger.info('Merge request merged');
     if (options.awaitPipeline) {
       const awaitPipelineParams = {
         options,
         conf,
-        source: "push",
-        ref: options.targetBranch
+        source: 'push',
+        ref: options.targetBranch,
       };
       await Runner.awaitPipeline(awaitPipelineParams);
     }
   };
 
-  static parseArgs = (arg: string): { command?: commands; option?: options } => {
-    if (arg === "help") return { command: "help" };
-    if (arg === "deploy") return { command: "deploy" };
-    if (arg === "create-mr") return { command: "createMergeRequest" };
-    if (arg === "--help") return { option: "help" };
-    return {};
-  };
-
-  prompt = async (userOptions: unknown, _: Conf) => {
+  prompt = async (userOptions: unknown) => {
     const options = promptOptionSchema.parse(userOptions);
     const { store, question } = options;
     prompt.start();
     const { value } = await prompt.get([
       {
         description: question,
-        name: "value",
-        required: true
-      }
+        name: 'value',
+        required: true,
+      },
     ]);
     const validatedValue = z.string().parse(value);
     this.addToStore(store, validatedValue);
   };
 
-  getCurrentBranchName = async (userOptions: unknown, _: Conf) => {
-    logger.debug("Getting current branch name");
+  getCurrentBranchName = async (userOptions: unknown) => {
+    logger.debug('Getting current branch name');
     const options = getCurrentBranchNameOptionSchema.parse(userOptions);
     const { store } = options;
     const branchName = await Git.getBranchName();
@@ -250,8 +228,8 @@ class Runner {
     this.addToStore(store, branchName);
   };
 
-  getCurrentProjectName = async (userOptions: unknown, _: Conf) => {
-    logger.debug("Getting current project name");
+  getCurrentProjectName = async (userOptions: unknown) => {
+    logger.debug('Getting current project name');
     const options = getCurrentProjectNameOptionSchema.parse(userOptions);
     const { store } = options;
     const projectName = await Git.getProjectName();
@@ -259,8 +237,8 @@ class Runner {
     this.addToStore(store, projectName);
   };
 
-  getDiffs = async (userOptions: unknown, _: Conf) => {
-    logger.debug("Getting Diffs");
+  getDiffs = async (userOptions: unknown) => {
+    logger.debug('Getting Diffs');
     const options = getDiffsOptionSchema.parse(userOptions);
     options.sourceBranch = this.populateVariable(options.sourceBranch);
     options.targetBranch = this.populateVariable(options.targetBranch);
@@ -273,8 +251,8 @@ class Runner {
     this.addToDiffStore(store, diffs);
   };
 
-  promptDiffs = async (userOptions: unknown, _: Conf) => {
-    logger.debug("Prompt Diffs");
+  promptDiffs = async (userOptions: unknown) => {
+    logger.debug('Prompt Diffs');
     const options = promptDiffsOptionSchema.parse(userOptions);
     const diffs = this.populateDiffs(options.diffs);
     const add = getObjectPaths(diffs?.added);
@@ -282,32 +260,30 @@ class Runner {
     const update = getObjectPaths(diffs?.updated);
     logger.diffs({ add, remove, update });
     // TODO: store verified diffs and add modification
-    await assertContinue("Continue?");
+    await assertContinue('Continue?');
   };
 
-  applyDiffs = async (userOptions: unknown, _: Conf) => {
-    logger.debug("Prompt Diffs");
+  applyDiffs = async (userOptions: unknown) => {
+    logger.debug('Prompt Diffs');
 
     const options = applyDiffsOptionSchema.parse(userOptions);
     const diffs = this.populateDiffs(options.diffs);
     const { files } = options;
 
-    for (let i = 0, c = files.length; i < c; i++) {
-      const file = files[i];
+    files.forEach((file) => {
       const path = getAbsolutePath(file);
-      const baseObject = YAML.parse(fs.readFileSync(path, "utf8"));
+      const baseObject = YAML.parse(fs.readFileSync(path, 'utf8'));
       const paths = Object.keys(getObjectPaths(diffs?.deleted));
       const deletedDiffs = omit(baseObject, paths);
       const addedDiffs = merge(deletedDiffs, diffs?.added);
       const updatedDiffs = merge(addedDiffs, diffs?.updated);
       const newFile = YAML.stringify(updatedDiffs, null, 4);
-
-      fs.writeFileSync(path, newFile, { encoding: "utf-8" });
-    }
+      fs.writeFileSync(path, newFile, { encoding: 'utf-8' });
+    });
   };
 
   fetchLastTag = async (userOptions: unknown, conf: Conf) => {
-    logger.debug("Getting last tag");
+    logger.debug('Getting last tag');
     const options = fetchLastTagOptionSchema.parse(userOptions);
     options.project = this.populateVariable(options.project);
     const { store } = options;
@@ -317,8 +293,8 @@ class Runner {
     this.addToStore(store, tag);
   };
 
-  readCurrentVersion = async (userOptions: unknown, _: Conf) => {
-    logger.debug("Getting current version");
+  readCurrentVersion = async (userOptions: unknown) => {
+    logger.debug('Getting current version');
     const options = readCurrentVersionOptionSchema.parse(userOptions);
     const { file, store } = options;
     assertPathExists(file);
@@ -329,7 +305,7 @@ class Runner {
   };
 
   createTag = async (userOptions: unknown, conf: Conf) => {
-    logger.debug("Creating a new tag on the remote");
+    logger.debug('Creating a new tag on the remote');
     const options = createTagOptionSchema.parse(userOptions);
 
     options.project = this.populateVariable(options.project);
@@ -341,7 +317,7 @@ class Runner {
     const postTagData = {
       ...apiOptions,
       ref: options.targetBranch,
-      tagName: options.tagName
+      tagName: options.tagName,
     };
     await Tags.post(postTagData, logger);
     if (awaitPipeline) {
@@ -349,14 +325,14 @@ class Runner {
         options,
         conf,
         ref: options.tagName,
-        source: "push"
+        source: 'push',
       };
       await Runner.awaitPipeline(awaitPipelineParams);
     }
   };
 
-  writeVersion = async (userOptions: unknown, _: Conf) => {
-    logger.debug("Setting new version");
+  writeVersion = async (userOptions: unknown) => {
+    logger.debug('Setting new version');
     const options = writeVersionOptionSchema.parse(userOptions);
     options.newVersion = this.populateVariable(options.newVersion);
     const { files, newVersion } = options;
@@ -367,8 +343,8 @@ class Runner {
     });
   };
 
-  incrementVersion = async (userOptions: unknown, _: Conf) => {
-    logger.debug("Incrementing version");
+  incrementVersion = async (userOptions: unknown) => {
+    logger.debug('Incrementing version');
 
     const options = incrementVersionOptionSchema.parse(userOptions);
     options.incrementBy = this.populateVariable(options.incrementBy);
@@ -377,36 +353,36 @@ class Runner {
     assertVersionIncrement(incrementBy);
     const incrementedVersion = Tags.incrementVersion({
       incrementBy,
-      version: incrementFrom
+      version: incrementFrom,
     });
     logger.info(`Incremented version is ${incrementedVersion}`);
     this.addToStore(store, incrementedVersion);
   };
 
-  commit = async (userOptions: unknown, _: Conf) => {
+  commit = async (userOptions: unknown) => {
     const branchName = await Git.getBranchName();
     logger.info(`Committing changes in branch ${branchName}`);
     const options = commitOptionSchema.parse(userOptions);
     await Git.commit(options, logger);
-    logger.debug("Changes have been committed");
+    logger.debug('Changes have been committed');
   };
 
-  pull = async (userOptions: unknown, _: Conf) => {
+  pull = async (userOptions: unknown) => {
     const currentBranchName = await Git.getBranchName();
-    logger.debug("Pulling changes");
+    logger.debug('Pulling changes');
     const options = pullOptionSchema.parse(userOptions);
     const { branch } = options;
     if (branch) {
       logger.info(`Pulling changes from origin ${branch} to ${currentBranchName}`);
     }
     await Git.pull(branch);
-    logger.debug("Pulling successful");
+    logger.debug('Pulling successful');
   };
 
   push = async (userOptions: unknown, conf: Conf) => {
     const currentBranchName = await Git.getBranchName();
     const project = await Git.getProjectName();
-    logger.debug("Pushing changes");
+    logger.debug('Pushing changes');
     const options = pushOptionSchema.parse(userOptions);
 
     if (options.branch) {
@@ -416,33 +392,35 @@ class Runner {
 
     const { branch, awaitPipeline } = options;
     await Git.push(branch);
-    logger.debug("Push successful");
+    logger.debug('Push successful');
 
     if (awaitPipeline) {
       const awaitPipelineParams = {
         options: { project, ...options },
         conf,
-        source: "push",
-        ref: currentBranchName
+        source: 'push',
+        ref: currentBranchName,
       };
       await Runner.awaitPipeline(awaitPipelineParams);
     }
   };
 
   startPipeline = async (userOptions: unknown, conf: Conf) => {
-    logger.debug("Starting pipeline");
+    logger.debug('Starting pipeline');
     const options = startPipelineOptionSchema.parse(userOptions);
 
     options.project = this.populateVariable(options.project);
     options.ref = this.populateVariable(options.ref);
 
     const pipelines = new Pipelines(conf);
-    const { awaitPipeline, ref, project, store } = options;
+    const {
+      awaitPipeline, ref, project, store,
+    } = options;
     const apiOptions = conf.getApiOptions(options);
     const pipelineData = {
       ...apiOptions,
       ref,
-      project
+      project,
     };
 
     const data = await pipelines.post(pipelineData);
@@ -455,7 +433,7 @@ class Runner {
         options,
         conf,
         ref,
-        source: "api"
+        source: 'api',
       };
       await Runner.awaitPipeline(awaitPipelineParams);
     }
@@ -468,26 +446,26 @@ class Runner {
     options.pipeline = this.populateVariable(options.pipeline);
     options.name = this.populateVariable(options.name);
 
-    const { project, store, awaitJob } = options;
+    const { project, store } = options;
     const pipelines = new Pipelines(conf);
     const apiOptions = conf.getApiOptions(options);
     const pipelineData = {
       ...apiOptions,
       id: parseInt(options.pipeline, 10),
-      project
+      project,
     };
 
     const resJobs = await pipelines.fetchJobs(pipelineData);
-    const job = gitlabRunJobApiResponseSchema.parse(
-      resJobs.find((job) => job.name === options.name)
+    const foundJob = gitlabRunJobApiResponseSchema.parse(
+      resJobs.find((job) => job.name === options.name),
     );
 
-    const jobId = job.id;
+    const jobId = foundJob.id;
     const jobs = new Jobs(conf);
     const startJobsOptions = {
       ...apiOptions,
       jobId,
-      project
+      project,
     };
     const startedJob = await jobs.start(startJobsOptions);
     if (store) {
@@ -505,21 +483,23 @@ class Runner {
     // }
   };
 
-  static awaitMergeAvailable = async (options: awaitMergeAvailableOptions, conf: Conf) => {
+  static awaitMergeAvailable = async (options: AwaitMergeAvailableOptions, conf: Conf) => {
     const awaitPipelineParams = {
       options,
       conf,
-      source: "push",
-      ref: options.sourceBranch
+      source: 'push',
+      ref: options.sourceBranch,
     };
     await Runner.awaitPipeline(awaitPipelineParams);
-    awaitPipelineParams.source = "merge_request_event";
+    awaitPipelineParams.source = 'merge_request_event';
     await Runner.awaitPipeline(awaitPipelineParams);
   };
 
-  static awaitPipeline = async (params: awaitPipelineParams) => {
+  static awaitPipeline = async (params: AwaitPipelineParams) => {
     await standby(5000);
-    const { options, conf, source, ref } = params;
+    const {
+      options, conf, source, ref,
+    } = params;
     const fetchOptions = conf.getApiOptions(options);
     const currentUser = await Users.fetchMe(fetchOptions, logger);
     const pipelines = new Pipelines(conf);
@@ -527,54 +507,54 @@ class Runner {
       username: currentUser.username,
       ref,
       source,
-      ...fetchOptions
+      ...fetchOptions,
     };
     const allPipelines = await pipelines.fetchAll(fetchAllOptions);
 
-    if (allPipelines.length === 0 || allPipelines[0].status === "success") {
+    if (allPipelines.length === 0 || allPipelines[0].status === 'success') {
       return;
     }
     pipelines.pushRunningPipeline(allPipelines[0].id);
     const pollingData = {
       fn: async () => pipelines.arePipelineRunning(fetchOptions),
-      timeoutMessage: "timeout exceeded",
+      timeoutMessage: 'timeout exceeded',
       pollingLogFn: () => {
-        logger.debug("polling pipelines");
-      }
+        logger.debug('polling pipelines');
+      },
     };
     await poll(pollingData);
     const failedPipelines = pipelines.getFailedPipelines();
-    if (failedPipelines.length > 0) throw "Failed pipelines";
+    if (failedPipelines.length > 0) throw new Error('Failed pipelines');
   };
 
   addToStore = (userKey: string, value: string) => {
-    const key = userKey.replace("$_", "");
-    this.store[key] = value;
+    const key = userKey.replace('$_', '');
+    this.store.set(key, value);
     logger.debug(`Storing ${value} as ${key}`);
   };
 
   addToDiffStore = (userKey: string, value: diffType) => {
-    const key = userKey.replace("$_", "");
-    this.diffStore[key] = value;
+    const key = userKey.replace('$_', '');
+    this.diffStore.set(key, value);
     logger.debug(`Storing diffs as ${key}`);
   };
 
   populateVariable = (store: string): string => {
     if (!checkIsVarKey(store)) return store;
-    const varKey = store.match(/\$\_\w*/);
+    const varKey = store.match(/\$_\w*/);
     if (!varKey || varKey?.length === 0) return store;
-    const key = varKey[0].replace("$_", "");
-    assertExists(this.store[key]);
-    return this.store[key];
+    const key = varKey[0].replace('$_', '');
+    const value = this.store.get(key);
+    assertExists(value);
+    return value;
   };
 
   populateDiffs = (store: string): diffType | undefined => {
-    if (!checkIsVarKey(store)) return;
-    const varKey = store.match(/\$\_\w*/);
-    if (!varKey || varKey?.length === 0) return;
-    const key = varKey[0].replace("$_", "");
-    assertExists(this.diffStore[key], `${store} does not exist`);
-    return this.diffStore[key];
+    if (!checkIsVarKey(store)) return undefined;
+    const varKey = store.match(/\$_\w*/);
+    if (!varKey || varKey?.length === 0) return undefined;
+    const key = varKey[0].replace('$_', '');
+    return this.diffStore.get(key);
   };
 }
 export default Runner;
