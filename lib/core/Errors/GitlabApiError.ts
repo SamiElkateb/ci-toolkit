@@ -12,20 +12,20 @@ import {
   hasOwnProperty,
 } from '../../utils/validations/basicTypeValidations';
 
-class GitlabApiError {
-  readonly message: string;
-
+class GitlabApiError extends Error {
   constructor(gitlabError: unknown) {
     try {
       const errorSchema = z.object({
         response: z.object({ data: z.string() }),
       });
       const parsedError = errorSchema.parse(gitlabError);
-      this.message = GitlabApiError.getMessageFromData(
+      const message = GitlabApiError.getMessageFromData(
         parsedError.response.data,
       );
+      super(message);
     } catch (error) {
-      this.message = ERROR_MESSAGES.unknownGitlabApiError;
+      const message = ERROR_MESSAGES.unknownGitlabApiError;
+      super(message);
     }
   }
 

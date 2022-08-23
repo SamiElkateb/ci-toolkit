@@ -3,16 +3,16 @@ interface TypeErrorParams {
   varName: string;
   type: string;
 }
-class TypeError {
-  readonly message: string;
-
+class TypeError extends Error {
   constructor(params: TypeErrorParams) {
     const { location, varName, type } = params;
     if (location) {
-      this.message = `${location}: ${varName} should be of type ${type}`;
+      const message = `${location}: ${varName} should be of type ${type}`;
+      super(message);
       return;
     }
-    this.message = `${varName} should be of type ${type}`;
+    const message = `${varName} should be of type ${type}`;
+    super(message);
   }
 }
 export default TypeError;
