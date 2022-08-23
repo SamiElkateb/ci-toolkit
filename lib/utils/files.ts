@@ -6,6 +6,7 @@ import {
 
 const fs = require('fs');
 const util = require('util');
+
 const fileExists = (path: string) => {
     try {
         if (fs.existsSync(path)) return true;
@@ -26,7 +27,7 @@ const writeVersion = async (path: string, version: string) => {
     assertPathExists(absolutePath);
     const packageJson = JSON.parse(fs.readFileSync(absolutePath, 'utf8'));
     packageJson.version = version;
-    const packageString = JSON.stringify(packageJson, null, '\t') + '\n';
+    const packageString = `${JSON.stringify(packageJson, null, '\t')}\n`;
     fs.writeFileSync(absolutePath, packageString, { encoding: 'utf-8' });
 };
 
