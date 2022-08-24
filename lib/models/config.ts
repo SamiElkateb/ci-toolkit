@@ -690,9 +690,6 @@ export const customCommands = z.record(z.string(), arrayCommands, {
   required_error: ERROR_MESSAGES.isRequired(
     'commands',
   ),
-  // invalid_type_error: ERROR_MESSAGES.shouldBeBoolean(
-  //   'commands',
-  // ),
 });
 
 export const nonPopulatedConfigSchema = z.object({
@@ -708,7 +705,7 @@ export const nonPopulatedConfigSchema = z.object({
     ERROR_MESSAGES.shouldBeValidPath('token'),
   ),
   commands: z.record(z.string(), z.union([z.string(), arrayCommands])),
-});
+}).passthrough();
 
 export const configSchema = z
   .object({
@@ -726,7 +723,7 @@ export const configSchema = z
           'project',
         ),
       }).optional(),
-    aggregated_commands: z.record(z.string(), customCommands).optional(),
+    aggregated_commands: z.record(z.string(), z.array(z.string())).optional(),
     commands: customCommands,
     log_level: z
       .string({
