@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { z } from 'zod';
 import ERROR_MESSAGES from '../constants/ErrorMessages';
+// import { SnakeToCamelCase } from '../utils/snakeToCamelCase';
 
 export const fetchLastTagOptionSchema = z
   .object({
@@ -28,7 +30,7 @@ export const fetchLastTagOptionSchema = z
   })
   .strict();
 
-export const createTagOptionSchema = z
+export const create_tag_option_schema = z
   .object({
     project: z.string({
       required_error: ERROR_MESSAGES.isRequired('create_tag.project'),
@@ -36,7 +38,7 @@ export const createTagOptionSchema = z
         'create_tag.project',
       ),
     }),
-    targetBranch: z.string({
+    target_branch: z.string({
       required_error: ERROR_MESSAGES.isRequired(
         'create_tag.target_branch',
       ),
@@ -44,11 +46,11 @@ export const createTagOptionSchema = z
         'create_tag.target_branch',
       ),
     }),
-    tagName: z.string({
+    tag_name: z.string({
       required_error: ERROR_MESSAGES.isRequired('create_tag.tag'),
       invalid_type_error: ERROR_MESSAGES.shouldBeString('create_tag.tag'),
     }),
-    awaitPipeline: z
+    await_pipeline: z
       .boolean({
         invalid_type_error: ERROR_MESSAGES.shouldBeBoolean(
           'create_tag.await_pipeline',
@@ -57,8 +59,16 @@ export const createTagOptionSchema = z
       .default(false),
   })
   .strict();
+export const createTagOptionSchema = create_tag_option_schema.transform(
+  (value) => ({
+    ...value,
+    targetBranch: value.target_branch,
+    tagName: value.tag_name,
+    awaitPipeline: value.await_pipeline,
+  }),
+);
 
-export const startPipelineOptionSchema = z
+export const start_pipeline_option_schema = z
   .object({
     project: z.string({
       required_error: ERROR_MESSAGES.isRequired('start_pipeline.project'),
@@ -79,7 +89,7 @@ export const startPipelineOptionSchema = z
         ),
       })
       .default(0),
-    awaitPipeline: z
+    await_pipeline: z
       .boolean({
         invalid_type_error: ERROR_MESSAGES.shouldBeBoolean(
           'start_pipeline.await_pipeline',
@@ -105,8 +115,14 @@ export const startPipelineOptionSchema = z
       .optional(),
   })
   .strict();
+export const startPipelineOptionSchema = start_pipeline_option_schema.transform(
+  (value) => ({
+    ...value,
+    awaitPipeline: value.await_pipeline,
+  }),
+);
 
-export const startJobOptionSchema = z
+export const start_job_option_schema = z
   .object({
     project: z.string({
       required_error: ERROR_MESSAGES.isRequired('start_job.project'),
@@ -141,7 +157,7 @@ export const startJobOptionSchema = z
         ),
       })
       .default(0),
-    awaitJob: z
+    await_job: z
       .boolean({
         invalid_type_error: ERROR_MESSAGES.shouldBeBoolean(
           'start_job.await_job',
@@ -150,6 +166,12 @@ export const startJobOptionSchema = z
       .default(false),
   })
   .strict();
+export const startJobOptionSchema = start_job_option_schema.transform(
+  (value) => ({
+    ...value,
+    awaitJob: value.await_job,
+  }),
+);
 
 export const applyDiffsOptionSchema = z
   .object({
@@ -258,7 +280,7 @@ export const readCurrentVersionOptionSchema = z
   })
   .strict();
 
-export const getDiffsOptionSchema = z
+export const get_diffs_option_schema = z
   .object({
     file: z
       .string({
@@ -271,7 +293,7 @@ export const getDiffsOptionSchema = z
         /^(\.{1,2}\/)?(\/|\w|_|-|\.)+$/,
         ERROR_MESSAGES.shouldBeValidPath('get_diffs.file'),
       ),
-    sourceBranch: z.string({
+    source_branch: z.string({
       required_error: ERROR_MESSAGES.isRequired(
         'get_diffs.source_branch',
       ),
@@ -279,7 +301,7 @@ export const getDiffsOptionSchema = z
         'get_diffs.source_branch',
       ),
     }),
-    targetBranch: z.string(),
+    target_branch: z.string(),
     store: z
       .string({
         required_error: ERROR_MESSAGES.isRequired('get_diffs.store'),
@@ -292,6 +314,13 @@ export const getDiffsOptionSchema = z
       }),
   })
   .strict();
+export const getDiffsOptionSchema = get_diffs_option_schema.transform(
+  (value) => ({
+    ...value,
+    sourceBranch: value.source_branch,
+    targetBranch: value.target_branch,
+  }),
+);
 
 export const promptDiffsOptionSchema = z
   .object({
@@ -314,7 +343,7 @@ export const promptDiffsOptionSchema = z
   })
   .strict();
 
-export const writeVersionOptionSchema = z.object({
+export const write_version_option_schema = z.object({
   files: z.array(
     z
       .string({
@@ -330,15 +359,22 @@ export const writeVersionOptionSchema = z.object({
         ERROR_MESSAGES.shouldBeValidPaths('write_version.files'),
       ),
   ),
-  newVersion: z.string({
+  new_version: z.string({
     required_error: ERROR_MESSAGES.isRequired('write_version.new_version'),
     invalid_type_error: ERROR_MESSAGES.shouldBeString(
       'write_version.new_version',
     ),
   }),
 });
-export const incrementVersionOptionSchema = z.object({
-  incrementFrom: z.string({
+export const writeVersionOptionSchema = write_version_option_schema.transform(
+  (value) => ({
+    ...value,
+    newVersion: value.new_version,
+  }),
+);
+
+export const increment_version_option_schema = z.object({
+  increment_from: z.string({
     required_error: ERROR_MESSAGES.isRequired(
       'increment_version.increment_from',
     ),
@@ -346,7 +382,7 @@ export const incrementVersionOptionSchema = z.object({
       'increment_version.increment_from',
     ),
   }),
-  incrementBy: z.string({
+  increment_by: z.string({
     required_error: ERROR_MESSAGES.isRequired(
       'increment_version.increment_by',
     ),
@@ -367,7 +403,15 @@ export const incrementVersionOptionSchema = z.object({
       message: ERROR_MESSAGES.shouldStartWith('increment_version.store'),
     }),
 });
-export const createMergeRequestOptionSchema = z
+export const incrementVersionOptionSchema = increment_version_option_schema.transform(
+  (value) => ({
+    ...value,
+    incrementFrom: value.increment_from,
+    incrementBy: value.increment_by,
+  }),
+);
+
+export const create_merge_request_option_schema = z
   .object({
     title: z.string({
       required_error: ERROR_MESSAGES.isRequired(
@@ -385,7 +429,7 @@ export const createMergeRequestOptionSchema = z
         'create_merge_request.project',
       ),
     }),
-    sourceBranch: z.string({
+    source_branch: z.string({
       required_error: ERROR_MESSAGES.isRequired(
         'create_merge_request.source_branch',
       ),
@@ -393,7 +437,7 @@ export const createMergeRequestOptionSchema = z
         'create_merge_request.source_branch',
       ),
     }),
-    targetBranch: z.string({
+    target_branch: z.string({
       required_error: ERROR_MESSAGES.isRequired(
         'create_merge_request.target_branch',
       ),
@@ -401,35 +445,35 @@ export const createMergeRequestOptionSchema = z
         'create_merge_request.target_branch',
       ),
     }),
-    awaitPipeline: z
+    await_pipeline: z
       .boolean({
         invalid_type_error: ERROR_MESSAGES.shouldBeBoolean(
           'create_merge_request.await_pipeline',
         ),
       })
       .default(false),
-    minApprovals: z
+    min_approvals: z
       .number({
         invalid_type_error: ERROR_MESSAGES.shouldBeNumber(
           'create_merge_request.min_approvals',
         ),
       })
       .default(0),
-    assignToMe: z
+    assign_to_me: z
       .boolean({
         invalid_type_error: ERROR_MESSAGES.shouldBeBoolean(
           'create_merge_request.assign_to_me',
         ),
       })
       .default(false),
-    deleteSourceBranch: z
+    delete_source_branch: z
       .boolean({
         invalid_type_error: ERROR_MESSAGES.shouldBeBoolean(
           'create_merge_request.delete_source_branch',
         ),
       })
       .default(false),
-    squashCommits: z
+    squash_commits: z
       .boolean({
         invalid_type_error: ERROR_MESSAGES.shouldBeBoolean(
           'create_merge_request.squash_commits',
@@ -455,7 +499,20 @@ export const createMergeRequestOptionSchema = z
   })
   .strict();
 
-export const mergeMergeRequestOptionSchema = z.object({
+export const createMergeRequestOptionSchema = create_merge_request_option_schema.transform(
+  (value) => ({
+    ...value,
+    sourceBranch: value.source_branch,
+    targetBranch: value.target_branch,
+    awaitPipeline: value.await_pipeline,
+    minApprovals: value.min_approvals,
+    assignToMe: value.assign_to_me,
+    deleteSourceBranch: value.delete_source_branch,
+    squashCommits: value.squash_commits,
+  }),
+);
+
+export const merge_merge_request_option_chema = z.object({
   project: z.string({
     required_error: ERROR_MESSAGES.isRequired(
       'merge_merge_request.project',
@@ -464,7 +521,7 @@ export const mergeMergeRequestOptionSchema = z.object({
       'merge_merge_request.project',
     ),
   }),
-  sourceBranch: z.string({
+  source_branch: z.string({
     required_error: ERROR_MESSAGES.isRequired(
       'merge_merge_request.source_branch',
     ),
@@ -472,7 +529,7 @@ export const mergeMergeRequestOptionSchema = z.object({
       'merge_merge_request.source_branch',
     ),
   }),
-  targetBranch: z.string({
+  target_branch: z.string({
     required_error: ERROR_MESSAGES.isRequired(
       'merge_merge_request.target_branch',
     ),
@@ -480,35 +537,35 @@ export const mergeMergeRequestOptionSchema = z.object({
       'merge_merge_request.target_branch',
     ),
   }),
-  awaitPipeline: z
+  await_pipeline: z
     .boolean({
       invalid_type_error: ERROR_MESSAGES.shouldBeBoolean(
         'merge_merge_request.await_pipeline',
       ),
     })
     .default(false),
-  minUpvotes: z
+  min_upvotes: z
     .number({
       invalid_type_error: ERROR_MESSAGES.shouldBeNumber(
         'merge_merge_request.min_upvotes',
       ),
     })
     .default(0),
-  maxDownvotes: z
+  max_downvotes: z
     .number({
       invalid_type_error: ERROR_MESSAGES.shouldBeNumber(
         'merge_merge_request.max_downvotes',
       ),
     })
     .default(0),
-  deleteSourceBranch: z
+  delete_source_branch: z
     .boolean({
       invalid_type_error: ERROR_MESSAGES.shouldBeBoolean(
         'merge_merge_request.delete_source_branch',
       ),
     })
     .default(false),
-  squashCommits: z
+  squash_commits: z
     .boolean({
       invalid_type_error: ERROR_MESSAGES.shouldBeBoolean(
         'merge_merge_request.squash_commits',
@@ -516,6 +573,18 @@ export const mergeMergeRequestOptionSchema = z.object({
     })
     .default(false),
 });
+export const mergeMergeRequestOptionSchema = merge_merge_request_option_chema.transform(
+  (value) => ({
+    ...value,
+    sourceBranch: value.source_branch,
+    targetBranch: value.target_branch,
+    awaitPipeline: value.await_pipeline,
+    minUpvotes: value.min_upvotes,
+    maxDownvotes: value.max_downvotes,
+    deleteSourceBranch: value.delete_source_branch,
+    squashCommits: value.squash_commits,
+  }),
+);
 
 export const commitOptionSchema = z
   .object({
@@ -540,13 +609,13 @@ export const pullOptionSchema = z.object({
     .optional(),
 });
 
-export const pushOptionSchema = z.object({
+export const push_option_schema = z.object({
   branch: z
     .string({
       invalid_type_error: ERROR_MESSAGES.shouldBeString('push.branch'),
     })
     .optional(),
-  awaitPipeline: z
+  await_pipeline: z
     .boolean({
       invalid_type_error: ERROR_MESSAGES.shouldBeBoolean(
         'push.await_pipeline',
@@ -554,6 +623,10 @@ export const pushOptionSchema = z.object({
     })
     .default(false),
 });
+
+export const pushOptionSchema = push_option_schema.transform(
+  (value) => ({ ...value, awaitPipeline: value.await_pipeline }),
+);
 
 export const commandsUnion = z.union([
   z.object({
@@ -566,7 +639,7 @@ export const commandsUnion = z.union([
     get_current_project_name: getCurrentProjectNameOptionSchema,
   }),
   z.object({
-    get_diffs: getDiffsOptionSchema,
+    get_diffs: get_diffs_option_schema,
   }),
   z.object({
     prompt_diffs: promptDiffsOptionSchema,
@@ -575,10 +648,10 @@ export const commandsUnion = z.union([
     apply_diffs: applyDiffsOptionSchema,
   }),
   z.object({
-    create_merge_request: createMergeRequestOptionSchema,
+    create_merge_request: create_merge_request_option_schema,
   }),
   z.object({
-    merge_merge_request: mergeMergeRequestOptionSchema,
+    merge_merge_request: merge_merge_request_option_chema,
   }),
   z.object({
     fetch_last_tag: fetchLastTagOptionSchema,
@@ -587,13 +660,13 @@ export const commandsUnion = z.union([
     read_current_version: readCurrentVersionOptionSchema,
   }),
   z.object({
-    create_tag: createTagOptionSchema,
+    create_tag: create_tag_option_schema,
   }),
   z.object({
-    write_version: writeVersionOptionSchema,
+    write_version: write_version_option_schema,
   }),
   z.object({
-    increment_version: incrementVersionOptionSchema,
+    increment_version: increment_version_option_schema,
   }),
   z.object({
     commit: commitOptionSchema,
@@ -602,11 +675,40 @@ export const commandsUnion = z.union([
     pull: pullOptionSchema,
   }),
   z.object({
-    push: pushOptionSchema,
+    push: push_option_schema,
+  }),
+  z.object({
+    start_pipeline: start_pipeline_option_schema,
+  }),
+  z.object({
+    start_job: start_job_option_schema,
   }),
 ]);
 
 export const arrayCommands = z.array(commandsUnion);
+export const customCommands = z.record(z.string(), arrayCommands, {
+  required_error: ERROR_MESSAGES.isRequired(
+    'commands',
+  ),
+  // invalid_type_error: ERROR_MESSAGES.shouldBeBoolean(
+  //   'commands',
+  // ),
+});
+
+export const nonPopulatedConfigSchema = z.object({
+  token: z.string({
+    required_error: ERROR_MESSAGES.isRequired(
+      'token',
+    ),
+    invalid_type_error: ERROR_MESSAGES.shouldBeString(
+      'token',
+    ),
+  }).regex(
+    /^(\.{1,2}\/)?(\/|\w|_|-|\.)+$/,
+    ERROR_MESSAGES.shouldBeValidPath('token'),
+  ),
+  commands: z.record(z.string(), z.union([z.string(), arrayCommands])),
+});
 
 export const configSchema = z
   .object({
@@ -617,12 +719,15 @@ export const configSchema = z
       invalid_type_error: ERROR_MESSAGES.shouldBeString(
         'token',
       ),
-    }).regex(
-      /^(\.{1,2}\/)?(\/|\w|_|-|\.)+$/,
-      ERROR_MESSAGES.shouldBeValidPath('token'),
-    ),
-    aggregated_commands: z.map(z.string(), z.array(z.string())),
-    commands: z.map(z.string(), commandsUnion),
+    }),
+    project: z
+      .string({
+        invalid_type_error: ERROR_MESSAGES.shouldBeString(
+          'project',
+        ),
+      }).optional(),
+    aggregated_commands: z.record(z.string(), customCommands).optional(),
+    commands: customCommands,
     log_level: z
       .string({
         invalid_type_error: ERROR_MESSAGES.shouldBeString(
@@ -674,4 +779,12 @@ export const configSchema = z
         ERROR_MESSAGES.shouldBeOneOf('protocoles', 'http|https'),
       )
       .default('https'),
-  }).strict();
+  }).strict()
+  .transform((userConfig) => ({
+    ...userConfig,
+    warningAction: userConfig.warning_action,
+    allowInsecureCertificates: userConfig.allow_insecure_certificates,
+    logLevel: userConfig.log_level,
+    // aggregatedCommands: userConfig.aggregated_commands,
+  }));
+export type ConfigFile = z.infer<typeof configSchema>;

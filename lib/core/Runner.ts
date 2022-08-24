@@ -14,7 +14,7 @@ import {
   assertPathExists,
   assertVersionIncrement,
 } from '../utils/assertions/customTypesAssertions';
-import { assertProperty, assertArray, assertExists } from '../utils/assertions/baseTypeAssertions';
+import { assertExists } from '../utils/assertions/baseTypeAssertions';
 import lang from './lang/en';
 import Logger from './Logger';
 import Tags from './Gitlab/Tags';
@@ -51,6 +51,7 @@ import {
 import { packageSchema } from '../models/others';
 import { gitlabRunJobApiResponseSchema } from '../models/Gitlab/Jobs';
 import Jobs from './Gitlab/Jobs';
+import { snakeToCamelCaseWord } from '../utils/snakeToCamelCase';
 
 type AwaitPipelineParams = {
   conf: Conf;
@@ -89,18 +90,17 @@ class Runner {
   };
 
   static runCustomCommand = async (customCommandKey: string, conf: Conf) => {
-    assertProperty(conf.commands, customCommandKey);
-    const commands = conf.commands[customCommandKey];
-    assertArray(commands);
+    const commands = conf.commands.get(customCommandKey);
+    if (typeof commands === 'undefined') throw new Error(`${customCommandKey} does seem to exist in you commands`);
     const runner = new Runner();
-    for (let i = 0, c = commands.length; i < c; i += 1) {
-      const commandName = Runner.getCommandName(commands[i]);
-      assertExists(commandName);
-      const commandsOptions = commands[i];
-      if (checkIsCommandName(commandName)) {
-        assertProperty(commandsOptions, commandName);
+
+    for (let i = 0; i < commands.length; i += 1) {
+      const command = commands[i];
+      const commandName = Object.keys(command)[0] as keyof typeof command;
+      const camelCaseCommandName = snakeToCamelCaseWord(commandName);
+      if (checkIsCommandName(camelCaseCommandName)) {
         // eslint-disable-next-line no-await-in-loop
-        await runner[commandName](commandsOptions[commandName], conf);
+        await runner[camelCaseCommandName](command[commandName], conf);
       }
       // eslint-disable-next-line no-await-in-loop
       await standby(1000);

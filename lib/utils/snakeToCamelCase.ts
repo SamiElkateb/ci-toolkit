@@ -27,5 +27,7 @@ function SnakeToCamelCaseArray<S extends string>(
     return lowerCaseKey.replace(/(_\w)/g, (group) => group.toUpperCase().replace('_', '')) as unknown as SnakeToCamelCase<S>;
   });
 }
-
-export { SnakeToCamelCase, SnakeToCamelCaseArray };
+function snakeToCamelCaseWord<T extends string>(val: T): SnakeToCamelCase<T> {
+  return val.toLowerCase().replace(/(_\w)/g, (group) => group.toUpperCase().replace('_', '')) as unknown as SnakeToCamelCase<T>;
+}
+export { snakeToCamelCaseWord, SnakeToCamelCase, SnakeToCamelCaseArray };

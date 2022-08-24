@@ -5,18 +5,18 @@ type path = `${string}/${string}`;
 type varKey = `$_${string}`;
 type configExtension = 'json' | 'yaml' | 'yml' | 'txt';
 type protocole = 'http' | 'https';
-interface configFile {
-  protocole: protocole;
-  project?: string;
-  domain?: string;
-  allow_insecure_certificates: boolean;
-  token: string;
-  log_level: logLevel;
-  lang: string;
-  warning_action: warningAction;
-  commands: custom_commands;
-  aggregated_commands?: aggregated_commands;
-}
+// interface configFile {
+//   protocole: string;
+//   project?: string;
+//   domain: string;
+//   allow_insecure_certificates: boolean;
+//   token: string;
+//   log_level: string;
+//   lang: string;
+//   warning_action: string;
+//   commands: custom_commands;
+//   aggregated_commands?: aggregated_commands;
+// }
 
 type baseCommands = commandOptions[];
 type base_commands = command_options[];

@@ -168,8 +168,7 @@ const execCommand = async (options: ExecCommandOptions) => {
   if (branches) command = appendBranches(command, branches);
   if (path) command = prependPath(command, path);
   if (pathToAppend) command = appendPath(command, pathToAppend);
-  //! should log command before executing?
-  logger.warn(`Will execute command: ${command}`, 'Continue?');
+  await logger.warn(`Will execute command: ${command}`, 'Continue?');
   const data = await execProm(command);
   return data;
 };
