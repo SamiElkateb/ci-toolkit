@@ -10,7 +10,7 @@ class ErrorHandler {
       await callback();
     } catch (error) {
       if (error instanceof ZodError) error.errors.forEach((e) => logger.error(e.message));
-      // if (typeof error === 'string') logger.error(error);
+      if (typeof error === 'string') logger.error(error);
       if (error instanceof Error) logger.error(error.message);
       if (error instanceof TypeError) { logger.error(error.message, 'Type Error'); }
       if (error instanceof GitlabApiError) { logger.error(error.message, 'Gitlab Api Error'); }

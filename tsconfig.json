@@ -6,8 +6,8 @@
 		"strict": true,
 		"noImplicitAny": true,
 		"allowJs": true,
-		"outDir": "./dist"
+		"outDir": "./dist",
+    "types": ["vitest/globals"]
 	},
-	"include": ["lib/**/*"],
-	"exclude":["lib/__test__/**/*"]
+	"include": ["lib/**/*.ts"]
 }

@@ -49,6 +49,7 @@ import {
   startJobOptionSchema,
 } from '../models/config';
 import { packageSchema } from '../models/others';
+import { CLIArgs } from '../models/args';
 import { gitlabRunJobApiResponseSchema } from '../models/Gitlab/Jobs';
 import Jobs from './Gitlab/Jobs';
 import { snakeToCamelCaseWord } from '../utils/snakeToCamelCase';
@@ -74,17 +75,16 @@ class Runner {
     this.diffStore = new Map();
   }
 
-  static help = () => {
+  static init = () => {
     const message = lang.help;
     logger.info(message);
   };
 
-  static start = async () => {
-    const args = process.argv;
-    const command = args[2];
-    ErrorHandler.try(async () => {
+  static start = async (args: CLIArgs) => {
+    const { run: command, config } = args;
+    await ErrorHandler.try(async () => {
       assertExists(command, 'No command provided');
-      const conf = await Runner.getConf();
+      const conf = await Runner.getConf(config);
       await Runner.runCustomCommand(command, conf);
     });
   };
@@ -109,9 +109,9 @@ class Runner {
 
   static getCommandName = (command: object) => Object.keys(command)[0];
 
-  static getConf = async () => {
+  static getConf = async (path:string) => {
     logger.debug('getting config file');
-    const configFile = Conf.readConfigFile();
+    const configFile = Conf.readConfigFile(path);
     if (!configFile) throw new Error(ERROR_MESSAGES.noConfig);
     logger.debug('parsing config file');
     const parsedConfig = await Conf.parseConfig(configFile);

@@ -1,5 +1,5 @@
 import YAML = require('yaml');
-import fs = require('fs');
+import { readFileSync } from 'fs';
 import { checkIsConfigFilePath } from '../utils/validations/customTypeValidation';
 import { fileExists, getAbsolutePath } from '../utils/files';
 import { ConfigFile, configSchema, nonPopulatedConfigSchema } from '../models/config';
@@ -37,7 +37,7 @@ class Conf {
     this.commands = new Map<string, commandOptions[]>();
     const commands = Object.keys(conf.commands);
     commands.forEach((command) => {
-      this.commands.set(command, conf.commands[command] as any);
+      this.commands.set(command, conf.commands[command] as commandOptions[]);
     });
   }
 
@@ -68,7 +68,7 @@ class Conf {
     const unparsedConfig = {
       ...nonPopulatedConfig,
       token: populatedToken,
-      commands: Object.fromEntries(populatedCustomCommands),
+      commands: Object.fromEntries(populatedCustomCommands) as unknown,
     };
     return configSchema.parse(unparsedConfig);
   };
@@ -76,12 +76,12 @@ class Conf {
   static populateFromFilesPath = (configFile: unknown): unknown => {
     if (checkIsConfigFilePath(configFile)) {
       const path = getAbsolutePath(configFile);
-      return Conf.getLinkedFile(path);
+      return Conf.readConfigFile(path);
     }
     return configFile;
   };
 
-  static getLinkedFile = (path: string): unknown => {
+  static readConfigFile = (path: string) => {
     if (path.match(/\.txt$|\.txt$/)) {
       const configFile = Conf.findConfigFile(path, 'txt');
       if (configFile) return configFile;
@@ -89,6 +89,10 @@ class Conf {
     if (path.match(/\.yaml$|\.yml$/)) {
       const configFile = Conf.findConfigFile(path, 'yaml');
       if (configFile) return configFile;
+
+      const otherPath = path.match(/\.yaml$/) ? path.replace(/\.yaml$/, '.yml') : path.replace(/\.yml$/, '.yaml');
+      const retryConfigFile = Conf.findConfigFile(otherPath, 'yaml');
+      if (retryConfigFile) return retryConfigFile;
     }
     if (path.match(/\.json$/)) {
       const configFile = Conf.findConfigFile(path, 'json');
@@ -97,27 +101,16 @@ class Conf {
     throw new Error(`File: ${path} does not exist`);
   };
 
-  static readConfigFile = (): unknown => {
-    const extensions = ['yml', 'yaml', 'json'] as configExtension[];
-    for (let i = 0, c = extensions.length; i < c; i += 1) {
-      const currentPath = process.cwd();
-      const filePath = `${currentPath}/ci-toolkit.${extensions[i]}`;
-      const config = Conf.findConfigFile(filePath, extensions[i]);
-      if (config) return config;
-    }
-    return undefined;
-  };
-
-  static findConfigFile = (path: string, extension: configExtension) => {
+  static findConfigFile = (path: string, extension: configExtension) : unknown => {
     if (!fileExists(path)) return undefined;
     switch (extension) {
       case 'txt':
-        return fs.readFileSync(path, 'utf8');
+        return readFileSync(path, 'utf8');
       case 'json':
-        return JSON.parse(fs.readFileSync(path, 'utf8'));
+        return JSON.parse(readFileSync(path, 'utf8'));
       case 'yaml':
       case 'yml':
-        return YAML.parse(fs.readFileSync(path, 'utf8'));
+        return YAML.parse(readFileSync(path, 'utf8'));
       default:
         return undefined;
     }
