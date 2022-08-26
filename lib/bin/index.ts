@@ -43,15 +43,14 @@ const yarg = yargs(hideBin(process.argv))
   .alias('h', 'help')
   .strict()
   .strictOptions()
-  .wrap(null)
-  .showHelpOnFail(true);
+  .wrap(null);
 
 const argv = cliArgsSchema.safeParse(yarg.argv);
 const init = initSchema.safeParse(yarg.argv);
 if (argv.success) {
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
   Runner.start(argv.data);
-} else if (init.success) {
+} else if (init.success && init.data.init === true) {
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
   Runner.init();
 } else {

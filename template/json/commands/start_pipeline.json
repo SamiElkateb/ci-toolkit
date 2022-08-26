@@ -1,0 +1,32 @@
+[
+	{
+		"get_current_project_name": {
+			"store": "$_currentProject"
+		}
+	},
+	{
+		"start_pipeline": {
+			"project": "$_currentProject",
+			"ref": "master",
+			"await_pipeline": true,
+			"retries": 0,
+			"variables": [
+				{
+					"key": "",
+					"type": "",
+					"value": ""
+				}
+			],
+			"store": "$_pipeline"
+		}
+	},
+	{
+		"start_job": {
+			"project": "$_currentProject",
+			"await_job": true,
+			"pipeline": "$_pipeline",
+			"name": "manual_job",
+			"retries": 0
+		}
+	}
+]

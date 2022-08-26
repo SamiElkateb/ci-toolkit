@@ -18,7 +18,7 @@ import { assertExists } from '../utils/assertions/baseTypeAssertions';
 import lang from './lang/en';
 import Logger from './Logger';
 import Tags from './Gitlab/Tags';
-import { getAbsolutePath, writeVersion } from '../utils/files';
+import { getAbsolutePath, safeWriteFileSync, writeVersion } from '../utils/files';
 import poll from '../utils/polling';
 import { checkIsCommandName, checkIsVarKey } from '../utils/validations/customTypeValidation';
 import standby from '../utils/standby';
@@ -53,6 +53,14 @@ import { CLIArgs } from '../models/args';
 import { gitlabRunJobApiResponseSchema } from '../models/Gitlab/Jobs';
 import Jobs from './Gitlab/Jobs';
 import { snakeToCamelCaseWord } from '../utils/snakeToCamelCase';
+import {
+  ciToolkit,
+  applyEnvDiff,
+  createMergeRequest,
+  mergeMergeRequest,
+  startPipeline,
+  incrementVersionFromTag,
+} from '../templates';
 
 type AwaitPipelineParams = {
   conf: Conf;
@@ -75,9 +83,15 @@ class Runner {
     this.diffStore = new Map();
   }
 
-  static init = () => {
-    const message = lang.help;
-    logger.info(message);
+  static init = async () => {
+    fs.mkdirSync('./.ci-toolkit/.secrets', { recursive: true });
+    await safeWriteFileSync('./ci-toolkit.yml', YAML.stringify(ciToolkit));
+    await safeWriteFileSync('./.ci-toolkit/apply_env_diff.yml', YAML.stringify(applyEnvDiff));
+    await safeWriteFileSync('./.ci-toolkit/create_merge_request.yml', YAML.stringify(createMergeRequest));
+    await safeWriteFileSync('./.ci-toolkit/increment_version_from_tag.yml', YAML.stringify(incrementVersionFromTag));
+    await safeWriteFileSync('./.ci-toolkit/merge_merge_request.yml', YAML.stringify(mergeMergeRequest));
+    await safeWriteFileSync('./.ci-toolkit/start_pipeline.yml', YAML.stringify(startPipeline));
+    await safeWriteFileSync('./.ci-toolkit/.secrets/token.txt', '');
   };
 
   static start = async (args: CLIArgs) => {
@@ -298,7 +312,7 @@ class Runner {
     const options = readCurrentVersionOptionSchema.parse(userOptions);
     const { file, store } = options;
     assertPathExists(file);
-    const data = await Conf.getLinkedFile(file);
+    const data = await Conf.readConfigFile(file);
     const { version } = packageSchema.parse(data);
     logger.info(`Current version is ${version}`);
     this.addToStore(store, version);

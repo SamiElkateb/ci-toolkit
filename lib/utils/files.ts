@@ -1,10 +1,11 @@
+import prompt = require('prompt');
+import { z } from 'zod';
 import path = require('path');
+import { readFileSync, existsSync, writeFileSync } from 'fs';
 import {
   assertPath,
   assertPathExists,
 } from './assertions/customTypesAssertions';
-
-import { readFileSync, existsSync, writeFileSync } from "fs";
 
 const fileExists = (path: string) => {
   try {
@@ -30,4 +31,34 @@ const writeVersion = async (path: string, version: string) => {
   writeFileSync(absolutePath, packageString, { encoding: 'utf-8' });
 };
 
-export { writeVersion, fileExists, getAbsolutePath };
+const safeWriteFileSync = async (path: string, content: string) => {
+  const absolutePath = getAbsolutePath(path);
+  if (existsSync(absolutePath)) {
+    const question = `${path} already exists. Do you want to overwrite it ? (Y/n)?`;
+    prompt.start();
+    const { value } = await prompt.get([
+      {
+        description: question,
+        name: 'value',
+        required: true,
+      },
+    ]);
+    const validatedValue = z.string().safeParse(value);
+    if (!validatedValue.success) {
+      await safeWriteFileSync(path, content);
+      return;
+    }
+    if (validatedValue.data.match(/^(n|no)$/i)) {
+      return;
+    }
+    if (!validatedValue.data.match(/^(Y|Yes|yes)$/)) {
+      await safeWriteFileSync(path, content);
+      return;
+    }
+  }
+  writeFileSync(absolutePath, content);
+};
+
+export {
+  writeVersion, fileExists, getAbsolutePath, safeWriteFileSync,
+};

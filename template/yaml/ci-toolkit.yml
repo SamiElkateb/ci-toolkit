@@ -1,10 +1,8 @@
 token: './.ci-toolkit/.secrets/token.txt'
-log_level: debug
+log_level: info
 domain: gitlab.com
-allow_insecure_certificates: true
+allow_insecure_certificates: false
 warning_action: 'prompt'
-# on_pipeline_fail: 'warn|throw'
-lang: 'en'
 commands:
     create_merge_request: './.ci-toolkit/create_merge_request.yml'
     start_pipeline: './.ci-toolkit/start_pipeline.yml'
