@@ -7,17 +7,17 @@ import getHttpsAgent from '../../utils/getHttpsAgent';
 import gitlabPipelineSchema from '../../models/Gitlab/Pipelines';
 import gitlabJobSchema from '../../models/Gitlab/Jobs';
 
-interface FetchOptions extends gitlabApiOptions {
+interface FetchOptions extends GitlabApiOptions {
   id: number;
 }
-interface FetchAllOptions extends gitlabApiOptions {
+interface FetchAllOptions extends GitlabApiOptions {
   username?: string;
   ref?: string;
   source?: string;
 }
-interface PostOptions extends gitlabApiOptions {
+interface PostOptions extends GitlabApiOptions {
   ref: string;
-  variables?: pipelineVariable[];
+  variables?: PipelineVariable[];
 }
 
 class Pipelines {
@@ -145,7 +145,7 @@ class Pipelines {
     }
   };
 
-  arePipelineRunning = async (options: gitlabApiOptions) => {
+  arePipelineRunning = async (options: GitlabApiOptions) => {
     const runningPipelines:number[] = [];
     const failedPipelines = [...this.failedPipelines];
     const successPipelines = [...this.successPipelines];

@@ -6,13 +6,13 @@ import GitlabApiError from '../Errors/GitlabApiError';
 import getHttpsAgent from '../../utils/getHttpsAgent';
 import gitlabJobSchema from '../../models/Gitlab/Jobs';
 
-interface FetchOptions extends gitlabApiOptions {
+interface FetchOptions extends GitlabApiOptions {
   id: number;
 }
-interface PostOptions extends gitlabApiOptions {
+interface PostOptions extends GitlabApiOptions {
   retry?: boolean;
   jobId: number;
-  variables?: pipelineVariable[];
+  variables?: PipelineVariable[];
 }
 
 class Jobs {
@@ -89,7 +89,7 @@ class Jobs {
     }
   };
 
-  areJobsRunning = async (options: gitlabApiOptions) => {
+  areJobsRunning = async (options: GitlabApiOptions) => {
     const runningJobs:number[] = [];
     const failedJobs = [...this.failedJobs];
     const successJobs = [...this.successJobs];

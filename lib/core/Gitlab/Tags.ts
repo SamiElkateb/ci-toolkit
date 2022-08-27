@@ -10,13 +10,13 @@ type IncrementVersionParams = {
   incrementBy: string;
   version: string;
 };
-interface PostOptions extends gitlabApiOptions {
+interface PostOptions extends GitlabApiOptions {
   tagName: string;
   ref: string;
 }
 
 class Tags {
-  static fetch = async (options: gitlabApiOptions, logger?: Logger) => {
+  static fetch = async (options: GitlabApiOptions, logger?: Logger) => {
     const {
       protocole,
       domain,
@@ -64,7 +64,7 @@ class Tags {
     }
   };
 
-  static fetchLast = async (options: gitlabApiOptions, logger?: Logger) => {
+  static fetchLast = async (options: GitlabApiOptions, logger?: Logger) => {
     const data = await Tags.fetch(options, logger);
     const lastTag = data[0].name;
     return lastTag;

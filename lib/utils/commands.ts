@@ -1,16 +1,8 @@
 import { execSync } from 'child_process';
+import { z } from 'zod';
 import Logger from '../core/Logger';
 import { commitMessageValidationSchema } from '../models/others';
-import {
-  // assertCommitMessageValidCharacters,
-  // assertCommitMessageValidLength,
-  assertPathExists,
-} from './assertions/customTypesAssertions';
-import {
-  checkIsObject,
-  checkIsString,
-  hasOwnProperty,
-} from './validations/basicTypeValidations';
+import { assertFileExists } from './files';
 
 const execProm = (command: string): Promise<string> => new Promise((resolve, reject) => {
   try {
@@ -18,44 +10,43 @@ const execProm = (command: string): Promise<string> => new Promise((resolve, rej
   } catch (error) {
     let errorText = 'exited with';
     let errorMessage = '';
-    if (checkIsObject(error)) {
-      if (hasOwnProperty(error, 'status')) {
-        errorText = `${errorText} error code ${error.status}`;
-      } else {
-        errorText = `${errorText} an error`;
-      }
-      if (hasOwnProperty(error, 'stderr')) {
-        if (error.stderr instanceof Buffer) {
-          errorMessage = error.stderr.toString();
-        }
-        if (!errorMessage && checkIsString(error.stderr)) {
-          errorMessage = error.stderr;
-        }
-      }
-      if (!errorMessage && hasOwnProperty(error, 'message')) {
-        if (!errorMessage && error.message instanceof Buffer) {
-          errorMessage = error.message.toString();
-        }
-        if (!errorMessage && checkIsString(error.message)) {
-          errorMessage = error.message;
-        }
-      }
-      if (!errorMessage && hasOwnProperty(error, 'stdout')) {
-        if (error.stdout instanceof Buffer && !errorMessage) {
-          errorMessage = error.stdout.toString();
-        }
-        if (checkIsString(error.stdout) && !errorMessage) {
-          errorMessage = error.stdout;
-        }
-      }
+    const stringOrBuffer = z.string().or(z.instanceof(Buffer));
+
+    const parsedErrorWithStderr = z.object({
+      status: z.string().optional(),
+      stderr: stringOrBuffer,
+    }).safeParse(error);
+    const parsedErrorWithMessage = z.object({
+      status: z.string().optional(),
+      message: stringOrBuffer,
+    }).safeParse(error);
+    const parsedErrorWithStdout = z.object({
+      status: z.string().optional(),
+      stdout: stringOrBuffer,
+    }).safeParse(error);
+
+    if (parsedErrorWithStderr.success) {
+      const { status, stderr } = parsedErrorWithStderr.data;
+      errorText = status ? `${errorText} error code ${status}` : `${errorText} an error`;
+      errorMessage = stderr.toString();
+    } else if (parsedErrorWithMessage.success) {
+      const { status, message } = parsedErrorWithMessage.data;
+      errorText = status ? `${errorText} error code ${status}` : `${errorText} an error`;
+      errorMessage = message.toString();
+    } else if (parsedErrorWithStdout.success) {
+      const { status, stdout } = parsedErrorWithStdout.data;
+      errorText = status ? `${errorText} error code ${status}` : `${errorText} an error`;
+      errorMessage = stdout.toString();
     }
+
     if (errorMessage.length > 0) {
       reject(new Error(`${errorText}, ${errorMessage}`));
     } else {
-      reject(errorText);
+      reject(new Error(errorText));
     }
   }
 });
+
 const appendCommitMessage = (command: string, message: string) => {
   const whitelistedCommands = [
     'git commit -m',
@@ -95,7 +86,11 @@ const appendBranches = (command: string, branches: string[]) => {
     'git show',
   ];
   if (!whitelistedCommands.includes(command)) {
-    throw new Error(`Appending "${branches}" to command "${command}" is not allowed.`);
+    const branchesString = branches.reduce((acc, curr) => {
+      const branchesAcc = `${acc} ${curr}`;
+      return branchesAcc;
+    }, '');
+    throw new Error(`Appending "${branchesString}" to command "${command}" is not allowed.`);
   }
   branches.forEach((branch) => {
     commitMessageValidationSchema.parse(branch);
@@ -110,12 +105,12 @@ const appendBranches = (command: string, branches: string[]) => {
   return finalCommand;
 };
 const prependPath = (command: string, path: string) => {
-  if (path) assertPathExists(path);
+  if (path) assertFileExists(path);
   return `cd "${path}" && ${command}`;
 };
 
 const appendPath = (command: string, path: string) => {
-  if (path) assertPathExists(path);
+  if (path) assertFileExists(path);
   return `${command}${path}`;
 };
 

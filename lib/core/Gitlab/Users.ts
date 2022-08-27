@@ -1,19 +1,19 @@
 import axios from 'axios';
 import { z, ZodError } from 'zod';
-import { assertExists } from '../../utils/assertions/baseTypeAssertions';
+import assertExists from '../../utils/assertExists';
 import lang from '../lang/en';
 import GitlabApiError from '../Errors/GitlabApiError';
 import getHttpsAgent from '../../utils/getHttpsAgent';
 import Logger from '../Logger';
 import gitlabUserSchema from '../../models/Gitlab/Users';
 
-interface FetchOptions extends Omit<gitlabApiOptions, 'project'> {
+interface FetchOptions extends Omit<GitlabApiOptions, 'project'> {
   username: string;
 }
-interface FetchIdsOptions extends Omit<gitlabApiOptions, 'project'> {
+interface FetchIdsOptions extends Omit<GitlabApiOptions, 'project'> {
   usernames: string[];
 }
-type FetchMeOptions = Omit<gitlabApiOptions, 'project'>;
+type FetchMeOptions = Omit<GitlabApiOptions, 'project'>;
 
 class Users {
   static fetch = async (

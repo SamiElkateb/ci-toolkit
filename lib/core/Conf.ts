@@ -47,7 +47,7 @@ class Conf {
     });
   }
 
-  getApiOptions = (options: Partial<gitlabApiOptions>):gitlabApiOptions => {
+  getApiOptions = (options: Partial<GitlabApiOptions>) => {
     const parsedOptions = gitlabApiOptionsSchema.partial().parse(options);
     const apiOptions = {
       allowInsecureCertificates: this.allowInsecureCertificates,

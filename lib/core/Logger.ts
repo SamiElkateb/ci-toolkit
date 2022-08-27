@@ -1,12 +1,7 @@
 /* eslint-disable no-console */
-import assertContinue from '../utils/assertions/assertContinue';
-import { assertProperty } from '../utils/assertions/baseTypeAssertions';
+import { z } from 'zod';
+import assertContinue from '../utils/assertContinue';
 import standby from '../utils/standby';
-import {
-  checkIsArray,
-  checkIsObject,
-  checkIsStrictObject,
-} from '../utils/validations/basicTypeValidations';
 import Lang from './lang/Lang';
 
 type DiffsLog = {
@@ -16,6 +11,12 @@ type DiffsLog = {
 };
 type LogLevel = 'error' | 'warn' | 'info' | 'debug';
 type WarningAction = 'prompt' | 'standby' | 'skip';
+interface DataForDiffLog {
+  diffs: unknown;
+  name: string;
+  color: string;
+  sign: string;
+}
 
 class Logger {
   private green: string;
@@ -118,57 +119,45 @@ class Logger {
 
   diffs(inputDifs: DiffsLog) {
     const diffs = inputDifs;
-    if (checkIsStrictObject(diffs.add)) {
-      diffs.add = [diffs.add];
-    }
-    if (checkIsStrictObject(diffs.remove)) {
-      diffs.remove = [diffs.remove];
-    }
-    if (checkIsStrictObject(diffs.update)) {
-      diffs.update = [diffs.update];
-    }
     const { add, remove, update } = diffs;
     this.info('Diffs:');
-    if (checkIsArray(add)) {
-      console.info(this.green, '\t Add:');
-      add.forEach((diff: unknown) => {
-        if (checkIsObject(diff)) {
-          const keysArray = Object.keys(diff);
-          keysArray.forEach((key) => {
-            assertProperty(diff, key);
-            const path = key.replace(/\.([0-9]+)/, '[$1]');
-            console.info(`\t + ${path}: ${diff[key]}`);
-          });
-        }
-      });
-    }
-    if (checkIsArray(remove)) {
-      console.info(this.red, '\t Remove:');
-      remove.forEach((diff: unknown) => {
-        if (checkIsObject(diff)) {
-          const keysArray = Object.keys(diff);
-          keysArray.forEach((key) => {
-            assertProperty(diff, key);
-            const path = key.replace(/\.([0-9]+)/, '[$1]');
-            console.info(`\t - ${path}: ${diff[key]}`);
-          });
-        }
-      });
-    }
-    if (checkIsArray(update)) {
-      console.info(this.yellow, '\t Update:');
-      update.forEach((diff: unknown) => {
-        if (checkIsObject(diff)) {
-          const keysArray = Object.keys(diff);
-          keysArray.forEach((key) => {
-            assertProperty(diff, key);
-            const path = key.replace(/\.([0-9]+)/, '[$1]');
-            console.info(`\t \u2213 ${path}: ${diff[key]}`);
-          });
-        }
-      });
-    }
+    Logger.logDiffs({
+      diffs: add,
+      name: 'Add',
+      color: this.green,
+      sign: '+',
+    });
+    Logger.logDiffs({
+      diffs: remove,
+      name: 'Remove',
+      color: this.red,
+      sign: '-',
+    });
+    Logger.logDiffs({
+      diffs: update,
+      name: 'Update',
+      color: this.yellow,
+      sign: '\u2213',
+    });
   }
+
+  private static logDiffs = (data: DataForDiffLog) => {
+    const {
+      diffs, color, name, sign,
+    } = data;
+    const parsedDiffObject = z.array(z.object({})).safeParse(diffs);
+    if (parsedDiffObject.success) {
+      console.info(color, `\t ${name}:`);
+      parsedDiffObject.data.forEach((diff) => {
+        const keysArray = Object.keys(parsedDiffObject.data);
+        keysArray.forEach((key) => {
+          const parsedDiff = z.object({ [key]: z.string() }).parse(diff);
+          const path = key.replace(/\.([0-9]+)/, '[$1]');
+          console.info(`\t ${sign} ${path}: ${parsedDiff[key]}`);
+        });
+      });
+    }
+  };
 
   request(url: string, type?: string) {
     if (this.logLevel !== 'debug') return;

@@ -2,18 +2,31 @@ import prompt = require('prompt');
 import { z } from 'zod';
 import path = require('path');
 import { readFileSync, existsSync, writeFileSync } from 'fs';
-import {
-  assertPathExists,
-} from './assertions/customTypesAssertions';
 import { pathValidationSchema } from '../models/others';
+import { JSONParse } from './parsers';
+import Logger from '../core/Logger';
 
-const fileExists = (path: string) => {
+const logger = new Logger();
+
+const fileExists = (filePath: string) => {
   try {
-    if (existsSync(path)) return true;
+    if (existsSync(filePath)) return true;
   } catch (err) {
-    console.error(err);
+    const parsedError = z.object({ message: z.string() }).safeParse(err);
+    if (parsedError.success) {
+      logger.error(parsedError.data.message);
+    }
   }
   return false;
+};
+
+type AssertPathExists = (val: unknown, message?: string) => asserts val;
+const assertFileExists: AssertPathExists = (
+  val: unknown,
+  message?: string,
+): asserts val => {
+  const parsedPath = pathValidationSchema.parse(val);
+  if (!fileExists(parsedPath)) throw new Error(message || `path ${parsedPath} does not exist`);
 };
 
 const getAbsolutePath = (filePath: string) => {
@@ -24,17 +37,21 @@ const getAbsolutePath = (filePath: string) => {
 
 const writeVersion = (relativePath: string, version: string) => {
   const absolutePath = getAbsolutePath(relativePath);
-  assertPathExists(absolutePath);
-  const packageJson = JSON.parse(readFileSync(absolutePath, 'utf8'));
+  assertFileExists(absolutePath);
+  const packageJson = z
+    .object({ version: z.string() })
+    .passthrough()
+    .parse(JSONParse(readFileSync(absolutePath, 'utf8')));
+
   packageJson.version = version;
   const packageString = `${JSON.stringify(packageJson, null, '\t')}\n`;
   writeFileSync(absolutePath, packageString, { encoding: 'utf-8' });
 };
 
-const safeWriteFileSync = async (path: string, content: string) => {
-  const absolutePath = getAbsolutePath(path);
+const safeWriteFileSync = async (filePath: string, content: string) => {
+  const absolutePath = getAbsolutePath(filePath);
   if (existsSync(absolutePath)) {
-    const question = `${path} already exists. Do you want to overwrite it ? (Y/n)?`;
+    const question = `${filePath} already exists. Do you want to overwrite it ? (Y/n)?`;
     prompt.start();
     const { value } = await prompt.get([
       {
@@ -45,14 +62,14 @@ const safeWriteFileSync = async (path: string, content: string) => {
     ]);
     const validatedValue = z.string().safeParse(value);
     if (!validatedValue.success) {
-      await safeWriteFileSync(path, content);
+      await safeWriteFileSync(filePath, content);
       return;
     }
     if (validatedValue.data.match(/^(n|no)$/i)) {
       return;
     }
     if (!validatedValue.data.match(/^(Y|Yes|yes)$/)) {
-      await safeWriteFileSync(path, content);
+      await safeWriteFileSync(filePath, content);
       return;
     }
   }
@@ -60,5 +77,9 @@ const safeWriteFileSync = async (path: string, content: string) => {
 };
 
 export {
-  writeVersion, fileExists, getAbsolutePath, safeWriteFileSync,
+  writeVersion,
+  fileExists,
+  getAbsolutePath,
+  safeWriteFileSync,
+  assertFileExists,
 };

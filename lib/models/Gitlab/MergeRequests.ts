@@ -17,4 +17,4 @@ const gitlabMergeRequestSchema = z.object({
 });
 
 export default gitlabMergeRequestSchema;
-export type GitlabeMergeRequest = z.infer<typeof gitlabMergeRequestSchema>;
+export type GitlabMergeRequest = z.infer<typeof gitlabMergeRequestSchema>;

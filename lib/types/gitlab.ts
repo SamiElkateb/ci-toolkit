@@ -1,4 +1,4 @@
-interface mergeRequestsPostOptions extends gitlabApiOptions {
+interface MergeRequestsPostOptions extends GitlabApiOptions {
   title: string;
   targetBranch: string;
   sourceBranch: string;
@@ -10,18 +10,18 @@ interface mergeRequestsPostOptions extends gitlabApiOptions {
   reviewerIds: number[];
 }
 
-
-interface gitlabApiOptions {
+interface GitlabApiOptions {
   allowInsecureCertificates?: boolean;
   protocole: string;
   domain: string;
   project: string;
   token: string;
 }
-interface pipelineVariable {
+
+interface PipelineVariable {
   key: string;
   value: string;
   type?: string;
 }
 
-type source = 'push' | 'web' | 'trigger' | 'schedule' | 'api' | 'external' | 'pipeline' | 'chat' | 'webide' | 'merge_request_event' | 'external_pull_request_event' | 'parent_pipeline' | 'ondemand_dast_scan' | 'ondemand_dast_validation';
+type Source = 'push' | 'web' | 'trigger' | 'schedule' | 'api' | 'external' | 'pipeline' | 'chat' | 'webide' | 'merge_request_event' | 'external_pull_request_event' | 'parent_pipeline' | 'ondemand_dast_scan' | 'ondemand_dast_validation';

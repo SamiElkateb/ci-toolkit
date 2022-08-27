@@ -10,20 +10,19 @@ import ErrorHandler from './Errors/ErrorHandler';
 import Git from './Git';
 import Conf from './Conf';
 
-import {
-  assertPathExists,
-} from '../utils/assertions/customTypesAssertions';
-import { assertExists } from '../utils/assertions/baseTypeAssertions';
+import assertExists from '../utils/assertExists';
 // import lang from './lang/en';
 import Logger from './Logger';
 import Tags from './Gitlab/Tags';
-import { getAbsolutePath, safeWriteFileSync, writeVersion } from '../utils/files';
+import {
+  assertFileExists, getAbsolutePath, safeWriteFileSync, writeVersion,
+} from '../utils/files';
 import poll from '../utils/polling';
 import standby from '../utils/standby';
 import Users from './Gitlab/Users';
 import Pipelines from './Gitlab/Pipelines';
 import MergeRequests from './Gitlab/MergeRequests';
-import assertContinue from '../utils/assertions/assertContinue';
+import assertContinue from '../utils/assertContinue';
 import ERROR_MESSAGES from '../constants/ErrorMessages';
 import getObjectPaths from '../utils/flattenObject';
 import {
@@ -51,25 +50,25 @@ import {
 import { packageSchema, versionIncrementSchema } from '../models/others';
 import { CLIArgs } from '../models/args';
 import Jobs from './Gitlab/Jobs';
-import { snakeToCamelCaseWord } from '../utils/snakeToCamelCase';
+import snakeToCamelCase from '../utils/snakeToCamelCase';
 import {
   ciToolkit,
-  applyEnvDiff,
+  applyEnvDiffs,
   createMergeRequest,
   mergeMergeRequest,
   startPipeline,
   incrementVersionFromTag,
 } from '../templates';
-import { YAMLParse } from '../typeSafeImplementations/parsers';
+import { YAMLParse } from '../utils/parsers';
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 type AwaitPipelineParams = {
   conf: Conf;
-  options: Partial<gitlabApiOptions>;
+  options: Partial<GitlabApiOptions>;
   source?: string;
   ref?: string;
 };
-interface AwaitMergeAvailableOptions extends gitlabApiOptions {
+interface AwaitMergeAvailableOptions extends GitlabApiOptions {
   sourceBranch: string;
 }
 
@@ -77,7 +76,7 @@ const logger = new Logger();
 class Runner {
   store: Map<string, string>;
 
-  diffStore: Map<string, diffType>;
+  diffStore: Map<string, DiffType>;
 
   constructor() {
     this.store = new Map();
@@ -87,7 +86,7 @@ class Runner {
   static init = async () => {
     fs.mkdirSync('./.ci-toolkit/.secrets', { recursive: true });
     await safeWriteFileSync('./ci-toolkit.yml', YAML.stringify(ciToolkit));
-    await safeWriteFileSync('./.ci-toolkit/apply_env_diff.yml', YAML.stringify(applyEnvDiff));
+    await safeWriteFileSync('./.ci-toolkit/apply_env_diffs.yml', YAML.stringify(applyEnvDiffs));
     await safeWriteFileSync('./.ci-toolkit/create_merge_request.yml', YAML.stringify(createMergeRequest));
     await safeWriteFileSync('./.ci-toolkit/increment_version_from_tag.yml', YAML.stringify(incrementVersionFromTag));
     await safeWriteFileSync('./.ci-toolkit/merge_merge_request.yml', YAML.stringify(mergeMergeRequest));
@@ -112,7 +111,7 @@ class Runner {
       const command = commands[i];
       const commandName = Object.keys(command)[0] as KeysOfUnion<CommandOptions>;
       const commandOptions = Object.entries(command)[0][1] as unknown;
-      const camelCaseCommandName = snakeToCamelCaseWord(commandName);
+      const camelCaseCommandName = snakeToCamelCase(commandName);
       // eslint-disable-next-line no-await-in-loop
       await runner[camelCaseCommandName](commandOptions, conf);
       // eslint-disable-next-line no-await-in-loop
@@ -141,7 +140,7 @@ class Runner {
     options.sourceBranch = this.populateVariable(options.sourceBranch);
     options.targetBranch = this.populateVariable(options.targetBranch);
     const apiOptions = conf.getApiOptions(options);
-    const postOptions: mergeRequestsPostOptions = {
+    const postOptions: MergeRequestsPostOptions = {
       ...apiOptions,
       title: options.title,
       targetBranch: options.targetBranch,
@@ -193,7 +192,7 @@ class Runner {
       deleteSourceBranch: options.deleteSourceBranch || undefined,
       squashCommits: options.squashCommits || undefined,
     };
-    const mergeRequest = await MergeRequests.fetch(mergeOptions);
+    const mergeRequest = await MergeRequests.fetchRequest(mergeOptions);
     MergeRequests.verify(options, mergeRequest);
     if (mergeRequest.merge_status !== 'can_be_merged') {
       logger.info(
@@ -258,7 +257,7 @@ class Runner {
     const sourceObj = YAMLParse(sourceFile);
     const targetFile = await Git.show(logger, targetBranch, options.file);
     const targetObj = YAMLParse(targetFile);
-    const diffs = detailedDiff(sourceObj, targetObj) as diffType;
+    const diffs = detailedDiff(sourceObj, targetObj) as DiffType;
     this.addToDiffStore(store, diffs);
   };
 
@@ -308,7 +307,7 @@ class Runner {
     logger.debug('Getting current version');
     const options = readCurrentVersionOptionSchema.parse(userOptions);
     const { file, store } = options;
-    assertPathExists(file);
+    assertFileExists(file);
     const data = await Conf.readConfigFile(file);
     const { version } = packageSchema.parse(data);
     logger.info(`Current version is ${version}`);
@@ -347,7 +346,7 @@ class Runner {
     const options = writeVersionOptionSchema.parse(userOptions);
     options.newVersion = this.populateVariable(options.newVersion);
     const { files, newVersion } = options;
-    files.forEach((file) => assertPathExists(file));
+    files.forEach((file) => assertFileExists(file));
     files.forEach((file) => {
       writeVersion(file, newVersion);
       logger.debug(`Setting version to ${newVersion} in ${file}`);
@@ -544,7 +543,7 @@ class Runner {
     logger.debug(`Storing ${value} as ${key}`);
   };
 
-  addToDiffStore = (userKey: string, value: diffType) => {
+  addToDiffStore = (userKey: string, value: DiffType) => {
     const key = userKey.replace('$_', '');
     this.diffStore.set(key, value);
     logger.debug(`Storing diffs as ${key}`);
@@ -556,11 +555,10 @@ class Runner {
     if (!varKey || varKey?.length === 0) return store;
     const key = varKey[0].replace('$_', '');
     const value = this.store.get(key);
-    assertExists(value, `Could not find store variable : ${store}`);
-    return value;
+    return z.string({ required_error: `Could not find store variable : ${store}` }).parse(value);
   };
 
-  populateDiffs = (store: string): diffType | undefined => {
+  populateDiffs = (store: string): DiffType | undefined => {
     if (!storeValidationSchema.safeParse(store).success) return undefined;
     const varKey = store.match(/\$_\w*/);
     if (!varKey || varKey?.length === 0) return undefined;
