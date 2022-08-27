@@ -1,9 +1,3 @@
-import {
-  checkIsArray,
-  checkIsObject,
-} from './validations/basicTypeValidations';
-
-
 function SnakeToCamelCaseArray<S extends string>(
   val: S[],
 ): SnakeToCamelCase<S>[] {

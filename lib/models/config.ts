@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { z } from 'zod';
 import ERROR_MESSAGES from '../constants/ErrorMessages';
-// import { SnakeToCamelCase } from '../utils/snakeToCamelCase';
+
+export const storeValidationSchema = z.string().startsWith('$_');
 
 export const fetchLastTagOptionSchema = z
   .object({
@@ -684,6 +685,7 @@ export const commandsUnion = z.union([
     start_job: start_job_option_schema,
   }),
 ]);
+export type CommandOptions = z.infer<typeof commandsUnion>;
 
 export const arrayCommands = z.array(commandsUnion);
 export const customCommands = z.record(z.string(), arrayCommands, {

@@ -12,15 +12,13 @@ import Conf from './Conf';
 
 import {
   assertPathExists,
-  assertVersionIncrement,
 } from '../utils/assertions/customTypesAssertions';
 import { assertExists } from '../utils/assertions/baseTypeAssertions';
-import lang from './lang/en';
+// import lang from './lang/en';
 import Logger from './Logger';
 import Tags from './Gitlab/Tags';
 import { getAbsolutePath, safeWriteFileSync, writeVersion } from '../utils/files';
 import poll from '../utils/polling';
-import { checkIsCommandName, checkIsVarKey } from '../utils/validations/customTypeValidation';
 import standby from '../utils/standby';
 import Users from './Gitlab/Users';
 import Pipelines from './Gitlab/Pipelines';
@@ -47,8 +45,10 @@ import {
   pushOptionSchema,
   startPipelineOptionSchema,
   startJobOptionSchema,
+  storeValidationSchema,
+  CommandOptions,
 } from '../models/config';
-import { packageSchema } from '../models/others';
+import { packageSchema, versionIncrementSchema } from '../models/others';
 import { CLIArgs } from '../models/args';
 import Jobs from './Gitlab/Jobs';
 import { snakeToCamelCaseWord } from '../utils/snakeToCamelCase';
@@ -62,6 +62,7 @@ import {
 } from '../templates';
 import { YAMLParse } from '../typeSafeImplementations/parsers';
 
+type KeysOfUnion<T> = T extends T ? keyof T : never;
 type AwaitPipelineParams = {
   conf: Conf;
   options: Partial<gitlabApiOptions>;
@@ -97,7 +98,6 @@ class Runner {
   static start = async (args: CLIArgs) => {
     const { run: command, config } = args;
     await ErrorHandler.try(async () => {
-      assertExists(command, 'No command provided');
       const conf = await Runner.getConf(config);
       await Runner.runCustomCommand(command, conf);
     });
@@ -110,18 +110,15 @@ class Runner {
 
     for (let i = 0; i < commands.length; i += 1) {
       const command = commands[i];
-      const commandName = Object.keys(command)[0] as keyof typeof command;
+      const commandName = Object.keys(command)[0] as KeysOfUnion<CommandOptions>;
+      const commandOptions = Object.entries(command)[0][1] as unknown;
       const camelCaseCommandName = snakeToCamelCaseWord(commandName);
-      if (checkIsCommandName(camelCaseCommandName)) {
-        // eslint-disable-next-line no-await-in-loop
-        await runner[camelCaseCommandName](command[commandName], conf);
-      }
+      // eslint-disable-next-line no-await-in-loop
+      await runner[camelCaseCommandName](commandOptions, conf);
       // eslint-disable-next-line no-await-in-loop
       await standby(1000);
     }
   };
-
-  static getCommandName = (command: object) => Object.keys(command)[0];
 
   static getConf = async (path:string) => {
     logger.debug('getting config file');
@@ -364,9 +361,9 @@ class Runner {
     options.incrementBy = this.populateVariable(options.incrementBy);
     options.incrementFrom = this.populateVariable(options.incrementFrom);
     const { incrementBy, incrementFrom, store } = options;
-    assertVersionIncrement(incrementBy);
+    const parsedIncrement = versionIncrementSchema.parse(incrementBy);
     const incrementedVersion = Tags.incrementVersion({
-      incrementBy,
+      incrementBy: parsedIncrement,
       version: incrementFrom,
     });
     logger.info(`Incremented version is ${incrementedVersion}`);
@@ -554,17 +551,17 @@ class Runner {
   };
 
   populateVariable = (store: string): string => {
-    if (!checkIsVarKey(store)) return store;
+    if (!storeValidationSchema.safeParse(store).success) return store;
     const varKey = store.match(/\$_\w*/);
     if (!varKey || varKey?.length === 0) return store;
     const key = varKey[0].replace('$_', '');
     const value = this.store.get(key);
-    assertExists(value);
+    assertExists(value, `Could not find store variable : ${store}`);
     return value;
   };
 
   populateDiffs = (store: string): diffType | undefined => {
-    if (!checkIsVarKey(store)) return undefined;
+    if (!storeValidationSchema.safeParse(store).success) return undefined;
     const varKey = store.match(/\$_\w*/);
     if (!varKey || varKey?.length === 0) return undefined;
     const key = varKey[0].replace('$_', '');

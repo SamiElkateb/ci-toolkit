@@ -11,9 +11,10 @@ const gitlabMergeRequestSchema = z.object({
   upvotes: z.number(),
   downvotes: z.number(),
   merge_status: z.string(),
-  should_remove_source_branch: z.string(),
+  should_remove_source_branch: z.boolean().nullable(),
   has_conflicts: z.boolean(),
   blocking_discussions_resolved: z.boolean(),
 });
 
 export default gitlabMergeRequestSchema;
+export type GitlabeMergeRequest = z.infer<typeof gitlabMergeRequestSchema>;

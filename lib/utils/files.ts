@@ -3,9 +3,9 @@ import { z } from 'zod';
 import path = require('path');
 import { readFileSync, existsSync, writeFileSync } from 'fs';
 import {
-  assertPath,
   assertPathExists,
 } from './assertions/customTypesAssertions';
+import { pathValidationSchema } from '../models/others';
 
 const fileExists = (path: string) => {
   try {
@@ -16,10 +16,10 @@ const fileExists = (path: string) => {
   return false;
 };
 
-const getAbsolutePath = (filePath: string): path => {
-  assertPath(filePath);
-  if (path.isAbsolute(filePath)) return filePath;
-  return path.resolve(process.cwd(), filePath) as path;
+const getAbsolutePath = (filePath: string) => {
+  const parsedPath = pathValidationSchema.parse(filePath);
+  if (path.isAbsolute(parsedPath)) return parsedPath;
+  return path.resolve(process.cwd(), parsedPath);
 };
 
 const writeVersion = (relativePath: string, version: string) => {

@@ -14,6 +14,8 @@ type DiffsLog = {
   remove: unknown;
   update: unknown;
 };
+type LogLevel = 'error' | 'warn' | 'info' | 'debug';
+type WarningAction = 'prompt' | 'standby' | 'skip';
 
 class Logger {
   private green: string;
@@ -24,9 +26,9 @@ class Logger {
 
   private bright: string;
 
-  private logLevel: logLevel;
+  private logLevel: LogLevel;
 
-  private warningAction: warningAction;
+  private warningAction: WarningAction;
 
   public text: Lang['language'];
 
@@ -126,7 +128,7 @@ class Logger {
       diffs.update = [diffs.update];
     }
     const { add, remove, update } = diffs;
-    this.info('Diffs test:');
+    this.info('Diffs:');
     if (checkIsArray(add)) {
       console.info(this.green, '\t Add:');
       add.forEach((diff: unknown) => {

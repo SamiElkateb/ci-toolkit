@@ -1,8 +1,9 @@
 import { execSync } from 'child_process';
 import Logger from '../core/Logger';
+import { commitMessageValidationSchema } from '../models/others';
 import {
-  assertCommitMessageValidCharacters,
-  assertCommitMessageValidLength,
+  // assertCommitMessageValidCharacters,
+  // assertCommitMessageValidLength,
   assertPathExists,
 } from './assertions/customTypesAssertions';
 import {
@@ -64,9 +65,8 @@ const appendCommitMessage = (command: string, message: string) => {
   if (!whitelistedCommands.includes(command)) {
     throw new Error(`Appending "${message}" to command "${command}" is not allowed.`);
   }
-  assertCommitMessageValidLength(message);
-  assertCommitMessageValidCharacters(message);
-  return `${command} "${message}"`;
+  const parsedCommitMessage = commitMessageValidationSchema.parse(message);
+  return `${command} "${parsedCommitMessage}"`;
 };
 
 const appendBranch = (command: string, branch: string) => {
@@ -80,12 +80,11 @@ const appendBranch = (command: string, branch: string) => {
   if (!whitelistedCommands.includes(command)) {
     throw new Error(`Appending "${branch}" to command "${command}" is not allowed.`);
   }
-  assertCommitMessageValidLength(branch);
-  assertCommitMessageValidCharacters(branch);
+  const parsedBranch = commitMessageValidationSchema.parse(branch);
   if (command === 'git pull origin') {
-    return `${command} ${branch} --ff`;
+    return `${command} ${parsedBranch} --ff`;
   }
-  return `${command} ${branch}`;
+  return `${command} ${parsedBranch}`;
 };
 const appendBranches = (command: string, branches: string[]) => {
   const whitelistedCommands = [
@@ -99,8 +98,7 @@ const appendBranches = (command: string, branches: string[]) => {
     throw new Error(`Appending "${branches}" to command "${command}" is not allowed.`);
   }
   branches.forEach((branch) => {
-    assertCommitMessageValidLength(branch);
-    assertCommitMessageValidCharacters(branch);
+    commitMessageValidationSchema.parse(branch);
   });
   const finalCommand = branches.reduce(
     (acc, branch) => `${acc} ${branch}`,

@@ -1,12 +1,17 @@
 import YAML = require('yaml');
 import { readFileSync } from 'fs';
-import { checkIsConfigFilePath } from '../utils/validations/customTypeValidation';
 import { fileExists, getAbsolutePath } from '../utils/files';
-import { ConfigFile, configSchema, nonPopulatedConfigSchema } from '../models/config';
+import {
+  ConfigFile,
+  configSchema,
+  nonPopulatedConfigSchema,
+  CommandOptions,
+} from '../models/config';
 import gitlabApiOptionsSchema from '../models/gitlabApiOptions';
+import { configFilePathValidationSchema } from '../models/others';
 
 class Conf {
-  readonly commands: Map<string, commandOptions[]>;
+  readonly commands: Map<string, CommandOptions[]>;
 
   readonly protocole: string;
 
@@ -28,16 +33,17 @@ class Conf {
     const conf = { ...userConf };
     this.domain = conf.domain;
     this.project = conf.project;
-    this.token = conf.token;
+    const [token] = conf.token.split('\n');
+    this.token = token;
     this.allowInsecureCertificates = conf.allow_insecure_certificates;
     this.logLevel = conf.logLevel;
     this.lang = conf.lang;
     this.warningAction = conf.warningAction;
     this.protocole = conf.protocole;
-    this.commands = new Map<string, commandOptions[]>();
+    this.commands = new Map<string, CommandOptions[]>();
     const commands = Object.keys(conf.commands);
     commands.forEach((command) => {
-      this.commands.set(command, conf.commands[command] as commandOptions[]);
+      this.commands.set(command, conf.commands[command]);
     });
   }
 
@@ -74,8 +80,9 @@ class Conf {
   };
 
   static populateFromFilesPath = (configFile: unknown): unknown => {
-    if (checkIsConfigFilePath(configFile)) {
-      const path = getAbsolutePath(configFile);
+    const parsedConfigFile = configFilePathValidationSchema.safeParse(configFile);
+    if (parsedConfigFile.success) {
+      const path = getAbsolutePath(parsedConfigFile.data);
       return Conf.readConfigFile(path);
     }
     return configFile;
@@ -101,7 +108,7 @@ class Conf {
     throw new Error(`File: ${path} does not exist`);
   };
 
-  static findConfigFile = (path: string, extension: configExtension) : unknown => {
+  static findConfigFile = (path: string, extension: string) : unknown => {
     if (!fileExists(path)) return undefined;
     switch (extension) {
       case 'txt':

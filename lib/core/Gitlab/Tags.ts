@@ -1,14 +1,14 @@
 import axios from 'axios';
 import { z, ZodError } from 'zod';
 import Logger from '../Logger';
-import { assertVersion } from '../../utils/assertions/customTypesAssertions';
 import GitlabApiError from '../Errors/GitlabApiError';
 import getHttpsAgent from '../../utils/getHttpsAgent';
 import gitlabTagSchema from '../../models/Gitlab/Tags';
+import { versionValidationSchema } from '../../models/others';
 
 type IncrementVersionParams = {
-  incrementBy: versionIncrement;
-  version: unknown;
+  incrementBy: string;
+  version: string;
 };
 interface PostOptions extends gitlabApiOptions {
   tagName: string;
@@ -70,12 +70,12 @@ class Tags {
     return lastTag;
   };
 
-  static incrementVersion = (params: IncrementVersionParams): version => {
+  static incrementVersion = (params: IncrementVersionParams) => {
     const { version, incrementBy } = params;
-    assertVersion(version);
-    let [, major, minor, patch] = version.match(
+    const parsedVersion = versionValidationSchema.parse(version);
+    let [, major, minor, patch] = z.array(z.string()).parse(parsedVersion.match(
       /(\d*)\.(\d*)\.(\d*)/,
-    ) as string[];
+    ));
     switch (incrementBy) {
       case 'patch':
         patch = (+patch + 1).toString();
@@ -93,8 +93,7 @@ class Tags {
         throw new Error('Error while increasing tag number');
     }
     const newVersion = `${major}.${minor}.${patch}`;
-    assertVersion(newVersion);
-    return newVersion;
+    return versionValidationSchema.parse(newVersion);
   };
 }
 export default Tags;

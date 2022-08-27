@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 type PollParams = {
   fn: () => Promise<unknown>;
   validate?: (value: unknown) => boolean;

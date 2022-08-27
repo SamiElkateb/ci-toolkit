@@ -1,23 +1,12 @@
 import { z } from 'zod';
 import ERROR_MESSAGES from '../../constants/ErrorMessages';
-import {
-  assertArray,
-  assertObject,
-  assertProperty,
-  assertString,
-} from '../../utils/assertions/baseTypeAssertions';
-import {
-  checkIsObject,
-  checkIsString,
-  hasOwnProperty,
-} from '../../utils/validations/basicTypeValidations';
 
 class GitlabApiError extends Error {
   constructor(gitlabError: unknown) {
     try {
       const errorSchema = z.object({
-        response: z.object({ data: z.string() }),
-      });
+        response: z.object({ data: z.unknown() }),
+      }).passthrough();
       const parsedError = errorSchema.parse(gitlabError);
       const message = GitlabApiError.getMessageFromData(
         parsedError.response.data,
@@ -30,29 +19,36 @@ class GitlabApiError extends Error {
   }
 
   static getMessageFromData = (data: unknown) => {
-    assertObject(data);
-    if (hasOwnProperty(data, 'error')) {
-      assertString(data.error);
-      return data.error;
+    const messageInError = z.object({ error: z.string() }).safeParse(data);
+    if (messageInError.success) {
+      return messageInError.data.error;
     }
-    assertProperty(data, 'message');
-    if (checkIsString(data.message)) {
-      return data.message;
+
+    const messageInMessage = z.object({ message: z.string() }).safeParse(data);
+    if (messageInMessage.success) {
+      return messageInMessage.data.message;
     }
-    if (
-      checkIsObject(data.message)
-            && hasOwnProperty(data.message, 'base')
-    ) {
-      return GitlabApiError.getMessageFromArray(data.message.base);
+
+    const messageInBase = z.object({
+      message: z.object({ base: z.array(z.string()) }),
+    }).safeParse(data);
+    if (messageInBase.success) {
+      return GitlabApiError.getMessageFromArray(messageInBase.data.message.base);
     }
-    return GitlabApiError.getMessageFromArray(data.message);
+
+    const messageInMessageArray = z.object({ message: z.array(z.string()) }).safeParse(data);
+    if (messageInMessageArray.success) {
+      return GitlabApiError.getMessageFromArray(messageInMessageArray.data.message);
+    }
+    return ERROR_MESSAGES.unknownGitlabApiError;
   };
 
   static getMessageFromArray = (messages: unknown) => {
-    assertArray(messages);
-    const message = messages[0];
-    assertString(message);
-    return message;
+    const messageInArray = z.array(z.string()).safeParse(messages);
+    if (messageInArray.success) {
+      return messageInArray.data.reduce((acc, currMessage) => (`${acc} \n ${currMessage}`));
+    }
+    return ERROR_MESSAGES.unknownGitlabApiError;
   };
 }
 export default GitlabApiError;

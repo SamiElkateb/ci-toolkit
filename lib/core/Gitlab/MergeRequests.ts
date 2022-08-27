@@ -6,7 +6,7 @@ import lang from '../lang/en';
 import GitlabApiError from '../Errors/GitlabApiError';
 import getHttpsAgent from '../../utils/getHttpsAgent';
 import { hasOwnProperty } from '../../utils/validations/basicTypeValidations';
-import gitlabMergeRequestSchema from '../../models/Gitlab/MergeRequests';
+import gitlabMergeRequestSchema, { GitlabeMergeRequest } from '../../models/Gitlab/MergeRequests';
 
 interface VerifyOptions {
   minUpvotes?: number;
@@ -26,7 +26,7 @@ class MergeRequests {
   static fetch<S extends FetchOptions | gitlabApiOptions>(
     options: S,
     logger?: Logger
-  ): S extends FetchOptions ? Promise<mergeRequest> : Promise<mergeRequest[]>;
+  ): S extends FetchOptions ? Promise<GitlabeMergeRequest> : Promise<GitlabeMergeRequest[]>;
 
   static async fetch(
     options: FetchOptions | gitlabApiOptions,
@@ -114,7 +114,7 @@ class MergeRequests {
     return foundMergeRequest;
   };
 
-  static verify = (options: VerifyOptions, mergeRequest: mergeRequest) => {
+  static verify = (options: VerifyOptions, mergeRequest: GitlabeMergeRequest) => {
     const { maxDownvotes = 0, minUpvotes = 0, targetBranch } = options;
     if (mergeRequest.has_conflicts) {
       throw new Error('Please resolve merge request conflicts before merging');
@@ -135,7 +135,7 @@ class MergeRequests {
 
   static merge = async (
     options: MergeOptions,
-    mergeRequest: mergeRequest,
+    mergeRequest: GitlabeMergeRequest,
     logger?: Logger,
   ) => {
     const {

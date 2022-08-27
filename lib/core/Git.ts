@@ -1,7 +1,4 @@
-import {
-  assertArray,
-  assertString,
-} from '../utils/assertions/baseTypeAssertions';
+import { z } from 'zod';
 import { execCommand } from '../utils/commands';
 import Logger from './Logger';
 
@@ -9,13 +6,13 @@ type CommitOptions = {
   message?: string;
   add?: string;
 };
+
 class Git {
   static getBranchName = async (logger: Logger, path?: string) => {
     const command = 'git rev-parse --abbrev-ref HEAD';
     const data = await execCommand({ command, path, logger });
     const branchName = data.replace('\n', '');
-    assertString(branchName, 'Could not find branch name');
-    return branchName;
+    return z.string().parse(branchName);
   };
 
   static getProjectName = async (logger: Logger, path?: string) => {
@@ -88,24 +85,24 @@ class Git {
   };
 
   static getUrlFromGitRemote = (remote: unknown) => {
-    assertString(remote);
-    const urlArray = remote.match(/^origin\t(.*) \((fetch|push)\)$/);
-    assertArray(urlArray);
-    return urlArray[1];
+    const parsedRemote = z.string().parse(remote);
+    const urlArray = parsedRemote.match(/^origin\t(.*) \((fetch|push)\)$/);
+    const parsedUrlArray = z.array(z.string()).parse(urlArray);
+    return parsedUrlArray[1];
   };
 
   static getProjectNameFromUrl = (url: unknown) => {
-    assertString(url);
-    const projectNameArray = url.match(/^.*:(.*)\.git$/);
-    assertArray(projectNameArray);
-    return projectNameArray[1];
+    const parsedUrl = z.string().parse(url);
+    const projectNameArray = parsedUrl.match(/^.*:(.*)\.git$/);
+    const parsedProjectNameArray = z.array(z.string()).parse(projectNameArray);
+    return parsedProjectNameArray[1];
   };
 
   static getOriginDomainFromUrl = (url: unknown) => {
-    assertString(url);
-    const originDomainArray = url.match(/^git@(.*):.*\.git$/);
-    assertArray(originDomainArray);
-    return originDomainArray[1];
+    const parsedUrl = z.string().parse(url);
+    const originDomainArray = parsedUrl.match(/^git@(.*):.*\.git$/);
+    const parsedDomainArray = z.array(z.string()).parse(originDomainArray);
+    return parsedDomainArray[1];
   };
 
   static checkCanCommit = async (logger: Logger, add?: string) => {
@@ -115,6 +112,7 @@ class Git {
     const noStagedChangesMessage = 'no changes added to commit';
     const changesToCommitMessage = 'Changes to be committed';
     const changesNotCommittedMessage = 'Changes not staged for commit';
+    const untrackedFiles = 'nothing added to commit but untracked files present';
     if (response.includes(cleanTreeMessage)) {
       if (logger) {
         const text = logger.text.shouldCommitTreeClean();
@@ -134,12 +132,21 @@ class Git {
     }
     if (
       response.includes(changesNotCommittedMessage)
-            && response.includes(changesToCommitMessage)
+      && response.includes(changesToCommitMessage)
     ) {
       if (add === 'all') return true;
       if (logger) {
         const text = logger.text.shouldCommitSomeChangeNotAdded();
         const continueText = logger.text.continueCommitStaged();
+        await logger.warn(text, continueText);
+      }
+      return true;
+    }
+    if (response.includes(untrackedFiles)) {
+      if (add === 'all') return true;
+      if (logger) {
+        const text = logger.text.shouldCommitSomeFilesAreUntracked();
+        const continueText = logger.text.continueWithoutCommittingUntracked();
         await logger.warn(text, continueText);
       }
       return true;

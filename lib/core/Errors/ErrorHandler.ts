@@ -1,11 +1,10 @@
-import { ZodError } from 'zod';
-import { checkIsObject, checkIsString, hasOwnProperty } from '../../utils/validations/basicTypeValidations';
+import { z, ZodError } from 'zod';
 import Log from '../Logger';
 import GitlabApiError from './GitlabApiError';
 
 const logger = new Log();
 class ErrorHandler {
-  static try = async (callback: Function) => {
+  static try = async (callback: () => Promise<void>) => {
     try {
       await callback();
     } catch (error) {
@@ -15,8 +14,9 @@ class ErrorHandler {
       if (error instanceof TypeError) { logger.error(error.message, 'Type Error'); }
       if (error instanceof GitlabApiError) { logger.error(error.message, 'Gitlab Api Error'); }
 
-      if (checkIsObject(error) && hasOwnProperty(error, 'stack') && checkIsString(error.stack)) {
-        logger.stack(error.stack);
+      const parsedError = z.object({ stack: z.string() }).safeParse(error);
+      if (parsedError.success) {
+        logger.stack(parsedError.data.stack);
       }
     }
   };

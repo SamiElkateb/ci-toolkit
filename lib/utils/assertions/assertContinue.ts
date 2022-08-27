@@ -1,5 +1,5 @@
 import prompt = require('prompt');
-import { assertString } from './baseTypeAssertions';
+import { z } from 'zod';
 
 const assertContinue = async (question: string): Promise<true> => {
   prompt.start();
@@ -10,9 +10,11 @@ const assertContinue = async (question: string): Promise<true> => {
       required: true,
     },
   ]);
-  assertString(answer);
-  if (['yes', 'Y'].includes(answer)) return true;
-  if (['no', 'n'].includes(answer)) throw new Error('Aborted by user');
+  const parsedAnswer = z.string().safeParse(answer);
+  if (parsedAnswer.success) {
+    if (['yes', 'Y'].includes(parsedAnswer.data)) return true;
+    if (['no', 'n'].includes(parsedAnswer.data)) throw new Error('Aborted by user');
+  }
   return assertContinue(question);
 };
 

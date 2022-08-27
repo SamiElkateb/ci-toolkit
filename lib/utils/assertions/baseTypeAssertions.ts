@@ -1,52 +1,13 @@
 import {
-  checkIsArray,
-  checkIsNumber,
-  checkIsObject,
-  checkIsString,
   hasOwnProperty,
 } from '../validations/basicTypeValidations';
 
-type assertString = (val: unknown, message?: string) => asserts val is string;
-const assertString: assertString = (
-  val: unknown,
-  message?: string,
-): asserts val is string => {
-  if (!checkIsString(val)) throw message || `${val} is not a string`;
-};
-
-type assertNumber = (val: unknown, message?: string) => asserts val is number;
-const assertNumber: assertNumber = (
-  val: unknown,
-  message?: string,
-): asserts val is number => {
-  if (!checkIsNumber(val)) throw message || `${val} is not a number`;
-};
-
-type assertArray = (
-  val: unknown,
-  message?: string
-) => asserts val is Array<unknown>;
-const assertArray: assertArray = (
-  val: unknown,
-  message?: string,
-): asserts val is Array<unknown> => {
-  if (!checkIsArray(val)) throw message || `${val} is not an array`;
-};
-
-type assertObject = (val: unknown, message?: string) => asserts val is object;
-const assertObject: assertObject = (
-  val: unknown,
-  message?: string,
-): asserts val is object => {
-  if (!checkIsObject(val)) throw message || `${val} is not an object`;
-};
-
-type assertExists = (val: unknown, message?: string) => asserts val;
-const assertExists: assertExists = (
+type AssertExists = (val: unknown, message?: string) => asserts val;
+const assertExists: AssertExists = (
   val: unknown,
   message?: string,
 ): asserts val => {
-  if (typeof val === 'undefined') throw message || `${val} does not exist`;
+  if (typeof val === 'undefined') throw new Error(message || 'A needed value does not exist');
 };
 
 type assertProperty<X extends {}, Y extends PropertyKey> = (
@@ -54,6 +15,7 @@ type assertProperty<X extends {}, Y extends PropertyKey> = (
   prop: Y,
   message?: string
 ) => asserts obj is X & Record<Y, unknown>;
+
 function assertProperty<X extends {}, Y extends PropertyKey>(
   obj: X,
   prop: Y,
@@ -64,9 +26,5 @@ function assertProperty<X extends {}, Y extends PropertyKey>(
 
 export {
   assertExists,
-  assertString,
   assertProperty,
-  assertObject,
-  assertArray,
-  assertNumber,
 };
