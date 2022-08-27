@@ -22,8 +22,8 @@ const getAbsolutePath = (filePath: string): path => {
   return path.resolve(process.cwd(), filePath) as path;
 };
 
-const writeVersion = async (path: string, version: string) => {
-  const absolutePath = getAbsolutePath(path);
+const writeVersion = (relativePath: string, version: string) => {
+  const absolutePath = getAbsolutePath(relativePath);
   assertPathExists(absolutePath);
   const packageJson = JSON.parse(readFileSync(absolutePath, 'utf8'));
   packageJson.version = version;

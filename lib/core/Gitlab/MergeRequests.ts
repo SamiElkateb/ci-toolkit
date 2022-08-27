@@ -1,11 +1,12 @@
+import axios from 'axios';
+import { z, ZodError } from 'zod';
 import Logger from '../Logger';
 import { assertExists } from '../../utils/assertions/baseTypeAssertions';
 import lang from '../lang/en';
 import GitlabApiError from '../Errors/GitlabApiError';
 import getHttpsAgent from '../../utils/getHttpsAgent';
 import { hasOwnProperty } from '../../utils/validations/basicTypeValidations';
-
-const axios = require('axios');
+import gitlabMergeRequestSchema from '../../models/Gitlab/MergeRequests';
 
 interface VerifyOptions {
   minUpvotes?: number;
@@ -30,7 +31,7 @@ class MergeRequests {
   static async fetch(
     options: FetchOptions | gitlabApiOptions,
     logger?: Logger,
-  ): Promise<mergeRequest | mergeRequest[]> {
+  ) {
     if (hasOwnProperty(options, 'sourceBranch')) {
       return MergeRequests.fetchRequest(options, logger);
     }
@@ -40,7 +41,7 @@ class MergeRequests {
   static async post(
     options: mergeRequestsPostOptions,
     logger?: Logger,
-  ): Promise<mergeRequest | mergeRequest[]> {
+  ) {
     const {
       title,
       protocole,
@@ -64,9 +65,11 @@ class MergeRequests {
     const url = `${protocole}://${domain}/api/v4/projects/${project}/merge_requests?access_token=${token}`;
     logger?.request(url, 'post');
     try {
-      const res = await axios.post(url, data, axiosOptions);
-      return res.data;
+      const res = await axios.post<unknown>(url, data, axiosOptions);
+      const parsedData = gitlabMergeRequestSchema.parse(res.data);
+      return parsedData;
     } catch (error) {
+      if (error instanceof ZodError) throw error;
       throw new GitlabApiError(error);
     }
   }
@@ -74,7 +77,7 @@ class MergeRequests {
   static fetchRequests = async (
     options: gitlabApiOptions,
     logger?: Logger,
-  ): Promise<mergeRequest[]> => {
+  ) => {
     const {
       protocole,
       domain,
@@ -86,9 +89,12 @@ class MergeRequests {
     const url = `${protocole}://${domain}/api/v4/projects/${project}/merge_requests?state=opened&access_token=${token}`;
     logger?.request(url, 'get');
     try {
-      const res = await axios.get(url, axiosOptions);
-      return res.data;
+      const res = await axios.get<unknown>(url, axiosOptions);
+      const parsedData = z.array(gitlabMergeRequestSchema).parse(res.data);
+
+      return parsedData;
     } catch (error) {
+      if (error instanceof ZodError) throw error;
       throw new GitlabApiError(error);
     }
   };
@@ -96,13 +102,13 @@ class MergeRequests {
   static fetchRequest = async (
     options: FetchOptions,
     logger?: Logger,
-  ): Promise<mergeRequest> => {
+  ) => {
     const mergeRequests = await MergeRequests.fetchRequests(
       options,
       logger,
     );
     const foundMergeRequest = mergeRequests.find(
-      (mergeRequest: mergeRequest) => mergeRequest.source_branch === options.sourceBranch,
+      (mergeRequest) => mergeRequest.source_branch === options.sourceBranch,
     );
     assertExists(foundMergeRequest, lang.noMergeRequest(options.sourceBranch));
     return foundMergeRequest;
@@ -148,9 +154,10 @@ class MergeRequests {
     const url = `${protocole}://${domain}/api/v4/projects/${project}/merge_requests/${mergeRequestIid}/merge?access_token=${token}`;
     logger?.request(url, 'put');
     try {
-      const res = await axios.put(url, data, axiosOptions);
+      const res = await axios.put<unknown>(url, data, axiosOptions);
       return res.data;
     } catch (error) {
+      if (error instanceof ZodError) throw error;
       throw new GitlabApiError(error);
     }
   };

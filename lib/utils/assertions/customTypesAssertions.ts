@@ -1,4 +1,3 @@
-import defaultConfig from '../../core/defaultConfig';
 import { commandName } from '../../types/commandNames';
 import { hasOwnProperty } from '../validations/basicTypeValidations';
 import {
@@ -69,36 +68,6 @@ function assertSameType<T, K>(
   if (!checkIsSameType(val1, val2)) { throw message || `${val1} and ${val2} are not the same type`; }
 }
 
-type assertCommandOptionsValid = (
-  options: unknown,
-  commandName: commandName
-) => asserts options is commandOptions[commandName];
-
-function assertCommandOptionsValid<C extends commandName>(
-  options: unknown,
-  commandName: C,
-): asserts options is commandOptions[C] {
-  const commandOptions = defaultConfig.commands[commandName];
-  assertObject(options);
-  for (const property in commandOptions) {
-    assertProperty(commandOptions, property);
-    const requirementLevel = commandOptions[property];
-    assertString(requirementLevel);
-    const isRequired = requirementLevel === 'required';
-    if (isRequired) {
-      assertProperty(options, property);
-    }
-    // else if (hasOwnProperty(options, property)) {
-    // 	assertSameType(options[property], commandOptions[property]);
-    // }
-  }
-  for (const property in options) {
-    assertProperty(commandOptions, property);
-    assertProperty(options, property);
-    // assertSameType(options[property], commandOptions[property]);
-  }
-}
-
 function assertCommitMessageValidLength(
   commitMessage: unknown,
   message?: string,
@@ -120,7 +89,6 @@ export {
   assertPath,
   assertPathExists,
   assertVarKey,
-  assertCommandOptionsValid,
   assertCommitMessageValidLength,
   assertCommitMessageValidCharacters,
 };

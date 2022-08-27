@@ -1,8 +1,11 @@
+import axios from 'axios';
+import { z, ZodError } from 'zod';
 import { assertExists } from '../../utils/assertions/baseTypeAssertions';
 import lang from '../lang/en';
 import GitlabApiError from '../Errors/GitlabApiError';
 import getHttpsAgent from '../../utils/getHttpsAgent';
 import Logger from '../Logger';
+import gitlabUserSchema from '../../models/Gitlab/Users';
 
 interface FetchOptions extends Omit<gitlabApiOptions, 'project'> {
   username: string;
@@ -11,13 +14,12 @@ interface FetchIdsOptions extends Omit<gitlabApiOptions, 'project'> {
   usernames: string[];
 }
 type FetchMeOptions = Omit<gitlabApiOptions, 'project'>;
-const axios = require('axios');
 
 class Users {
   static fetch = async (
     options: FetchOptions,
     logger?: Logger,
-  ): Promise<user[]> => {
+  ) => {
     const {
       username,
       protocole,
@@ -29,9 +31,11 @@ class Users {
     const url = `${protocole}://${domain}/api/v4/users?username=${username}&access_token=${token}`;
     logger?.request(url, 'get');
     try {
-      const res = await axios.get(url, axiosOptions);
-      return res.data;
+      const res = await axios.get<unknown>(url, axiosOptions);
+      const parsedData = z.array(gitlabUserSchema).parse(res.data);
+      return parsedData;
     } catch (error) {
+      if (error instanceof ZodError) throw error;
       throw new GitlabApiError(error);
     }
   };
@@ -39,7 +43,7 @@ class Users {
   static fetchMe = async (
     options: FetchMeOptions,
     logger?: Logger,
-  ): Promise<user> => {
+  ) => {
     const {
       protocole,
       domain,
@@ -50,9 +54,11 @@ class Users {
     const url = `${protocole}://${domain}/api/v4/user?access_token=${token}`;
     logger?.request(url, 'get');
     try {
-      const res = await axios.get(url, axiosOptions);
-      return res.data;
+      const res = await axios.get<unknown>(url, axiosOptions);
+      const parsedData = gitlabUserSchema.parse(res.data);
+      return parsedData;
     } catch (error) {
+      if (error instanceof ZodError) throw error;
       throw new GitlabApiError(error);
     }
   };

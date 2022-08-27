@@ -1,11 +1,11 @@
 /* eslint-disable class-methods-use-this */
 import prompt = require('prompt');
 import fs = require('fs');
-import YAML = require('yaml');
 import omit = require('lodash.omit');
 import merge = require('lodash.merge');
 import { detailedDiff } from 'deep-object-diff';
 import { z } from 'zod';
+import YAML from 'yaml';
 import ErrorHandler from './Errors/ErrorHandler';
 import Git from './Git';
 import Conf from './Conf';
@@ -50,7 +50,6 @@ import {
 } from '../models/config';
 import { packageSchema } from '../models/others';
 import { CLIArgs } from '../models/args';
-import { gitlabRunJobApiResponseSchema } from '../models/Gitlab/Jobs';
 import Jobs from './Gitlab/Jobs';
 import { snakeToCamelCaseWord } from '../utils/snakeToCamelCase';
 import {
@@ -61,6 +60,7 @@ import {
   startPipeline,
   incrementVersionFromTag,
 } from '../templates';
+import { YAMLParse } from '../typeSafeImplementations/parsers';
 
 type AwaitPipelineParams = {
   conf: Conf;
@@ -258,9 +258,9 @@ class Runner {
     options.targetBranch = this.populateVariable(options.targetBranch);
     const { store, sourceBranch, targetBranch } = options;
     const sourceFile = await Git.show(logger, sourceBranch, options.file);
-    const sourceObj = YAML.parse(sourceFile);
+    const sourceObj = YAMLParse(sourceFile);
     const targetFile = await Git.show(logger, targetBranch, options.file);
-    const targetObj = YAML.parse(targetFile);
+    const targetObj = YAMLParse(targetFile);
     const diffs = detailedDiff(sourceObj, targetObj) as diffType;
     this.addToDiffStore(store, diffs);
   };
@@ -286,7 +286,7 @@ class Runner {
 
     files.forEach((file) => {
       const path = getAbsolutePath(file);
-      const baseObject = YAML.parse(fs.readFileSync(path, 'utf8'));
+      const baseObject = YAMLParse(fs.readFileSync(path, 'utf8'));
       const paths = Object.keys(getObjectPaths(diffs?.deleted));
       const deletedDiffs = omit(baseObject, paths);
       const addedDiffs = merge(deletedDiffs, diffs?.added);
@@ -438,8 +438,9 @@ class Runner {
     };
 
     const data = await pipelines.post(pipelineData);
+
     if (store) {
-      this.addToStore(store, data.id);
+      this.addToStore(store, data.id.toString());
     }
 
     if (awaitPipeline) {
@@ -469,11 +470,10 @@ class Runner {
       project,
     };
 
-    const resJobs = await pipelines.fetchJobs(pipelineData);
-    const foundJob = gitlabRunJobApiResponseSchema.parse(
-      resJobs.find((job) => job.name === options.name),
-    );
+    const data = await pipelines.fetchJobs(pipelineData);
+    const foundJob = data.find((job) => job.name === options.name);
 
+    assertExists(foundJob, `Could not find job named "${options.name}" in pipeline ${pipelineData.id}`);
     const jobId = foundJob.id;
     const jobs = new Jobs(conf);
     const startJobsOptions = {

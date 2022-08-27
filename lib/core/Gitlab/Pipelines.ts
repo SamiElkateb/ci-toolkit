@@ -1,9 +1,11 @@
+import axios from 'axios';
+import { z, ZodError } from 'zod';
 import Conf from '../Conf';
 import Logger from '../Logger';
 import GitlabApiError from '../Errors/GitlabApiError';
-import { assertNumber } from '../../utils/assertions/baseTypeAssertions';
 import getHttpsAgent from '../../utils/getHttpsAgent';
-import { gitlabRunJobApiResponse } from '../../types/Gitlab/Jobs';
+import gitlabPipelineSchema from '../../models/Gitlab/Pipelines';
+import gitlabJobSchema from '../../models/Gitlab/Jobs';
 
 interface FetchOptions extends gitlabApiOptions {
   id: number;
@@ -17,8 +19,6 @@ interface PostOptions extends gitlabApiOptions {
   ref: string;
   variables?: pipelineVariable[];
 }
-
-const axios = require('axios');
 
 class Pipelines {
   private runningPipelines: number[];
@@ -42,7 +42,7 @@ class Pipelines {
     this.manualPipelines = [];
   }
 
-  fetch = async (options: FetchOptions): Promise<pipeline> => {
+  fetch = async (options: FetchOptions) => {
     const {
       id,
       protocole,
@@ -55,16 +55,18 @@ class Pipelines {
     const url = `${protocole}://${domain}/api/v4/projects/${project}/pipelines/${id}?access_token=${token}`;
     this.logger.request(url, 'get');
     try {
-      const res = await axios.get(url, axiosOptions);
-      return res.data;
+      const res = await axios.get<unknown>(url, axiosOptions);
+      const parsedData = gitlabPipelineSchema.parse(res.data);
+      return parsedData;
     } catch (error) {
+      if (error instanceof ZodError) throw error;
       throw new GitlabApiError(error);
     }
   };
 
   fetchJobs = async (
     options: FetchOptions,
-  ): Promise<gitlabRunJobApiResponse[]> => {
+  ) => {
     const {
       id,
       protocole,
@@ -78,14 +80,16 @@ class Pipelines {
     const url = `${protocole}://${domain}/api/v4/projects/${project}/pipelines/${id}/jobs?${params.toString()}`;
     this.logger.request(url, 'get');
     try {
-      const res = await axios.get(url, axiosOptions);
-      return res.data;
+      const res = await axios.get<unknown>(url, axiosOptions);
+      const parsedData = z.array(gitlabJobSchema).parse(res.data);
+      return parsedData;
     } catch (error) {
+      if (error instanceof ZodError) throw error;
       throw new GitlabApiError(error);
     }
   };
 
-  fetchAll = async (options: FetchAllOptions): Promise<pipeline[]> => {
+  fetchAll = async (options: FetchAllOptions) => {
     const {
       protocole,
       domain,
@@ -104,9 +108,11 @@ class Pipelines {
     const url = `${protocole}://${domain}/api/v4/projects/${project}/pipelines/?${params.toString()}`;
     this.logger.request(url, 'get');
     try {
-      const res = await axios.get(url, axiosOptions);
-      return res.data;
+      const res = await axios.get<unknown>(url, axiosOptions);
+      const parsedData = z.array(gitlabPipelineSchema).parse(res.data);
+      return parsedData;
     } catch (error) {
+      if (error instanceof ZodError) throw error;
       throw new GitlabApiError(error);
     }
   };
@@ -129,12 +135,12 @@ class Pipelines {
       variables: variables || [],
     };
     try {
-      const res = await axios.post(url, data, axiosOptions);
-      const { id } = res.data;
-      assertNumber(id);
-      this.runningPipelines.push(id);
-      return res.data;
+      const res = await axios.post<unknown>(url, data, axiosOptions);
+      const parsedData = gitlabPipelineSchema.parse(res.data);
+      this.runningPipelines.push(parsedData.id);
+      return parsedData;
     } catch (error) {
+      if (error instanceof ZodError) throw error;
       throw new GitlabApiError(error);
     }
   };

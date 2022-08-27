@@ -1,9 +1,10 @@
 import { ZodError } from 'zod';
+import axios from 'axios';
 import Conf from '../Conf';
 import Logger from '../Logger';
 import GitlabApiError from '../Errors/GitlabApiError';
 import getHttpsAgent from '../../utils/getHttpsAgent';
-import { gitlabRunJobApiResponseSchema } from '../../models/Gitlab/Jobs';
+import gitlabJobSchema from '../../models/Gitlab/Jobs';
 
 interface FetchOptions extends gitlabApiOptions {
   id: number;
@@ -13,8 +14,6 @@ interface PostOptions extends gitlabApiOptions {
   jobId: number;
   variables?: pipelineVariable[];
 }
-
-const axios = require('axios');
 
 class Jobs {
   private runningJobs: number[];
@@ -48,9 +47,11 @@ class Jobs {
     const url = `${protocole}://${domain}/api/v4/projects/${project}/jobs/${id}?access_token=${token}`;
     this.logger.request(url, 'get');
     try {
-      const res = await axios.get(url, axiosOptions);
-      return res.data;
+      const res = await axios.get<unknown>(url, axiosOptions);
+      const parsedData = gitlabJobSchema.parse(res.data);
+      return parsedData;
     } catch (error) {
+      if (error instanceof ZodError) throw error;
       throw new GitlabApiError(error);
     }
   };
@@ -77,15 +78,13 @@ class Jobs {
     };
 
     try {
-      const res = await axios.post(url, data, axiosOptions);
-      const parsedData = gitlabRunJobApiResponseSchema.parse(res.data);
+      const res = await axios.post<unknown>(url, data, axiosOptions);
+      const parsedData = gitlabJobSchema.parse(res.data);
       const { id } = parsedData;
       this.runningJobs.push(id);
       return parsedData;
     } catch (error) {
-      if (error instanceof ZodError) {
-        throw error;
-      }
+      if (error instanceof ZodError) throw error;
       throw new GitlabApiError(error);
     }
   };

@@ -1,7 +1,10 @@
+import axios from 'axios';
+import { z, ZodError } from 'zod';
 import Logger from '../Logger';
 import { assertVersion } from '../../utils/assertions/customTypesAssertions';
 import GitlabApiError from '../Errors/GitlabApiError';
 import getHttpsAgent from '../../utils/getHttpsAgent';
+import gitlabTagSchema from '../../models/Gitlab/Tags';
 
 type IncrementVersionParams = {
   incrementBy: versionIncrement;
@@ -11,8 +14,6 @@ interface PostOptions extends gitlabApiOptions {
   tagName: string;
   ref: string;
 }
-
-const axios = require('axios');
 
 class Tags {
   static fetch = async (options: gitlabApiOptions, logger?: Logger) => {
@@ -27,9 +28,11 @@ class Tags {
     const url = `${protocole}://${domain}/api/v4/projects/${project}/repository/tags?access_token=${token}`;
     logger?.request(url, 'get');
     try {
-      const res = await axios.get(url, axiosOptions);
-      return res.data;
+      const res = await axios.get<unknown>(url, axiosOptions);
+      const parsedData = z.array(gitlabTagSchema).parse(res.data);
+      return parsedData;
     } catch (error) {
+      if (error instanceof ZodError) throw error;
       throw new GitlabApiError(error);
     }
   };
@@ -52,9 +55,11 @@ class Tags {
     };
     logger?.request(url, 'post');
     try {
-      const res = await axios.post(url, data, axiosOptions);
-      return res.data;
+      const res = await axios.post<unknown>(url, data, axiosOptions);
+      const parsedData = gitlabTagSchema.parse(res.data);
+      return parsedData;
     } catch (error) {
+      if (error instanceof ZodError) throw error;
       throw new GitlabApiError(error);
     }
   };

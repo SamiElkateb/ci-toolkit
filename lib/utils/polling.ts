@@ -20,7 +20,7 @@ const poll = async (params: PollParams) => {
 
   const executePolling = async (
     resolve: (value: unknown) => void,
-    reject: (reason?: any) => void,
+    reject: (reason?: Error) => void,
   ) => {
     if (pollingLogFn) pollingLogFn();
     const result = await fn();
