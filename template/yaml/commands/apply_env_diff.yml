@@ -1,0 +1,14 @@
+- get_current_branch_name:
+      store: "$_currentBranch"
+- get_diffs:
+      file: "./ci-toolkit.yaml"
+      target_branch: "$_currentBranch"
+      source_branch: "main"
+      store: "$_diffs"
+- prompt_diffs:
+      diffs: "$_diffs"
+      store: "$_verifiedDiffs"
+- apply_diffs:
+      diffs: "$_diffs"
+      files: ["../test2/ci-toolkit.yaml"]
+
