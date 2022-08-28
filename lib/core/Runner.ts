@@ -109,7 +109,7 @@ class Runner {
 
   static runCustomCommand = async (customCommandKey: string, conf: Conf) => {
     const commands = conf.commands.get(customCommandKey);
-    if (typeof commands === 'undefined') throw new Error(`${customCommandKey} does seem to exist in you commands`);
+    if (typeof commands === 'undefined') throw new Error(`${customCommandKey} does not seem to exist in your commands`);
     const runner = new Runner();
 
     for (let i = 0; i < commands.length; i += 1) {
