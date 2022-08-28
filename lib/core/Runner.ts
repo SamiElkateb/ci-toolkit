@@ -317,7 +317,7 @@ class Runner {
     const options = readCurrentVersionOptionSchema.parse(userOptions);
     const { file, store } = options;
     assertFileExists(file);
-    const data = await Conf.readConfigFile(file);
+    const data = Conf.readConfigFile(file);
     const { version } = packageSchema.parse(data);
     logger.info(`Current version is ${version}`);
     this.addToStore(store, version);
