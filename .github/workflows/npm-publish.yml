@@ -1,6 +1,8 @@
 name: Node.js Package
 
 on:
+  push:
+    branches: [ "fix_npm_publish" ]
   release:
     types: [created]
 
@@ -12,8 +14,8 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
-      - run: npm ci
-      - run: npm test
+      - run: pnpm ci
+      - run: pnpm test
 
   publish-npm:
     needs: build
@@ -24,8 +26,8 @@ jobs:
         with:
           node-version: 16
           registry-url: https://registry.npmjs.org/
-      - run: npm ci
-      - run: npm run build
-      - run: npm publish
+      - run: pnpm ci
+      - run: pnpm run build
+      - run: pnpm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
