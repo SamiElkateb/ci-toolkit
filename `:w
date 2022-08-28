@@ -68,11 +68,6 @@ type AwaitPipelineParams = {
   source?: string;
   ref?: string;
 };
-type AwaitJobParams = {
-  conf: Conf;
-  options: Partial<GitlabApiOptions>;
-  id: number;
-};
 interface AwaitMergeAvailableOptions extends GitlabApiOptions {
   sourceBranch: string;
 }
@@ -460,7 +455,6 @@ class Runner {
   };
 
   startJob = async (userOptions: unknown, conf: Conf) => {
-    logger.debug('Starting job');
     const options = startJobOptionSchema.parse(userOptions);
 
     options.project = this.populateVariable(options.project);
@@ -491,11 +485,11 @@ class Runner {
     if (store) {
       this.addToStore(store, startedJob.id.toString());
     }
+    // TODO: add awaitJob
     if (awaitJob) {
       const awaitJobParam = {
         conf,
-        options,
-        id: jobId,
+        jobId,
       };
       await Runner.awaitJob(awaitJobParam);
     }
@@ -545,27 +539,31 @@ class Runner {
     if (failedPipelines.length > 0) throw new Error('Failed pipelines');
   };
 
-  static awaitJob = async (params: AwaitJobParams) => {
+  static awaitJob = async (params: AwaitPipelineParams) => {
     await standby(5000);
     const {
-      options, conf, id,
+      options, conf, source, ref,
     } = params;
     const fetchOptions = conf.getApiOptions(options);
+    const currentUser = await Users.fetchMe(fetchOptions, logger);
     const jobs = new Jobs(conf);
     const fetchAllOptions = {
-      id,
+      username: currentUser.username,
+      ref,
+      source,
       ...fetchOptions,
     };
-    const job = await jobs.fetch(fetchAllOptions);
+    const allJobs = await jobs.fetchAll(fetchAllOptions);
 
-    if (job.status === 'success') return;
-
-    jobs.pushRunningJob(job.id);
+    if (allJobs.length === 0 || allJobs[0].status === 'success') {
+      return;
+    }
+    jobs.pushRunningJob(allJobs[0].id);
     const pollingData = {
       fn: async () => jobs.areJobsRunning(fetchOptions),
       timeoutMessage: 'timeout exceeded',
       pollingLogFn: () => {
-        logger.debug('polling job');
+        logger.debug('polling pipelines');
       },
     };
     await poll(pollingData);

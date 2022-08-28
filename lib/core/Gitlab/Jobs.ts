@@ -1,4 +1,4 @@
-import { ZodError } from 'zod';
+import { z, ZodError } from 'zod';
 import axios from 'axios';
 import Conf from '../Conf';
 import Logger from '../Logger';
@@ -33,6 +33,27 @@ class Jobs {
     this.successJobs = [];
     this.canceledJobs = [];
   }
+
+  fetchAll = async (options: GitlabApiOptions) => {
+    const {
+      protocole,
+      domain,
+      project,
+      token,
+      allowInsecureCertificates: allowInsecure,
+    } = options;
+    const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
+    const url = `${protocole}://${domain}/api/v4/projects/${project}/jobs?access_token=${token}`;
+    this.logger.request(url, 'get');
+    try {
+      const res = await axios.get<unknown>(url, axiosOptions);
+      const parsedData = z.array(gitlabJobSchema).parse(res.data);
+      return parsedData;
+    } catch (error) {
+      if (error instanceof ZodError) throw error;
+      throw new GitlabApiError(error);
+    }
+  };
 
   fetch = async (options: FetchOptions) => {
     const {
@@ -135,9 +156,10 @@ class Jobs {
 
   getCanceledJobs = () => this.canceledJobs;
 
-  pushRunningPipeline = (pipelineId: number) => {
-    const runningJobs = [...this.runningJobs, pipelineId];
+  pushRunningJob = (jobId: number) => {
+    const runningJobs = [...this.runningJobs, jobId];
     this.runningJobs = runningJobs;
   };
 }
+
 export default Jobs;
