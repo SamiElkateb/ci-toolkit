@@ -4,11 +4,10 @@ import {
 import Logger from '../../lib/core/Logger';
 import Runner from '../../lib/core/Runner';
 
-process.argv[2] = 'test';
-// process.env.cwd = '.';
 describe('Configuration', () => {
   beforeAll(() => {
     vi.mock('fs');
+    vi.mock('child_process');
   });
   it('should not throw if provided with a valid configuration file', async () => {
     const errorSpy = vi.spyOn(Logger.prototype, 'error');

@@ -1,0 +1,26 @@
+export default {
+  name: '1.1.0',
+  message: '',
+  target: '55ae239f4a8b54b73ffc41c69d3981a07df2c8f4',
+  commit: {
+    id: '55ae239f4a8b54b73ffc41c69d3981a07df2c8f4',
+    short_id: '55ae239f',
+    created_at: '2022-08-27T21:18:41.000+00:00',
+    parent_ids: [
+      'e26adc72ff52ffb6f000c3577c5d626d83a6e379',
+      '6e7e610fa6fea49df753a4368dbe1d92d2fe1930',
+    ],
+    title: "Merge branch 'new-branch' into 'master'",
+    message: "Merge branch 'new-branch' into 'master'\n\nnew-branch\n\nSee merge request JohnDoe/testproject!20",
+    author_name: 'JohnDoe',
+    author_email: 'john.doe@doe-company.com',
+    authored_date: '2022-08-27T21:18:41.000+00:00',
+    committer_name: 'JohnDoe',
+    committer_email: 'john.doe@doe-company.com',
+    committed_date: '2022-08-27T21:18:41.000+00:00',
+    trailers: {},
+    web_url: 'https://gitlab.com/JohnDoe/testproject/-/commit/55ae239f4a8b54b73ffc41c69d3981a07df2c8f4',
+  },
+  release: null,
+  protected: false,
+};

@@ -10,7 +10,6 @@
     "types": ["vitest/globals"],
     "resolveJsonModule": true,
     "esModuleInterop": true
-
 	},
 	"include": ["lib/**/*.ts"]
 }

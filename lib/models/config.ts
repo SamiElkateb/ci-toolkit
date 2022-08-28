@@ -709,7 +709,7 @@ export const nonPopulatedConfigSchema = z.object({
   commands: z.record(z.string(), z.union([z.string(), arrayCommands])),
 }).passthrough();
 
-export const configSchema = z
+export const initialConfigSchema = z
   .object({
     token: z.string({
       required_error: ERROR_MESSAGES.isRequired(
@@ -778,7 +778,8 @@ export const configSchema = z
         ERROR_MESSAGES.shouldBeOneOf('protocoles', 'http|https'),
       )
       .default('https'),
-  }).strict()
+  }).strict();
+export const configSchema = initialConfigSchema
   .transform((userConfig) => ({
     ...userConfig,
     warningAction: userConfig.warning_action,
@@ -787,3 +788,4 @@ export const configSchema = z
     // aggregatedCommands: userConfig.aggregated_commands,
   }));
 export type ConfigFile = z.infer<typeof configSchema>;
+export type InitialConfigFile = z.infer<typeof initialConfigSchema>;
