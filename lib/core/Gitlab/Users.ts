@@ -63,17 +63,17 @@ class Users {
     }
   };
 
-  static fetchId = async (options: FetchOptions): Promise<number> => {
-    const user = (await Users.fetch(options))[0];
+  static fetchId = async (options: FetchOptions, logger?: Logger): Promise<number> => {
+    const user = (await Users.fetch(options, logger))[0];
     assertExists(user, lang.noUser(options.username));
     return user.id;
   };
 
-  static fetchIds = async (options: FetchIdsOptions): Promise<number[]> => {
+  static fetchIds = async (options: FetchIdsOptions, logger?: Logger): Promise<number[]> => {
     const { usernames } = options;
     const promisedUsersIds = usernames.map((username) => {
       const fetchOptions = { ...options, username };
-      return Users.fetchId(fetchOptions);
+      return Users.fetchId(fetchOptions, logger);
     });
     const userIds = Promise.all(promisedUsersIds);
     return userIds;

@@ -168,7 +168,7 @@ class Runner {
     const reviewerIds = await Users.fetchIds({
       ...apiOptions,
       usernames: reviewers,
-    });
+    }, logger);
     postOptions.reviewerIds = reviewerIds;
 
     await MergeRequests.post(postOptions, logger);

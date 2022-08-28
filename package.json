@@ -9,10 +9,11 @@
 	],
 	"scripts": {
 		"test": "vitest --run --reporter verbose",
+		"test:coverage": "vitest run --coverage",
 		"test:watch": "vitest",
 		"compile:watch": "npx tsc --watch",
 		"ts-to-zod": "ts-to-zod ./lib/types/Gitlab/Jobs.ts ./lib/models/Gitlab/Jobs.ts",
-    "lint": "eslint lib/**"
+		"lint": "eslint lib/**"
 	},
 	"author": "Sami E",
 	"license": "ISC",
@@ -23,6 +24,7 @@
 		"@types/prompt": "^1.1.2",
 		"@types/yargs": "^17.0.11",
 		"@typescript-eslint/eslint-plugin": "^5.0.0",
+		"c8": "^7.12.0",
 		"eslint": "^8.0.1",
 		"eslint-config-airbnb": "^19.0.4",
 		"eslint-config-airbnb-typescript": "^17.0.0",

@@ -8,18 +8,23 @@ import CONFIG_PATHS from '../../__fixtures__/configPaths';
 describe('get_current_branch_name', () => {
   let errorSpy = vi.spyOn(Logger.prototype, 'error');
   let infoSpy = vi.spyOn(Logger.prototype, 'info');
+
   beforeAll(() => {
+    vi.mock('../../lib/utils/standby');
     vi.mock('fs');
     vi.mock('child_process');
   });
+
   beforeEach(() => {
     errorSpy = vi.spyOn(Logger.prototype, 'error');
     infoSpy = vi.spyOn(Logger.prototype, 'info');
   });
+
   afterEach(() => {
     errorSpy.mockRestore();
     infoSpy.mockRestore();
   });
+
   it('should log the current branch name', async () => {
     errorSpy = vi.spyOn(Logger.prototype, 'error');
     infoSpy = vi.spyOn(Logger.prototype, 'info');
