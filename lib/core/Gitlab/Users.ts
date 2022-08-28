@@ -1,80 +1,82 @@
-import Conf from '../Conf';
-import { assertExists } from '../../utils/assertions/baseTypeAssertions';
+import axios from 'axios';
+import { z, ZodError } from 'zod';
+import assertExists from '../../utils/assertExists';
 import lang from '../lang/en';
 import GitlabApiError from '../Errors/GitlabApiError';
-import { getHttpsAgent } from '../../utils/getHttpsAgent';
+import getHttpsAgent from '../../utils/getHttpsAgent';
 import Logger from '../Logger';
+import gitlabUserSchema from '../../models/Gitlab/Users';
 
-interface fetchOptions extends Omit<gitlabApiOptions, 'project'> {
-	username: string;
+interface FetchOptions extends Omit<GitlabApiOptions, 'project'> {
+  username: string;
 }
-interface fetchIdsOptions extends Omit<gitlabApiOptions, 'project'> {
-	usernames: string[];
+interface FetchIdsOptions extends Omit<GitlabApiOptions, 'project'> {
+  usernames: string[];
 }
-type fetchMeOptions = Omit<gitlabApiOptions, 'project'>;
-const axios = require('axios');
+type FetchMeOptions = Omit<GitlabApiOptions, 'project'>;
+
 class Users {
-	private conf: Conf;
-	private logger: Logger;
-	constructor(conf: Conf) {
-		this.conf = conf;
-		this.logger = new Logger(conf.logLevel);
-	}
-	static fetch = async (
-		options: fetchOptions,
-		logger?: Logger
-	): Promise<user[]> => {
-		const {
-			username,
-			protocole,
-			domain,
-			token,
-			allowInsecureCertificate: allowInsecure,
-		} = options;
-		const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
-		const url = `${protocole}://${domain}/api/v4/users?username=${username}&access_token=${token}`;
-		logger?.request(url, 'get');
-		try {
-			const res = await axios.get(url, axiosOptions);
-			return res.data;
-		} catch (error) {
-			throw new GitlabApiError(error);
-		}
-	};
-	static fetchMe = async (
-		options: fetchMeOptions,
-		logger?: Logger
-	): Promise<user> => {
-		const {
-			protocole,
-			domain,
-			token,
-			allowInsecureCertificate: allowInsecure,
-		} = options;
-		const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
-		const url = `${protocole}://${domain}/api/v4/user?access_token=${token}`;
-		logger?.request(url, 'get');
-		try {
-			const res = await axios.get(url, axiosOptions);
-			return res.data;
-		} catch (error) {
-			throw new GitlabApiError(error);
-		}
-	};
-	static fetchId = async (options: fetchOptions): Promise<number> => {
-		const user = (await Users.fetch(options))[0];
-		assertExists(user, lang.noUser(options.username));
-		return user.id;
-	};
-	static fetchIds = async (options: fetchIdsOptions): Promise<number[]> => {
-		const userIds = [];
-		const { usernames } = options;
-		for (let i = 0, c = usernames.length; i < c; i++) {
-			const fetchOptions = { ...options, username: usernames[i] };
-			const id = await Users.fetchId(fetchOptions);
-			userIds.push(id);
-		}
-		return userIds;
-	};
+  static fetch = async (
+    options: FetchOptions,
+    logger?: Logger,
+  ) => {
+    const {
+      username,
+      protocole,
+      domain,
+      token,
+      allowInsecureCertificates: allowInsecure,
+    } = options;
+    const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
+    const url = `${protocole}://${domain}/api/v4/users?username=${username}&access_token=${token}`;
+    logger?.request(url, 'get');
+    try {
+      const res = await axios.get<unknown>(url, axiosOptions);
+      const parsedData = z.array(gitlabUserSchema).parse(res.data);
+      return parsedData;
+    } catch (error) {
+      if (error instanceof ZodError) throw error;
+      throw new GitlabApiError(error);
+    }
+  };
+
+  static fetchMe = async (
+    options: FetchMeOptions,
+    logger?: Logger,
+  ) => {
+    const {
+      protocole,
+      domain,
+      token,
+      allowInsecureCertificates: allowInsecure,
+    } = options;
+    const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
+    const url = `${protocole}://${domain}/api/v4/user?access_token=${token}`;
+    logger?.request(url, 'get');
+    try {
+      const res = await axios.get<unknown>(url, axiosOptions);
+      const parsedData = gitlabUserSchema.parse(res.data);
+      return parsedData;
+    } catch (error) {
+      if (error instanceof ZodError) throw error;
+      throw new GitlabApiError(error);
+    }
+  };
+
+  static fetchId = async (options: FetchOptions, logger?: Logger): Promise<number> => {
+    const user = (await Users.fetch(options, logger))[0];
+    assertExists(user, lang.noUser(options.username));
+    return user.id;
+  };
+
+  static fetchIds = async (options: FetchIdsOptions, logger?: Logger): Promise<number[]> => {
+    const { usernames } = options;
+    const promisedUsersIds = usernames.map((username) => {
+      const fetchOptions = { ...options, username };
+      return Users.fetchId(fetchOptions, logger);
+    });
+    const userIds = Promise.all(promisedUsersIds);
+    return userIds;
+  };
 }
 export default Users;

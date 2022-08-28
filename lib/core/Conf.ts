@@ -1,194 +1,127 @@
-import Git from './Git';
 import YAML = require('yaml');
-import fs = require('fs');
-import {
-	checkIsObject,
-	hasOwnProperty,
-} from '../utils/validations/basicTypeValidations';
-import { checkIsConfigFilePath } from '../utils/validations/customTypeValidation';
-import { defaultConfig } from './defaultConfig';
+import { readFileSync } from 'fs';
 import { fileExists, getAbsolutePath } from '../utils/files';
-import { SnakeToCamelCase } from '../utils/snakeToCamelCase';
-import { assertPathExists } from '../utils/assertions/customTypesAssertions';
 import {
-	assertArray,
-	assertObject,
-	assertString,
-	assertProperty,
-	assertExists,
-} from '../utils/assertions/baseTypeAssertions';
+  ConfigFile,
+  configSchema,
+  nonPopulatedConfigSchema,
+  CommandOptions,
+} from '../models/config';
+import gitlabApiOptionsSchema from '../models/gitlabApiOptions';
+import { configFilePathValidationSchema } from '../models/others';
 
 class Conf {
-	readonly commands: SnakeToCamelCaseObjectKeys<customCommands>;
-	readonly protocole: protocole;
-	readonly domain?: string;
-	readonly project?: string;
-	readonly token: string;
-	readonly allowInsecureCertificate: boolean;
-	readonly logLevel: logLevel;
-	readonly lang: string;
-	readonly warningAction: warningAction;
-	constructor(conf: configFile) {
-		this.domain = conf.domain;
-		this.project = conf.project;
-		this.token = conf.token;
-		this.allowInsecureCertificate = conf.allow_insecure_certificate;
-		this.logLevel = conf.log_level;
-		this.lang = conf.lang;
-		this.warningAction = conf.warning_action;
-		this.protocole = conf.protocole;
-		for (const command in conf.commands) {
-			conf.commands[command] = SnakeToCamelCase(conf.commands[command]);
-		}
-		this.commands = conf.commands;
-	}
+  readonly commands: Map<string, CommandOptions[]>;
 
-	getApiOptions = (options: Partial<gitlabApiOptions>) => {
-		let project, domain, protocole;
-		if (checkIsObject(options)) {
-			if (hasOwnProperty(options, 'project')) {
-				project = options.project as string;
-			}
-			if (hasOwnProperty(options, 'domain')) {
-				domain = options.domain as string;
-			}
-			if (hasOwnProperty(options, 'protocole')) {
-				protocole = options.protocole as protocole;
-			}
-		}
-		const apiOptions = {
-			allowInsecureCertificate: this.allowInsecureCertificate,
-			project: project || this.project,
-			domain: domain || this.domain,
-			protocole: protocole || this.protocole,
-			token: this.token,
-		};
-		assertString(apiOptions.project, 'Project name is not defined');
-		assertString(apiOptions.domain, 'Domain name is not defined');
-		assertString(apiOptions.protocole, 'Protocole is not defined');
-		assertString(apiOptions.token, 'Token is not defined');
-		return apiOptions as gitlabApiOptions;
-	};
+  readonly protocole: string;
 
-	static parseConfig = async (configFile: unknown): Promise<configFile> => {
-		assertObject(configFile);
-		assertProperty(configFile, 'token');
-		assertPathExists(configFile.token);
-		configFile.token = Conf.populateFromFilesPath(configFile.token);
+  readonly domain: string;
 
-		assertProperty(configFile, 'commands');
-		assertObject(configFile.commands);
-		for (const property in configFile.commands) {
-			if (hasOwnProperty(configFile.commands, property)) {
-				configFile.commands[property] = Conf.populateFromFilesPath(
-					configFile.commands[property]
-				);
-				assertArray(configFile.commands[property]);
-			}
-		}
+  readonly project?: string;
 
-		for (const property in configFile.commands) {
-			if (
-				hasOwnProperty(configFile.commands, property) &&
-				hasOwnProperty(defaultConfig, property)
-			) {
-				configFile.commands[property] = Conf.parseThroughConfig(
-					defaultConfig[property],
-					configFile.commands[property]
-				);
-			}
-		}
+  readonly token: string;
 
-		assertString(configFile.token);
-		const conf = {
-			protocole: 'https',
-			log_level: 'info',
-			lang: 'en',
-			warning_action: 'prompt',
-			allow_insecure_certificate: false,
-			...configFile,
-		};
-		return conf as configFile;
-	};
+  readonly allowInsecureCertificates: boolean;
 
-	static parseThroughConfig<T>(
-		defaultConf: T,
-		customConf: unknown,
-		propName?: string
-	): T {
-		if (typeof customConf === 'undefined') return defaultConf;
-		if (typeof defaultConf !== typeof customConf) {
-			const defaultConfType = typeof defaultConf;
-			const customConfType = typeof customConf;
-			throw `ConfigFile: ${propName} is of type ${customConfType}, should be of type ${defaultConfType} or undefined`;
-		}
-		if (typeof defaultConf !== 'object' || Array.isArray(defaultConf))
-			return customConf as T;
+  readonly logLevel: string;
 
-		if (defaultConf === null || typeof defaultConf !== 'object')
-			return defaultConf;
-		if (customConf === null || typeof customConf !== 'object') {
-			return defaultConf;
-		}
+  readonly lang: string;
 
-		for (const property in defaultConf) {
-			if (
-				hasOwnProperty(customConf, property) &&
-				hasOwnProperty(defaultConf, property)
-			) {
-				defaultConf[property] = Conf.parseThroughConfig(
-					defaultConf[property],
-					customConf[property],
-					property
-				);
-			}
-		}
-		return defaultConf;
-	}
-	static populateFromFilesPath = (configFile: unknown): unknown => {
-		if (checkIsConfigFilePath(configFile)) {
-			const path = getAbsolutePath(configFile);
-			return Conf.getLinkedFile(path);
-		}
-		return configFile;
-	};
-	static getLinkedFile = (path: path): unknown => {
-		if (path.match(/\.txt$|\.txt$/)) {
-			const configFile = Conf.findConfigFile(path, 'txt');
-			if (configFile) return configFile;
-		}
-		if (path.match(/\.yaml$|\.yml$/)) {
-			const configFile = Conf.findConfigFile(path, 'yaml');
-			if (configFile) return configFile;
-		}
-		if (path.match(/\.json$/)) {
-			const configFile = Conf.findConfigFile(path, 'json');
-			if (configFile) return configFile;
-		}
-		throw `File: ${path} does not exist`;
-	};
+  readonly warningAction: string;
 
-	static readConfigFile = (): unknown => {
-		const extensions = ['yml', 'yaml', 'json'] as configExtension[];
-		for (let i = 0, c = extensions.length; i < c; i++) {
-			const currentPath = process.cwd();
-			const filePath = `${currentPath}/ci-toolkit.${extensions[i]}`;
-			const config = Conf.findConfigFile(filePath, extensions[i]);
-			if (config) return config;
-		}
-	};
-	static findConfigFile = (path: string, extension: configExtension) => {
-		if (!fileExists(path)) return;
-		switch (extension) {
-			case 'txt':
-				return fs.readFileSync(path, 'utf8');
-			case 'json':
-				return JSON.parse(fs.readFileSync(path, 'utf8'));
-			case 'yaml':
-			case 'yml':
-				return YAML.parse(fs.readFileSync(path, 'utf8'));
-		}
-	};
+  constructor(userConf: ConfigFile) {
+    const conf = { ...userConf };
+    this.domain = conf.domain;
+    this.project = conf.project;
+    const [token] = conf.token.split('\n');
+    this.token = token;
+    this.allowInsecureCertificates = conf.allow_insecure_certificates;
+    this.logLevel = conf.logLevel;
+    this.lang = conf.lang;
+    this.warningAction = conf.warningAction;
+    this.protocole = conf.protocole;
+    this.commands = new Map<string, CommandOptions[]>();
+    const commands = Object.keys(conf.commands);
+    commands.forEach((command) => {
+      this.commands.set(command, conf.commands[command]);
+    });
+  }
+
+  getApiOptions = (options: Partial<GitlabApiOptions>) => {
+    const parsedOptions = gitlabApiOptionsSchema.partial().parse(options);
+    const apiOptions = {
+      allowInsecureCertificates: this.allowInsecureCertificates,
+      project: parsedOptions.project || this.project,
+      domain: parsedOptions.domain || this.domain,
+      protocole: parsedOptions.protocole || this.protocole,
+      token: this.token,
+    };
+    return gitlabApiOptionsSchema.parse(apiOptions);
+  };
+
+  static parseConfig = async (configFile: unknown) => {
+    const nonPopulatedConfig = nonPopulatedConfigSchema.parse(configFile);
+    const populatedToken = Conf.populateFromFilesPath(nonPopulatedConfig.token);
+    const customCommands = Object.keys(nonPopulatedConfig.commands);
+    const populatedCustomCommands = new Map<unknown, unknown>();
+    customCommands.forEach((key) => {
+      const populatedCustomCommand = Conf.populateFromFilesPath(
+        nonPopulatedConfig.commands[key],
+      );
+      populatedCustomCommands.set(key, populatedCustomCommand);
+    });
+
+    const unparsedConfig = {
+      ...nonPopulatedConfig,
+      token: populatedToken,
+      commands: Object.fromEntries(populatedCustomCommands) as unknown,
+    };
+    return configSchema.parse(unparsedConfig);
+  };
+
+  static populateFromFilesPath = (configFile: unknown): unknown => {
+    const parsedConfigFile = configFilePathValidationSchema.safeParse(configFile);
+    if (parsedConfigFile.success) {
+      const path = getAbsolutePath(parsedConfigFile.data);
+      return Conf.readConfigFile(path);
+    }
+    return configFile;
+  };
+
+  static readConfigFile = (path: string) => {
+    if (path.match(/\.txt$|\.txt$/)) {
+      const configFile = Conf.findConfigFile(path, 'txt');
+      if (configFile) return configFile;
+    }
+    if (path.match(/\.yaml$|\.yml$/)) {
+      const configFile = Conf.findConfigFile(path, 'yaml');
+      if (configFile) return configFile;
+
+      const otherPath = path.match(/\.yaml$/) ? path.replace(/\.yaml$/, '.yml') : path.replace(/\.yml$/, '.yaml');
+      const retryConfigFile = Conf.findConfigFile(otherPath, 'yaml');
+      if (retryConfigFile) return retryConfigFile;
+    }
+    if (path.match(/\.json$/)) {
+      const configFile = Conf.findConfigFile(path, 'json');
+      if (configFile) return configFile;
+    }
+    throw new Error(`File: ${path} does not exist`);
+  };
+
+  static findConfigFile = (path: string, extension: string) : unknown => {
+    if (!fileExists(path)) return undefined;
+    switch (extension) {
+      case 'txt':
+        return readFileSync(path, 'utf8');
+      case 'json':
+        return JSON.parse(readFileSync(path, 'utf8'));
+      case 'yaml':
+      case 'yml':
+        return YAML.parse(readFileSync(path, 'utf8'));
+      default:
+        return undefined;
+    }
+  };
 }
 
 export default Conf;

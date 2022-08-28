@@ -1,0 +1,16 @@
+token: './.ci-toolkit/.secrets/token.txt'
+log_level: info
+domain: gitlab.com
+allow_insecure_certificates: false
+warning_action: 'prompt'
+commands:
+    create_merge_request: './.ci-toolkit/create_merge_request.yml'
+    start_pipeline: './.ci-toolkit/start_pipeline.yml'
+    increment_version: './.ci-toolkit/increment_version_from_tag.yml'
+    merge_merge_request: './.ci-toolkit/merge_merge_request.yml'
+    apply_env_diffs: './.ci-toolkit/apply_env_diffs.yml'
+aggregated_commands:
+    deploy:
+        - increment_version
+        - merge_merge_request
+        - star_pipeline

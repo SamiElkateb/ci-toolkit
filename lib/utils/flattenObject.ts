@@ -1,16 +1,20 @@
-import { checkIsObject, hasOwnProperty } from "./validations/basicTypeValidations";
+import { z } from 'zod';
 
-const getObjectPaths = (obj:unknown, prefix = "") => {
-    if(!checkIsObject(obj)) return obj
-	return Object.keys(obj).reduce((acc: any, curr) => {
-		const pre = prefix.length ? prefix + "." : "";
-		if (hasOwnProperty(obj, curr) && checkIsObject(obj[curr])) {
-			Object.assign(acc, getObjectPaths(obj[curr], pre + curr));
-		} else if (hasOwnProperty(obj, curr)){
-			acc[pre + curr] = obj[curr];
-		}
-		return acc;
-	}, {});
+type Map = { [key:string]: unknown };
+const getObjectPaths = (obj:unknown, prefix = ''): object => {
+  const checkedObj = z.object({}).passthrough().safeParse(obj);
+  if (!checkedObj.success) return {};
+  return Object.keys(checkedObj.data).reduce((acc: Map, curr) => {
+    const pre = prefix.length ? `${prefix}.` : '';
+    const parsedObjWithChildren = z.object({ [curr]: z.object({}) }).passthrough().safeParse(obj);
+    const parsedObj = z.object({ [curr]: z.unknown() }).passthrough().safeParse(obj);
+    if (parsedObjWithChildren.success) {
+      Object.assign(acc, getObjectPaths(parsedObjWithChildren.data[curr], pre + curr));
+    } else if (parsedObj.success) {
+      acc[pre + curr] = parsedObj.data[curr];
+    }
+    return acc;
+  }, {});
 };
 
-export default getObjectPaths
+export default getObjectPaths;

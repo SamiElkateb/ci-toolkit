@@ -1,0 +1,27 @@
+- prompt:
+      question: How to increment the version? (major|minor|patch)
+      store: $_increment
+- get_current_branch_name:
+      store: $_currentBranch
+- get_current_project_name:
+      store: $_currentProject
+- fetch_last_tag:
+      project: $_currentProject
+      store: $_currentVersion
+- increment_version:
+      increment_from: "$_currentVersion"
+      increment_by: "$_increment"
+      store: "$_newVersion"
+- write_version:
+      files: ["./package.json", "./package-lock.json"]
+      new_version: "$_newVersion"
+- commit:
+      add: "all"
+      message: "chore: increment version"
+- push:
+      await_pipeline: true
+- create_tag:
+      project: $_project
+      target_branch: $_currentBranch
+      tag_name: $_newVersion
+      await_pipeline: true

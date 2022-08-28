@@ -1,0 +1,35 @@
+[
+	{
+		"get_current_branch_name": {
+			"store": "$_currentBranch"
+		}
+	},
+	{
+		"get_current_project_name": {
+			"store": "$_currentProject"
+		}
+	},
+	{
+		"push": {
+			"branch": "$_currentBranch",
+			"await_pipeline": true
+		}
+	},
+	{
+		"create_merge_request": {
+			"title": "$_currentBranch is a great branch",
+			"project": "$_currentProject",
+			"source_branch": "$_currentBranch",
+			"target_branch": "main",
+			"await_pipeline": true,
+			"min_approvals": 0,
+			"assign_to_me": true,
+			"delete_source_branch": true,
+			"squash_commits": true,
+			"reviewers": [
+				"JohnDoe"
+			],
+			"label": "test"
+		}
+	}
+]

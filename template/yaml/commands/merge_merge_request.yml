@@ -1,0 +1,21 @@
+- get_current_branch_name:
+      store: "$_currentBranch"
+- get_current_project_name:
+      store: "$_currentProject"
+- commit:
+      add: "all"
+      message: "auto: ci-toolkit commit"
+- pull:
+      branch: "main"
+- push:
+      branch: "$_currentBranch"
+      await_pipeline: true
+- merge_merge_request:
+      project: "$_currentProject"
+      source_branch: "$_currentBranch"
+      target_branch: "main"
+      await_pipeline: true
+      min_upvotes: 0
+      max_downvotes: 0
+      delete_source_branch: true
+      squash_commits: false

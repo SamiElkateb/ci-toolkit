@@ -1,55 +1,54 @@
 import { z } from 'zod';
-import {
-	assertArray,
-	assertObject,
-	assertProperty,
-	assertString,
-} from '../../utils/assertions/baseTypeAssertions';
-import {
-	checkIsObject,
-	checkIsString,
-	hasOwnProperty,
-} from '../../utils/validations/basicTypeValidations';
+import ERROR_MESSAGES from '../../constants/ErrorMessages';
 
-class GitlabApiError {
-	readonly message: string;
-	constructor(error: unknown) {
-		try {
-			// const errorSchema = z.object({response: z.object({data: z.string()})})
-			assertObject(error);
-			assertProperty(error, 'response');
-			assertObject(error.response);
-			assertProperty(error.response, 'data');
-			this.message = GitlabApiError.getMessageFromData(
-				error.response.data
-			);
-		} catch (error) {
-			this.message = `Unknown Gitlab Api error`;
-		}
-	}
-	static getMessageFromData = (data: unknown) => {
-		assertObject(data);
-		if (hasOwnProperty(data, 'error')) {
-			assertString(data.error);
-			return data.error;
-		}
-		assertProperty(data, 'message');
-		if (checkIsString(data.message)) {
-			return data.message;
-		}
-		if (
-			checkIsObject(data.message) &&
-			hasOwnProperty(data.message, 'base')
-		) {
-			return GitlabApiError.getMessageFromArray(data.message.base);
-		}
-		return GitlabApiError.getMessageFromArray(data.message);
-	};
-	static getMessageFromArray = (messages: unknown) => {
-		assertArray(messages);
-		const message = messages[0];
-		assertString(message);
-		return message;
-	};
+class GitlabApiError extends Error {
+  constructor(gitlabError: unknown) {
+    try {
+      const errorSchema = z.object({
+        response: z.object({ data: z.unknown() }),
+      }).passthrough();
+      const parsedError = errorSchema.parse(gitlabError);
+      const message = GitlabApiError.getMessageFromData(
+        parsedError.response.data,
+      );
+      super(message);
+    } catch (error) {
+      const message = ERROR_MESSAGES.unknownGitlabApiError;
+      super(message);
+    }
+  }
+
+  static getMessageFromData = (data: unknown) => {
+    const messageInError = z.object({ error: z.string() }).safeParse(data);
+    if (messageInError.success) {
+      return messageInError.data.error;
+    }
+
+    const messageInMessage = z.object({ message: z.string() }).safeParse(data);
+    if (messageInMessage.success) {
+      return messageInMessage.data.message;
+    }
+
+    const messageInBase = z.object({
+      message: z.object({ base: z.array(z.string()) }),
+    }).safeParse(data);
+    if (messageInBase.success) {
+      return GitlabApiError.getMessageFromArray(messageInBase.data.message.base);
+    }
+
+    const messageInMessageArray = z.object({ message: z.array(z.string()) }).safeParse(data);
+    if (messageInMessageArray.success) {
+      return GitlabApiError.getMessageFromArray(messageInMessageArray.data.message);
+    }
+    return ERROR_MESSAGES.unknownGitlabApiError;
+  };
+
+  static getMessageFromArray = (messages: unknown) => {
+    const messageInArray = z.array(z.string()).safeParse(messages);
+    if (messageInArray.success) {
+      return messageInArray.data.reduce((acc, currMessage) => (`${acc} \n ${currMessage}`));
+    }
+    return ERROR_MESSAGES.unknownGitlabApiError;
+  };
 }
 export default GitlabApiError;
