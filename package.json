@@ -40,7 +40,7 @@
 		"vitest": "^0.18.1"
 	},
 	"bin": {
-		"deploy-test-4": "dist/bin/index.js"
+		"ci-toolkit": "dist/bin/index.js"
 	},
 	"dependencies": {
 		"axios": "^0.26.1",

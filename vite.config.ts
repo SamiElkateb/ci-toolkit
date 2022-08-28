@@ -5,7 +5,7 @@ import AutoImport from 'unplugin-auto-import/vite';
 export default defineConfig({
   test: {
     testTimeout: 10000,
-    // silent: true,
+    silent: true,
     coverage: {
       branches: 70,
       // lines: 50,

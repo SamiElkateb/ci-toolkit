@@ -101,10 +101,11 @@ class Pipelines {
       allowInsecureCertificates: allowInsecure,
     } = options;
     const axiosOptions = { httpsAgent: getHttpsAgent(allowInsecure) };
-    const params = new URLSearchParams({ access_token: token });
+    const params = new URLSearchParams();
     if (username) params.append('username', username);
     if (source) params.append('source', source);
     if (ref) params.append('ref', ref);
+    params.append('access_token', token);
     const url = `${protocole}://${domain}/api/v4/projects/${project}/pipelines/?${params.toString()}`;
     this.logger.request(url, 'get');
     try {

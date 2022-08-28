@@ -16,11 +16,20 @@ const workingServer = () => {
     .reply(200, GITLAB_RESPONSES.getCurrentUser)
     .get('/api/v4/users?username=JohnDoe&access_token=super_secret_token')
     .reply(200, GITLAB_RESPONSES.getUsers)
-  // .filteringRequestBody(/password=[^&]*/g, 'password=XXX')
     .post('/api/v4/projects/JohnDoe%2Ftestproject/merge_requests?access_token=super_secret_token', GITLAB_EXPECTED_REQUEST_BODY.createMergeRequest)
     .reply(200, GITLAB_RESPONSES.createMergeRequest)
-    .get('/api/v4/projects/JohnDoe%2Ftestproject/pipelines/?access_token=super_secret_token&username=JohnDoe&source=merge_request_event')
-    .times(1)
+    .get('/api/v4/projects/JohnDoe%2Ftestproject/merge_requests')
+    .query({ state: 'opened', access_token: 'super_secret_token' })
+    .reply(200, GITLAB_RESPONSES.getMergeRequests)
+    .put('/api/v4/projects/JohnDoe%2Ftestproject/merge_requests/24/merge?access_token=super_secret_token')
+    .reply(200, GITLAB_RESPONSES.mergeMergeRequest)
+    .get('/api/v4/projects/JohnDoe%2Ftestproject/pipelines/')
+    .query({ username: 'JohnDoe', access_token: 'super_secret_token', source: 'merge_request_event' })
+    .reply(200, GITLAB_RESPONSES.getPipelinesRunning)
+    .get('/api/v4/projects/JohnDoe%2Ftestproject/pipelines/')
+    .query({
+      username: 'JohnDoe', access_token: 'super_secret_token', source: 'push', ref: 'main',
+    })
     .reply(200, GITLAB_RESPONSES.getPipelinesRunning)
     .get('/api/v4/projects/JohnDoe%2Ftestproject/pipelines/123456789?access_token=super_secret_token')
     .reply(200, () => {
@@ -28,7 +37,6 @@ const workingServer = () => {
         pipelineCalls += 1;
         return GITLAB_RESPONSES.getPipelinesRunning[0];
       }
-
       return GITLAB_RESPONSES.getPipelinesManual[0];
     })
     .get(/.*/)
@@ -37,5 +45,3 @@ const workingServer = () => {
     .reply(401, GITLAB_RESPONSES.unauthorized);
 };
 export default workingServer;
-
-// Debug: sending get request to https://working-server.com/api/v4/projects/JohnDoe%2Ftestproject/pipelines/123456789?access_token=*****-********************

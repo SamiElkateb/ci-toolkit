@@ -1,7 +1,11 @@
 import { vi } from 'vitest';
 import CONFIG_PATHS from '../__fixtures__/configPaths';
 import {
-  CREATE_MERGE_REQUEST, GET_CURRENT_BRANCH_NAME, GET_CURRENT_PROJECT_NAME, STANDARD_CONFIG,
+  CREATE_MERGE_REQUEST,
+  GET_CURRENT_BRANCH_NAME,
+  GET_CURRENT_PROJECT_NAME,
+  MERGE_MERGE_REQUEST,
+  STANDARD_CONFIG,
 } from '../__fixtures__/configurations';
 import { TOKEN_PATH } from '../__fixtures__/paths';
 import addCommandToConfig from '../__fixtures__/addCommandToConfig';
@@ -15,6 +19,8 @@ const readFileSync = vi.fn((path: string) => {
       return addCommandToConfig(STANDARD_CONFIG, GET_CURRENT_BRANCH_NAME);
     case CONFIG_PATHS.createMergeRequestConfig:
       return addCommandToConfig(STANDARD_CONFIG, CREATE_MERGE_REQUEST);
+    case CONFIG_PATHS.mergeMergeRequestConfig:
+      return addCommandToConfig(STANDARD_CONFIG, MERGE_MERGE_REQUEST);
     case TOKEN_PATH:
       return 'super_secret_token';
     default:
@@ -26,6 +32,7 @@ const existsSync = vi.fn((path: string) => {
   // if (path.includes(CONFIG_PATH)) return true;
   switch (path) {
     case CONFIG_PATHS.createMergeRequestConfig:
+    case CONFIG_PATHS.mergeMergeRequestConfig:
     case CONFIG_PATHS.getCurrentProjectNameConfig:
     case CONFIG_PATHS.getCurrentBranchNameConfig:
     case TOKEN_PATH:

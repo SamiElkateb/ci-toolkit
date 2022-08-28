@@ -197,7 +197,7 @@ class Runner {
       deleteSourceBranch: options.deleteSourceBranch || undefined,
       squashCommits: options.squashCommits || undefined,
     };
-    const mergeRequest = await MergeRequests.fetchRequest(mergeOptions);
+    const mergeRequest = await MergeRequests.fetchRequest(mergeOptions, logger);
     MergeRequests.verify(options, mergeRequest);
     if (mergeRequest.merge_status !== 'can_be_merged') {
       logger.info(

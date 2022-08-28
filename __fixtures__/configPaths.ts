@@ -5,5 +5,6 @@ const CONFIG_PATHS = {
   getCurrentBranchNameConfig: '/getCurrentBranchNameConfig.ci-toolkit.yml',
   getCurrentProjectNameConfig: '/getCurrentProjectNameConfig.ci-toolkit.yml',
   createMergeRequestConfig: '/createMergeRequestConfig.ci-toolkit.yml',
+  mergeMergeRequestConfig: '/mergeMergeRequestConfig.ci-toolkit.yml',
 };
 export default CONFIG_PATHS;

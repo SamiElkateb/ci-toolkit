@@ -46,3 +46,26 @@ export const CREATE_MERGE_REQUEST = [{
     label: 'test-label',
   },
 }];
+
+export const MERGE_MERGE_REQUEST = [{
+  get_current_branch_name: {
+    store: '$_currentBranch',
+  },
+},
+{
+  get_current_project_name: {
+    store: '$_currentProject',
+  },
+},
+{
+  merge_merge_request: {
+    project: '$_currentProject',
+    source_branch: '$_currentBranch',
+    target_branch: 'main',
+    await_pipeline: true,
+    min_downvotes: 0,
+    min_upvotes: 0,
+    delete_source_branch: true,
+    squash_commits: true,
+  },
+}];

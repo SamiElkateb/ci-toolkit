@@ -6,7 +6,7 @@ import Runner from '../../lib/core/Runner';
 import CONFIG_PATHS from '../../__fixtures__/configPaths';
 import workingServer from '../../__mocks__/workingServer';
 
-describe.skip('create_merge_request', () => {
+describe('merge_merge_request', () => {
   let errorSpy = vi.spyOn(Logger.prototype, 'error');
   let infoSpy = vi.spyOn(Logger.prototype, 'info');
 
@@ -27,12 +27,12 @@ describe.skip('create_merge_request', () => {
     infoSpy.mockRestore();
   });
 
-  it('should log merge request created', async () => {
+  it('should log merge request merged', async () => {
     errorSpy = vi.spyOn(Logger.prototype, 'error');
     infoSpy = vi.spyOn(Logger.prototype, 'info');
 
-    await Runner.start({ run: 'test_command', config: CONFIG_PATHS.createMergeRequestConfig });
+    await Runner.start({ run: 'test_command', config: CONFIG_PATHS.mergeMergeRequestConfig });
     expect(errorSpy).not.toHaveBeenCalled();
-    expect(infoSpy.mock.calls[2]).toMatch(/Merge request created/);
+    expect(infoSpy.mock.calls[2]).toMatch(/Merge request merged/);
   });
 });
