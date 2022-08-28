@@ -1,6 +1,6 @@
 const createMergeRequest = JSON.stringify({
   source_branch: 'new-branch',
-  target_branch: 'master',
+  target_branch: 'main',
   title: 'new-branch',
   assignee_id: 11223344,
   reviewer_ids: [11223344],

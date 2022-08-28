@@ -7,7 +7,7 @@
 	{
 		"start_pipeline": {
 			"project": "$_currentProject",
-			"ref": "master",
+			"ref": "main",
 			"await_pipeline": true,
 			"retries": 0,
 			"variables": [

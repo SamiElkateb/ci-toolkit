@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-misused-promises */
+import standby from './standby';
+
 type PollParams = {
   fn: () => Promise<unknown>;
   validate?: (value: unknown) => boolean;
@@ -19,31 +20,25 @@ const poll = async (params: PollParams) => {
   } = params;
   let attempts = 0;
 
-  const executePolling = async (
-    resolve: (value: unknown) => void,
-    reject: (reason?: Error) => void,
-  ) => {
+  const executePolling = async (): Promise<unknown> => {
     if (pollingLogFn) pollingLogFn();
     const result = await fn();
     attempts += 1;
     if (validate && validate(result)) {
-      resolve(result);
-      return;
+      return result;
     }
     if (!validate && result) {
-      resolve(result);
-      return;
+      return result;
     }
     if (timeout && interval * attempts > timeout && timeoutMessage) {
-      reject(new Error(timeoutMessage));
-      return;
+      throw new Error(timeoutMessage);
     }
     if (timeout && interval * attempts > timeout) {
-      reject(new Error('Timeout exceeded'));
-      return;
+      throw new Error('Timeout exceeded');
     }
-    setTimeout(executePolling, interval, resolve, reject);
+    await standby(interval);
+    return executePolling();
   };
-  return new Promise(executePolling);
+  return executePolling();
 };
 export default poll;

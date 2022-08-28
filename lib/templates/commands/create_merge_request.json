@@ -20,14 +20,14 @@
 			"title": "$_currentBranch is a great branch",
 			"project": "$_currentProject",
 			"source_branch": "$_currentBranch",
-			"target_branch": "master",
+			"target_branch": "main",
 			"await_pipeline": true,
 			"min_approvals": 0,
 			"assign_to_me": true,
 			"delete_source_branch": true,
 			"squash_commits": true,
 			"reviewers": [
-				"SamiElkateb"
+				"JohnDoe"
 			],
 			"label": "test"
 		}

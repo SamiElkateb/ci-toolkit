@@ -8,7 +8,7 @@
 		"get_diffs": {
 			"file": "./ci-toolkit.yaml",
 			"target_branch": "$_currentBranch",
-			"source_branch": "master",
+			"source_branch": "main",
 			"store": "$_diffs"
 		}
 	},

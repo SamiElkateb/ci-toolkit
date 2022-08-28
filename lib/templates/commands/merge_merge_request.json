@@ -17,7 +17,7 @@
 	},
 	{
 		"pull": {
-			"branch": "master"
+			"branch": "main"
 		}
 	},
 	{
@@ -30,7 +30,7 @@
 		"merge_merge_request": {
 			"project": "$_currentProject",
 			"source_branch": "$_currentBranch",
-			"target_branch": "master",
+			"target_branch": "main",
 			"await_pipeline": true,
 			"min_upvotes": 0,
 			"max_downvotes": 0,

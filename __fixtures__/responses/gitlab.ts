@@ -10,8 +10,8 @@ const createTag = {
       'e26adc72ff52ffb6f000c3577c5d626d83a6e379',
       '6e7e610fa6fea49df753a4368dbe1d92d2fe1930',
     ],
-    title: "Merge branch 'new-branch' into 'master'",
-    message: "Merge branch 'new-branch' into 'master'\n\nnew-branch\n\nSee merge request JohnDoe/testproject!20",
+    title: "Merge branch 'new-branch' into 'main'",
+    message: "Merge branch 'new-branch' into 'main'\n\nnew-branch\n\nSee merge request JohnDoe/testproject!20",
     author_name: 'JohnDoe',
     author_email: 'john.doe@doe-company.com',
     authored_date: '2022-08-27T21:18:41.000+00:00',
@@ -24,6 +24,36 @@ const createTag = {
   release: null,
   protected: false,
 };
+
+const getPipelinesRunning = [
+  {
+    id: 123456789,
+    iid: 123,
+    project_id: 12345982,
+    sha: 'aef4e51efda4c3888f681541ae0b5bd40fe3b868',
+    ref: 'refs/merge-requests/21/head',
+    status: 'running',
+    source: 'merge_request_event',
+    created_at: '2022-08-28T19:06:27.547Z',
+    updated_at: '2022-08-28T19:07:48.690Z',
+    web_url: 'https://gitlab.com/JohnDoe/testproject/-/pipelines/624876466',
+  },
+];
+
+const getPipelinesManual = [
+  {
+    id: 123456789,
+    iid: 123,
+    project_id: 12345982,
+    sha: 'aef4e51efda4c3888f681541ae0b5bd40fe3b868',
+    ref: 'refs/merge-requests/21/head',
+    status: 'manual',
+    source: 'merge_request_event',
+    created_at: '2022-08-28T19:06:27.547Z',
+    updated_at: '2022-08-28T19:07:48.690Z',
+    web_url: 'https://gitlab.com/JohnDoe/testproject/-/pipelines/624876466',
+  },
+];
 
 const getCurrentUser = {
   id: 11223344,
@@ -91,7 +121,7 @@ const getProjectJobs = [
     status: 'success',
     stage: 'test',
     name: 'manual_job',
-    ref: 'master',
+    ref: 'main',
     tag: false,
     coverage: null,
     allow_failure: false,
@@ -148,7 +178,7 @@ const getProjectJobs = [
       iid: 127,
       project_id: 35551062,
       sha: '55ae239f4a8b54b73ffc41c69d3981a07df2c8f4',
-      ref: 'master',
+      ref: 'main',
       status: 'success',
       source: 'api',
       created_at: '2022-08-28T00:16:25.236Z',
@@ -184,7 +214,7 @@ const getProjectJobs = [
     status: 'success',
     stage: 'test',
     name: 'test_db',
-    ref: 'master',
+    ref: 'main',
     tag: false,
     coverage: null,
     allow_failure: false,
@@ -225,8 +255,8 @@ const getProjectJobs = [
         'e26adc72ff52ffb6f000c3577c5d626d83a6e379',
         '6e7e610fa6fea49df753a4368dbe1d92d2fe1930',
       ],
-      title: "Merge branch 'new-branch' into 'master'",
-      message: "Merge branch 'new-branch' into 'master'\n\nnew-branch\n\nSee merge request JohnDoe/testproject!20",
+      title: "Merge branch 'new-branch' into 'main'",
+      message: "Merge branch 'new-branch' into 'main'\n\nnew-branch\n\nSee merge request JohnDoe/testproject!20",
       author_name: 'JohnDoe',
       author_email: 'john.doe@doe-company.com',
       authored_date: '2022-08-27T21:18:41.000+00:00',
@@ -241,7 +271,7 @@ const getProjectJobs = [
       iid: 127,
       project_id: 35551062,
       sha: '55ae239f4a2a54c43ffc41c69d3981a07df2c8a4',
-      ref: 'master',
+      ref: 'main',
       status: 'success',
       source: 'api',
       created_at: '2022-08-28T00:16:25.236Z',
@@ -288,7 +318,7 @@ const createMergeRequest = {
   merged_at: null,
   closed_by: null,
   closed_at: null,
-  target_branch: 'master',
+  target_branch: 'main',
   source_branch: 'new-branch',
   user_notes_count: 0,
   upvotes: 0,
@@ -400,6 +430,8 @@ const GITLAB_RESPONSES = {
   getUsers,
   getCurrentUser,
   createMergeRequest,
+  getPipelinesManual,
+  getPipelinesRunning,
 };
 
 export default GITLAB_RESPONSES;
