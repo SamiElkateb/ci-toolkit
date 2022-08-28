@@ -6,7 +6,7 @@ import Runner from '../../lib/core/Runner';
 import CONFIG_PATHS from '../../__fixtures__/configPaths';
 import workingServer from '../../__mocks__/workingServer';
 
-describe.skip('create_merge_request', () => {
+describe('create_merge_request', () => {
   let errorSpy = vi.spyOn(Logger.prototype, 'error');
   let infoSpy = vi.spyOn(Logger.prototype, 'info');
 

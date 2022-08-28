@@ -11,8 +11,8 @@
 		"test": "vitest --run --reporter verbose",
 		"test:coverage": "vitest run --coverage",
 		"test:watch": "vitest",
-		"compile:watch": "npx tsc --watch",
-		"ts-to-zod": "ts-to-zod ./lib/types/Gitlab/Jobs.ts ./lib/models/Gitlab/Jobs.ts",
+		"compile:watch": "tsc --watch",
+		"build": "tsc",
 		"lint": "eslint lib/**"
 	},
 	"author": "Sami E",
